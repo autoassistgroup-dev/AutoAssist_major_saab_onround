@@ -6741,12 +6741,12 @@
                                         {% set can_preview = att_name.endswith(('.jpg', '.jpeg', '.png',
                                         '.gif', '.pdf', '.txt', '.md')) %}
                                         {% if can_preview %}
-                                        <button data-action="preview" data-ticket-id="{{ ticket.ticket_id|e }}"
-                                            data-index="{{ loop.index0 }}" data-filename="{{ att_name|e }}"
-                                            class="bg-blue-100 hover:bg-blue-200 text-blue-600 px-1.5 py-1 rounded text-[10px] transition att-preview-btn"
+                                        <a href="{{ url_for('tickets.preview_ticket_attachment', ticket_id=ticket.ticket_id, attachment_index=loop.index0) }}"
+                                            target="_blank"
+                                            class="bg-blue-100 hover:bg-blue-200 text-blue-600 px-1.5 py-1 rounded text-[10px] transition flex items-center justify-center"
                                             title="Preview {{ att_name }}">
                                             <i class="fas fa-eye"></i>
-                                        </button>
+                                        </a>
                                         {% endif %}
                                         <button data-action="download" data-ticket-id="{{ ticket.ticket_id|e }}"
                                             data-index="{{ loop.index0 }}" data-filename="{{ att_name|e }}"
