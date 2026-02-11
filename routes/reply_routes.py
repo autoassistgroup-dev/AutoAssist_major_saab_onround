@@ -8,6 +8,7 @@ Author: AutoAssistGroup Development Team
 """
 
 import logging
+import os
 from flask import Blueprint, jsonify
 from bson.objectid import ObjectId
 import base64
@@ -54,13 +55,23 @@ def download_reply_attachment_legacy(reply_id, attachment_index):
         # Get file data
         file_data = None
         filename = attachment.get('filename', attachment.get('fileName', 'download'))
-        logger.info(f"[LEGACY DOWNLOAD] Attachment {attachment_index}: filename={filename}, has_data={bool(attachment.get('data'))}, has_fileData={bool(attachment.get('fileData'))}")
+        logger.info(f"[LEGACY DOWNLOAD] Attachment {attachment_index}: filename={filename}, has_data={bool(attachment.get('data'))}, has_fileData={bool(attachment.get('fileData'))}, file_path={attachment.get('file_path', 'NONE')}")
         
-        if attachment.get('data') or attachment.get('fileData'):
+        # Try file_path first (reply attachments are saved to disk)
+        if attachment.get('file_path') and os.path.exists(attachment.get('file_path')):
+            try:
+                with open(attachment['file_path'], 'rb') as f:
+                    file_data = f.read()
+                logger.info(f"[LEGACY DOWNLOAD] Read {len(file_data)} bytes from disk: {attachment['file_path']}")
+            except Exception as e:
+                logger.error(f"[LEGACY DOWNLOAD] Failed to read from disk: {e}")
+        
+        # Fallback to base64 data
+        if not file_data and (attachment.get('data') or attachment.get('fileData')):
             base64_data = attachment.get('data') or attachment.get('fileData')
             try:
                 file_data = base64.b64decode(base64_data)
-                logger.info(f"[LEGACY DOWNLOAD] Successfully decoded {len(file_data)} bytes")
+                logger.info(f"[LEGACY DOWNLOAD] Successfully decoded {len(file_data)} bytes from base64")
             except Exception as e:
                 logger.error(f"[LEGACY DOWNLOAD] Failed to decode base64 data: {e}")
         
@@ -113,13 +124,23 @@ def preview_reply_attachment_legacy(reply_id, attachment_index):
         # Get file data
         file_data = None
         filename = attachment.get('filename', attachment.get('fileName', 'preview'))
-        logger.info(f"[LEGACY PREVIEW] Attachment {attachment_index}: filename={filename}, has_data={bool(attachment.get('data'))}, has_fileData={bool(attachment.get('fileData'))}")
+        logger.info(f"[LEGACY PREVIEW] Attachment {attachment_index}: filename={filename}, has_data={bool(attachment.get('data'))}, has_fileData={bool(attachment.get('fileData'))}, file_path={attachment.get('file_path', 'NONE')}")
         
-        if attachment.get('data') or attachment.get('fileData'):
+        # Try file_path first (reply attachments are saved to disk)
+        if attachment.get('file_path') and os.path.exists(attachment.get('file_path')):
+            try:
+                with open(attachment['file_path'], 'rb') as f:
+                    file_data = f.read()
+                logger.info(f"[LEGACY PREVIEW] Read {len(file_data)} bytes from disk: {attachment['file_path']}")
+            except Exception as e:
+                logger.error(f"[LEGACY PREVIEW] Failed to read from disk: {e}")
+        
+        # Fallback to base64 data
+        if not file_data and (attachment.get('data') or attachment.get('fileData')):
             base64_data = attachment.get('data') or attachment.get('fileData')
             try:
                 file_data = base64.b64decode(base64_data)
-                logger.info(f"[LEGACY PREVIEW] Successfully decoded {len(file_data)} bytes")
+                logger.info(f"[LEGACY PREVIEW] Successfully decoded {len(file_data)} bytes from base64")
             except Exception as e:
                 logger.error(f"[LEGACY PREVIEW] Failed to decode base64: {e}")
         
