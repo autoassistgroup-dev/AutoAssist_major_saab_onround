@@ -907,64 +907,102 @@ def send_ticket_email(ticket_id):
                 # 🚀 RESOLVE attachment file data for webhook
                 # Manual ticket attachments are stored on disk (file_path) without inline data.
                 # We must read from disk and base64-encode so n8n receives actual file content.
+                # NOTE: The frontend may send web URLs as file_path (not disk paths), so we
+                # always fall back to matching against the ticket's stored attachments by filename.
+                ticket_atts = ticket.get('attachments', [])
                 resolved_attachments = []
                 for att in attachments:
                     filename = att.get('name', att.get('filename', att.get('fileName', 'file')))
                     file_data = att.get('fileData', att.get('data', ''))
                     
+                    logger.info(f"[EMAIL-ATT] Processing: {filename}, inline_data_len={len(str(file_data)) if file_data else 0}")
+                    
                     # If no inline data, try reading from disk via file_path
                     if not file_data or len(str(file_data)) < 10:
                         file_path = att.get('file_path', att.get('path', ''))
+                        logger.info(f"[EMAIL-ATT] No inline data. file_path from frontend: '{file_path}'")
                         if file_path and os.path.exists(file_path):
                             try:
                                 with open(file_path, 'rb') as f:
                                     file_bytes = f.read()
                                 file_data = base64.b64encode(file_bytes).decode('utf-8')
-                                logger.info(f"Read attachment from disk: {filename} ({len(file_bytes)} bytes)")
+                                logger.info(f"[EMAIL-ATT] ✅ Read from disk path: {filename} ({len(file_bytes)} bytes)")
                             except Exception as read_err:
-                                logger.error(f"Failed to read attachment from disk {file_path}: {read_err}")
-                        
-                        # If still no data, try common document lookup
-                        if (not file_data or len(str(file_data)) < 10) and att.get('document_id'):
+                                logger.error(f"[EMAIL-ATT] ❌ Failed to read from disk {file_path}: {read_err}")
+                        else:
+                            logger.info(f"[EMAIL-ATT] file_path not a valid disk path (may be a URL)")
+                    
+                    # If still no data, try common document lookup
+                    if (not file_data or len(str(file_data)) < 10) and att.get('document_id'):
+                        try:
+                            doc = db.get_common_document(att['document_id'])
+                            if doc:
+                                doc_data = doc.get('data') or doc.get('fileData') or doc.get('content') or doc.get('file_data') or ''
+                                if doc_data:
+                                    file_data = doc_data
+                                    logger.info(f"[EMAIL-ATT] ✅ Resolved from common document: {filename}")
+                                elif doc.get('file_path') and os.path.exists(doc.get('file_path')):
+                                    with open(doc['file_path'], 'rb') as f:
+                                        file_bytes = f.read()
+                                    file_data = base64.b64encode(file_bytes).decode('utf-8')
+                                    logger.info(f"[EMAIL-ATT] ✅ Read common doc from disk: {filename} ({len(file_bytes)} bytes)")
+                        except Exception as doc_err:
+                            logger.error(f"[EMAIL-ATT] ❌ Failed common document lookup {att.get('document_id')}: {doc_err}")
+                    
+                    # If still no data, try ticket_index (with safe parsing)
+                    if (not file_data or len(str(file_data)) < 10):
+                        raw_idx = att.get('ticket_index')
+                        if raw_idx is not None and str(raw_idx).strip() != '':
                             try:
-                                doc = db.get_common_document(att['document_id'])
-                                if doc:
-                                    doc_data = doc.get('data') or doc.get('fileData') or doc.get('content') or doc.get('file_data') or ''
-                                    if doc_data:
-                                        file_data = doc_data
-                                        logger.info(f"Resolved common document data for: {filename}")
-                                    elif doc.get('file_path') and os.path.exists(doc.get('file_path')):
-                                        with open(doc['file_path'], 'rb') as f:
-                                            file_bytes = f.read()
-                                        file_data = base64.b64encode(file_bytes).decode('utf-8')
-                                        logger.info(f"Read common document from disk: {filename} ({len(file_bytes)} bytes)")
-                            except Exception as doc_err:
-                                logger.error(f"Failed to resolve common document {att.get('document_id')}: {doc_err}")
-                        
-                        # Last resort: try reading from ticket's own stored attachments by index
-                        if (not file_data or len(str(file_data)) < 10) and att.get('ticket_index') is not None:
-                            try:
-                                ticket_atts = ticket.get('attachments', [])
-                                idx = int(att['ticket_index'])
+                                idx = int(raw_idx)
                                 if 0 <= idx < len(ticket_atts):
                                     source_att = ticket_atts[idx]
                                     stored_data = source_att.get('data') or source_att.get('fileData') or ''
                                     if stored_data and len(str(stored_data)) >= 10:
                                         file_data = stored_data
-                                        logger.info(f"Resolved attachment data from ticket index {idx}: {filename}")
+                                        logger.info(f"[EMAIL-ATT] ✅ Resolved from ticket index {idx}: {filename}")
                                     elif source_att.get('file_path') and os.path.exists(source_att['file_path']):
                                         with open(source_att['file_path'], 'rb') as f:
                                             file_bytes = f.read()
                                         file_data = base64.b64encode(file_bytes).decode('utf-8')
-                                        logger.info(f"Read ticket attachment from disk index {idx}: {filename} ({len(file_bytes)} bytes)")
-                            except Exception as idx_err:
-                                logger.error(f"Failed to resolve attachment by ticket index: {idx_err}")
+                                        logger.info(f"[EMAIL-ATT] ✅ Read ticket att from disk index {idx}: {filename} ({len(file_bytes)} bytes)")
+                            except (ValueError, TypeError) as idx_err:
+                                logger.warning(f"[EMAIL-ATT] ticket_index parse failed ('{raw_idx}'): {idx_err}")
+                    
+                    # 🔥 FINAL FALLBACK: Match against ticket's stored attachments by filename
+                    # This handles cases where frontend sends a web URL as file_path
+                    if not file_data or len(str(file_data)) < 10:
+                        logger.info(f"[EMAIL-ATT] All methods failed, trying filename match against {len(ticket_atts)} ticket attachments")
+                        for stored_att in ticket_atts:
+                            stored_name = stored_att.get('filename', stored_att.get('name', stored_att.get('fileName', '')))
+                            if stored_name == filename:
+                                # Try inline data first
+                                stored_data = stored_att.get('data') or stored_att.get('fileData') or ''
+                                if stored_data and len(str(stored_data)) >= 10:
+                                    file_data = stored_data
+                                    logger.info(f"[EMAIL-ATT] ✅ Matched by filename, got inline data: {filename}")
+                                    break
+                                # Try disk path
+                                stored_fp = stored_att.get('file_path', '')
+                                if stored_fp and os.path.exists(stored_fp):
+                                    try:
+                                        with open(stored_fp, 'rb') as f:
+                                            file_bytes = f.read()
+                                        file_data = base64.b64encode(file_bytes).decode('utf-8')
+                                        logger.info(f"[EMAIL-ATT] ✅ Matched by filename, read from disk: {filename} ({len(file_bytes)} bytes)")
+                                        break
+                                    except Exception as e:
+                                        logger.error(f"[EMAIL-ATT] ❌ Filename match disk read failed: {e}")
+                    
+                    data_len = len(str(file_data)) if file_data else 0
+                    if data_len < 10:
+                        logger.warning(f"[EMAIL-ATT] ⚠️ UNRESOLVED attachment: {filename} (data_len={data_len})")
                     
                     resolved_attachments.append({
                         'filename': filename,
                         'data': file_data
                     })
-                    logger.info(f"Webhook attachment: {filename}, data_length={len(str(file_data))}")
+                    logger.info(f"[EMAIL-ATT] Final: {filename}, data_length={data_len}")
                 
                 # Payload with OVERRIDDEN subject and body
                 webhook_payload = {
