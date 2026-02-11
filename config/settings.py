@@ -80,18 +80,22 @@ class Config:
                 os.makedirs(upload_folder, exist_ok=True)
             except OSError:
                 upload_folder = '/tmp'
+
             return upload_folder
         else:
-            upload_folder = os.environ.get(
-                'UPLOAD_FOLDER', 
-                os.path.join(os.getcwd(), 'uploads')
-            )
+            # DEVELOPMENT: Use local uploads folder
+            path = os.path.join(os.getcwd(), 'uploads')
+            upload_folder = os.environ.get('UPLOAD_FOLDER', path)
+            
             try:
                 os.makedirs(upload_folder, exist_ok=True)
-            except OSError:
+                print(f"📂 [CONFIG] Using upload folder: {upload_folder}")
+            except OSError as e:
+                print(f"⚠️ [CONFIG] Failed to create {upload_folder}: {e}")
                 import tempfile
                 upload_folder = os.path.join(tempfile.gettempdir(), 'autoassist_uploads')
                 os.makedirs(upload_folder, exist_ok=True)
+                print(f"📂 [CONFIG] Fallback to temp upload folder: {upload_folder}")
             return upload_folder
 
 
