@@ -2383,68 +2383,7 @@
                                         }
                                     }
 
-                                    // 🚀 ENHANCED: Process attached files from enhanced attachment system
-                                    if (window.currentAttachments && window.currentAttachments.length > 0) {
-                                        console.log(`📎 Processing ${window.currentAttachments.length} enhanced attachments for webhook`);
-
-                                        for (let i = 0; i < window.currentAttachments.length; i++) {
-                                            const attachment = window.currentAttachments[i];
-
-                                            if (attachment.type === 'file' && attachment.file) {
-                                                // Handle uploaded files
-                                                try {
-                                                    const base64Data = await new Promise((resolve, reject) => {
-                                                        const reader = new FileReader();
-                                                        reader.onload = () => {
-                                                            const base64 = reader.result.split(',')[1];
-                                                            resolve(base64);
-                                                        };
-                                                        reader.onerror = reject;
-                                                        reader.readAsDataURL(attachment.file);
-                                                    });
-
-                                                    attachmentData.push({
-                                                        fileName: attachment.name,
-                                                        fileData: base64Data,  // 🚀 CRITICAL: This is what n8n expects
-                                                        size: attachment.size,
-                                                        type: attachment.fileType,
-                                                        isWarranty: attachment.name.toLowerCase().includes('warranty')
-                                                    });
-                                                    totalFiles++;
-                                                    console.log(`✅ Encoded uploaded file: ${attachment.name} (${attachment.size} bytes)`);
-                                                } catch (error) {
-                                                    console.error(`❌ Failed to encode uploaded file ${attachment.name}:`, error);
-                                                }
-                                            } else if (attachment.type === 'common_document' && attachment.file) {
-                                                // Handle common documents with file data
-                                                try {
-                                                    const base64Data = await new Promise((resolve, reject) => {
-                                                        const reader = new FileReader();
-                                                        reader.onload = () => {
-                                                            const base64 = reader.result.split(',')[1];
-                                                            resolve(base64);
-                                                        };
-                                                        reader.onerror = reject;
-                                                        reader.readAsDataURL(attachment.file);
-                                                    });
-
-                                                    attachmentData.push({
-                                                        fileName: attachment.name,
-                                                        fileData: base64Data,  // 🚀 CRITICAL: This is what n8n expects
-                                                        size: attachment.size,
-                                                        type: attachment.fileType,
-                                                        isWarranty: attachment.name.toLowerCase().includes('warranty'),
-                                                        isCommonDocument: true,
-                                                        documentId: attachment.documentId
-                                                    });
-                                                    totalFiles++;
-                                                    console.log(`✅ Encoded common document: ${attachment.name} (${attachment.size} bytes)`);
-                                                } catch (error) {
-                                                    console.error(`❌ Failed to encode common document ${attachment.name}:`, error);
-                                                }
-                                            }
-                                        }
-                                    }
+                                    // (Duplicate enhanced attachment processing removed - already handled above at lines 2302-2350)
 
                                     // Process common documents for webhook
                                     const commonDocumentPreview = document.getElementById('commonDocumentPreview');

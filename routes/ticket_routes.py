@@ -584,8 +584,8 @@ def send_ticket_reply(ticket_id):
             upload_root = Config.get_upload_folder()
             reply_prefix = f"reply_{ticket_id}_{int(datetime.now().timestamp())}"
             for key in sorted(request.files.keys()):
-                if key.startswith('attachment_') or key == 'attachments':
-                    files = request.files.getlist(key) if key == 'attachments' else [request.files[key]]
+                if key.startswith('attachment_') or key in ('attachments', 'response_attachments'):
+                    files = request.files.getlist(key) if key in ('attachments', 'response_attachments') else [request.files[key]]
                     for idx, f in enumerate(files):
                         if f.filename:
                             file_bytes = f.read()
@@ -598,6 +598,7 @@ def send_ticket_reply(ticket_id):
                                 attachments.append({
                                     'filename': saved['filename'],
                                     'fileName': saved['filename'],
+                                    'type': 'file',
                                     'file_path': saved['file_path'],
                                     'content_type': saved.get('mime_type', f.content_type or 'application/octet-stream'),
                                     'size': saved['size'],
