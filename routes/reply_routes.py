@@ -52,6 +52,11 @@ def download_reply_attachment_legacy(reply_id, attachment_index):
         
         attachment = attachments[attachment_index]
         
+        # Defensive: Ensure attachment is a dictionary
+        if not isinstance(attachment, dict):
+            logger.error(f"[LEGACY DOWNLOAD] Attachment {attachment_index} is not a dictionary: {type(attachment)}")
+            return jsonify({'error': 'Invalid attachment format'}), 500
+        
         # Get file data
         file_data = None
         filename = attachment.get('filename', attachment.get('fileName', 'download'))

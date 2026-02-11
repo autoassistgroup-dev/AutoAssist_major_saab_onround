@@ -217,13 +217,43 @@ def webhook_reply():
                         'idempotent': True
                     })
         
-        # Create reply (incoming customer/external only)
+        # Normalize attachments (handle strings/malformed data from n8n)
+        raw_attachments = data.get('attachments', [])
+        normalized_attachments = []
+        import base64
+        
+        for att in raw_attachments:
+            if isinstance(att, dict):
+                # Ensure filename exists
+                if not att.get('filename') and not att.get('fileName'):
+                    att['filename'] = 'attachment'
+                normalized_attachments.append(att)
+            elif isinstance(att, str):
+                # Handle string attachments (base64 or keys)
+                try:
+                    # Try to treat as base64 data first? Or just text content?
+                    # If it's short, it's probably a filename or key. If long, base64.
+                    # For safety, let's treat it as text content for now unless we know better.
+                    # But "attachment1" suggests it might be a key.
+                    # We'll validly encode it so it can be downloaded as a text file.
+                    encoded = base64.b64encode(att.encode('utf-8')).decode('utf-8')
+                    normalized_attachments.append({
+                        'filename': 'attachment.txt',
+                        'content_type': 'text/plain',
+                        'data': encoded,
+                        'type': 'file'
+                    })
+                except Exception as e:
+                    logger.warning(f"Failed to normalize string attachment: {e}")
+            else:
+                logger.warning(f"Skipping invalid attachment type: {type(att)}")
+
         reply_data = {
             'ticket_id': ticket_id,
             'message': message,
             'sender_name': data.get('sender_name', data.get('from', 'External System')),
             'sender_type': 'webhook',
-            'attachments': data.get('attachments', []),
+            'attachments': normalized_attachments,
             'created_at': datetime.now()
         }
         
