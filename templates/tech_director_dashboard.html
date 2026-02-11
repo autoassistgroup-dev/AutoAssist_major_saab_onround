@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Technical Director Dashboard - AutoAssistGroup</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        /* ===== DARK GLASS DESIGN SYSTEM ===== */
+        :root {
+            /* Dark Color Palette */
+            --primary: #ff758f;
+            --secondary: #ff7eb3;
+            --primary-dark: #e84a6f;
+            --primary-light: rgba(255, 117, 143, 0.15);
+            --urgent: #ef4444;
+            --high: #f59e0b;
+            --medium: #ec4899;
+            --low: #6366f1;
+
+            /* Dark Theme Colors */
+            --bg-dark: #0a0a0f;
+            --bg-card: rgba(20, 20, 30, 0.85);
+            --bg-card-hover: rgba(30, 30, 45, 0.95);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-shadow: rgba(0, 0, 0, 0.4);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --text-muted: rgba(255, 255, 255, 0.5);
+
+            /* Gradients */
+            --gradient-pink: linear-gradient(135deg, #ff758f 0%, #ff7eb3 100%);
+            --gradient-director: linear-gradient(135deg, #ff758f 0%, #a855f7 100%);
+
+            /* Shadows */
+            --shadow-pink: 0 10px 40px rgba(255, 117, 143, 0.15);
+            --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.3);
+            --shadow-hover: 0 20px 60px rgba(255, 117, 143, 0.2);
+        }
+
+        /* ===== BACKGROUND ===== */
+        body {
+            font-family: 'Poppins', sans-serif !important;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .bg-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            background: linear-gradient(180deg, #0a0a0f 0%, #141420 100%);
+        }
+
+        .bg-image {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background-image: url('/static/css/portal_bg.png');
+            background-size: cover;
+            background-position: center;
+            opacity: 0.15;
+        }
+
+        .background-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        /* Director Gradient Orbs */
+        .gradient-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.4;
+            mix-blend-mode: soft-light;
+            animation: floatOrb 30s ease-in-out infinite;
+        }
+
+        .orb-1 {
+            width: 800px;
+            height: 800px;
+            background: var(--gradient-director);
+            top: -20%;
+            left: -15%;
+            animation-delay: 0s;
+        }
+
+        .orb-2 {
+            width: 600px;
+            height: 600px;
+            background: linear-gradient(135deg, #9c27b0 0%, #e91e63 100%);
+            bottom: -20%;
+            right: -10%;
+            animation-delay: -10s;
+        }
+
+        .orb-3 {
+            width: 500px;
+            height: 500px;
+            background: linear-gradient(135deg, #ff87ab 0%, #fff0f6 100%);
+            top: 60%;
+            right: 25%;
+            animation-delay: -20s;
+            opacity: 0.3;
+        }
+
+        @keyframes floatOrb {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1) rotate(0deg);
+            }
+
+            33% {
+                transform: translate(50px, -50px) scale(1.1) rotate(120deg);
+            }
+
+            66% {
+                transform: translate(-30px, 30px) scale(0.95) rotate(240deg);
+            }
+        }
+
+        /* ===== PINK NOISE TEXTURE ===== */
+        .pink-noise {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.03;
+            background-image:
+                radial-gradient(circle at 15% 50%, rgba(255, 45, 85, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 85% 30%, rgba(156, 39, 176, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 50% 80%, rgba(255, 135, 171, 0.1) 0%, transparent 20%);
+            background-size: 200% 200%;
+            animation: noiseMove 20s linear infinite;
+        }
+
+        @keyframes noiseMove {
+            0% {
+                background-position: 0% 0%;
+            }
+
+            100% {
+                background-position: 100% 100%;
+            }
+        }
+
+
+        /* ===== NAVBAR ===== */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 12px 24px;
+        }
+
+        @media (min-width: 768px) {
+            .navbar {
+                padding: 12px 48px;
+            }
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .nav-link {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 12px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+            color: #fff;
+        }
+
+        .nav-link-active {
+            background: rgba(255, 117, 143, 0.15);
+            border-color: rgba(255, 117, 143, 0.3);
+            color: #ff758f;
+        }
+
+        .nav-link i {
+            margin-right: 6px;
+            font-size: 11px;
+            opacity: 0.8;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: white;
+            font-size: 0.85rem;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .menu-btn {
+            display: none;
+            color: white;
+            font-size: 1.2rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 70px;
+            left: 0;
+            right: 0;
+            background: rgba(15, 15, 26, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            z-index: 99;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .mobile-menu.active {
+            display: flex;
+        }
+
+        @media (max-width: 768px) {
+            .nav-links.desktop {
+                display: none;
+            }
+
+            .menu-btn {
+                display: block;
+            }
+        }
+
+
+        /* ===== DARK GLASS COMPONENTS ===== */
+        .glass-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(40px) saturate(180%);
+            -webkit-backdrop-filter: blur(40px) saturate(180%);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            box-shadow: var(--shadow-glass);
+            padding: 24px;
+        }
+
+        /* ===== DIRECTOR-SPECIFIC STYLES ===== */
+        .director-header {
+            background: linear-gradient(135deg, rgba(255, 117, 143, 0.15), rgba(168, 85, 247, 0.1));
+            border: 1px solid rgba(255, 117, 143, 0.2);
+            border-radius: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .director-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(255, 117, 143, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(168, 85, 247, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .director-badge {
+            background: linear-gradient(135deg, rgba(255, 117, 143, 0.15), rgba(168, 85, 247, 0.1));
+            border: 1px solid rgba(255, 117, 143, 0.2);
+            color: #ff758f;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 12px;
+            backdrop-filter: blur(20px);
+        }
+
+        /* ===== ENHANCED BUTTONS ===== */
+        .glass-btn {
+            background: linear-gradient(135deg, #ff758f, #ff7eb3);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(255, 117, 143, 0.3);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .glass-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(255, 117, 143, 0.4);
+            background: linear-gradient(135deg, #ff7eb3, #ffa8c5);
+        }
+
+        /* ===== PRIORITY BADGES ===== */
+        .priority-badge {
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-weight: 600;
+            font-size: 0.75rem;
+            padding: 0.5rem 1rem;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .priority-urgent {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        .priority-high {
+            background: rgba(245, 158, 11, 0.15);
+            color: #fbbf24;
+            border-color: rgba(245, 158, 11, 0.3);
+        }
+
+        .priority-medium {
+            background: rgba(236, 72, 153, 0.15);
+            color: #f472b6;
+            border-color: rgba(236, 72, 153, 0.3);
+        }
+
+        .priority-low {
+            background: rgba(99, 102, 241, 0.15);
+            color: #a5b4fc;
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+
+        /* ===== TICKET CARDS ===== */
+        .ticket-card {
+            position: relative;
+            overflow: hidden;
+            border-left: 4px solid transparent;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        /* Fix text colors for dark theme */
+        .text-gray-800 {
+            color: var(--text-primary) !important;
+        }
+
+        .text-gray-700 {
+            color: var(--text-secondary) !important;
+        }
+
+        .text-gray-600 {
+            color: var(--text-secondary) !important;
+        }
+
+        .text-gray-500 {
+            color: var(--text-muted) !important;
+        }
+
+        .text-gray-400 {
+            color: var(--text-muted) !important;
+        }
+
+        .bg-gray-50,
+        .bg-gray-100 {
+            background: rgba(255, 255, 255, 0.05) !important;
+        }
+
+        .border-gray-100,
+        .border-gray-200 {
+            border-color: rgba(255, 255, 255, 0.08) !important;
+        }
+
+        .bg-white\/80 {
+            background: rgba(255, 255, 255, 0.08) !important;
+            color: var(--text-secondary) !important;
+        }
+
+        .bg-white\/80:hover {
+            background: rgba(255, 255, 255, 0.12) !important;
+        }
+
+        /* ===== FLOATING PARTICLES ===== */
+        .floating-particles {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: var(--pink-primary);
+            border-radius: 50%;
+            opacity: 0.3;
+            filter: blur(0.5px);
+        }
+
+        /* ===== ANIMATIONS ===== */
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .slide-up {
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ===== RESPONSIVE DESIGN ===== */
+        @media (max-width: 768px) {
+            .glass-card {
+                backdrop-filter: blur(20px);
+                border-radius: 20px;
+                padding: 1.5rem !important;
+            }
+
+            .nav-link {
+                padding: 0.5rem 1rem !important;
+                font-size: 0.875rem !important;
+            }
+
+            .director-header {
+                padding: 1.5rem 1rem !important;
+            }
+
+            .ticket-card {
+                padding: 1.5rem !important;
+            }
+
+            .grid-responsive {
+                grid-template-columns: 1fr !important;
+                gap: 1rem !important;
+            }
+        }
+
+        /* ===== LINE CLAMP UTILITIES ===== */
+        .line-clamp-1 {
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .line-clamp-3 {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<!-- Background -->
+<div class="bg-gradient"></div>
+<!-- Background Image -->
+{% if system_settings.show_background %}
+<div class="bg-image"></div>
+{% endif %}
+
+<!-- Navigation -->
+<nav class="navbar">
+    <div class="flex items-center justify-between">
+        <!-- Logo -->
+        <div class="flex items-center">
+            <a href="/tech-director-dashboard" class="flex items-center">
+                <img src="/static/logo.png" alt="AutoAssistGroup Logo" class="h-8 md:h-10">
+            </a>
+        </div>
+
+        <!-- Desktop Nav Links -->
+        <div class="nav-links desktop hidden md:flex">
+            <a href="/" class="nav-link">
+                <i class="fas fa-ticket-alt"></i>Tickets
+            </a>
+            <a href="/dashboard" class="nav-link">
+                <i class="fas fa-chart-line"></i>Dashboard
+            </a>
+            <a href="/create-ticket" class="nav-link">
+                <i class="fas fa-plus-circle"></i>Create Ticket
+            </a>
+            {% if current_user_role == 'Administrator' %}
+            <a href="/technicians" class="nav-link">
+                <i class="fas fa-tools"></i>Technicians
+            </a>
+            <a href="/members" class="nav-link">
+                <i class="fas fa-users"></i>Members
+            </a>
+            <a href="/admin" class="nav-link">
+                <i class="fas fa-cog"></i>Admin Panel
+            </a>
+            {% endif %}
+        </div>
+
+        <!-- User Section -->
+        <div class="flex items-center gap-3">
+            {% if current_user %}
+            <div class="hidden sm:flex items-center gap-2">
+                <div class="user-avatar">{{ current_user[0]|upper }}</div>
+                <span class="text-sm" style="color: rgba(255,255,255,0.7);">{{ current_user }}</span>
+            </div>
+            <a href="/logout" class="nav-link">
+                <i class="fas fa-sign-out-alt"></i>Logout
+            </a>
+            {% else %}
+            <a href="/login" class="nav-link">
+                <i class="fas fa-sign-in-alt"></i>Login
+            </a>
+            {% endif %}
+
+            <!-- Mobile menu button -->
+            <button class="menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Mobile menu -->
+    <div id="mobileMenu" class="mobile-menu">
+        <a href="/" class="nav-link">
+            <i class="fas fa-ticket-alt"></i>Tickets
+        </a>
+        <a href="/dashboard" class="nav-link">
+            <i class="fas fa-chart-line"></i>Dashboard
+        </a>
+        <a href="/create-ticket" class="nav-link">
+            <i class="fas fa-plus-circle"></i>Create Ticket
+        </a>
+        {% if current_user_role == 'Administrator' %}
+        <a href="/technicians" class="nav-link">
+            <i class="fas fa-tools"></i>Technicians
+        </a>
+        <a href="/members" class="nav-link">
+            <i class="fas fa-users"></i>Members
+        </a>
+        <a href="/admin" class="nav-link">
+            <i class="fas fa-cog"></i>Admin Panel
+        </a>
+        {% endif %}
+    </div>
+</nav>
+
+<!-- Page Header -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-20">
+    <div class="glass-card" style="padding: 24px;">
+        <h1 style="font-size: 24px; font-weight: 600; color: #fff; margin-bottom: 6px;">Technical Director Dashboard
+        </h1>
+        <p style="font-size: 14px; color: rgba(255, 255, 255, 0.5);">Review tickets and provide technical feedback</p>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <!-- Stats Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 slide-up" style="animation-delay: 0.1s">
+        <!-- Referred Tickets Card -->
+        <div class="glass-card p-8">
+            <div class="flex items-center">
+                <div class="p-4 rounded-2xl bg-gradient-to-br from-amber-500/10 to-amber-600/10 mr-4">
+                    <i class="fas fa-exclamation-triangle text-2xl text-amber-600"></i>
+                </div>
+                <div>
+                    <h3 class="font-medium text-gray-600 text-sm uppercase tracking-wider">Referred Tickets</h3>
+                    <p class="text-3xl font-bold text-gray-800 mt-2">{{ total_referred }}</p>
+                    <div class="mt-4 pt-4 border-t border-gray-100/50">
+                        <div class="text-sm text-gray-500 flex items-center">
+                            <i class="fas fa-history mr-2"></i>
+                            Awaiting technical review
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Review Card -->
+        <div class="glass-card p-8" style="animation-delay: 0.2s">
+            <div class="flex items-center">
+                <div class="p-4 rounded-2xl bg-gradient-to-br from-blue-500/10 to-blue-600/10 mr-4">
+                    <i class="fas fa-clock text-2xl text-blue-600"></i>
+                </div>
+                <div>
+                    <h3 class="font-medium text-gray-600 text-sm uppercase tracking-wider">Pending Review</h3>
+                    <p class="text-3xl font-bold text-gray-800 mt-2">{{ total_referred }}</p>
+                    <div class="mt-4 pt-4 border-t border-gray-100/50">
+                        <div class="text-sm text-gray-500 flex items-center">
+                            <i class="fas fa-user-clock mr-2"></i>
+                            Awaiting your expert review
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Forwarded Out Card -->
+        <div class="glass-card p-8" style="animation-delay: 0.3s">
+            <div class="flex items-center">
+                <div class="p-4 rounded-2xl bg-gradient-to-br from-green-500/10 to-green-600/10 mr-4">
+                    <i class="fas fa-share text-2xl text-green-600"></i>
+                </div>
+                <div>
+                    <h3 class="font-medium text-gray-600 text-sm uppercase tracking-wider">Forwarded Out</h3>
+                    <p class="text-3xl font-bold text-gray-800 mt-2">{{ forwarded_to_others|default(0) }}</p>
+                    <div class="mt-4 pt-4 border-t border-gray-100/50">
+                        <div class="text-sm text-gray-500 flex items-center">
+                            <i class="fas fa-check-circle mr-2"></i>
+                            Already forwarded to team
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info Banner -->
+    {% if forwarded_to_others and forwarded_to_others > 0 %}
+    <div class="glass-card p-6 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 border-blue-200/50 slide-up"
+        style="animation-delay: 0.4s">
+        <div class="flex items-start space-x-4">
+            <div class="flex-shrink-0">
+                <div
+                    class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+                    <i class="fas fa-info-circle text-white"></i>
+                </div>
+            </div>
+            <div class="flex-1">
+                <p class="text-sm text-blue-800">
+                    <strong>{{ forwarded_to_others }} ticket{% if forwarded_to_others != 1 %}s{% endif %}</strong>
+                    that {% if forwarded_to_others == 1 %}was{% else %}were{% endif %} originally referred to you {%
+                    if forwarded_to_others == 1 %}has{% else %}have{% endif %} been forwarded to team members and {%
+                    if forwarded_to_others == 1 %}is{% else %}are{% endif %} no longer shown here.
+                </p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Referred Tickets List -->
+    <div class="glass-card overflow-hidden slide-up" style="animation-delay: 0.5s">
+        <div class="p-8 border-b border-gray-100/50 bg-gradient-to-r from-white/60 to-transparent">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-2xl font-semibold text-gray-800">
+                        <i class="fas fa-list-alt mr-3" style="color: var(--pink-primary);"></i>
+                        Tickets Forwarded to You
+                    </h2>
+                    <p class="text-sm text-gray-500 mt-2">All tickets that have been forwarded to you for technical
+                        review</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div
+                        style="display: flex; align-items: center; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 10px 16px; gap: 10px;">
+                        <span style="font-size: 16px;">🔍</span>
+                        <input type="text" placeholder="Search tickets..."
+                            style="background: transparent; border: none; outline: none; color: #fff; font-size: 14px; width: 200px;">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if tickets %}
+        <div class="divide-y divide-gray-200/30">
+            {% for ticket in tickets %}
+            <div class="ticket-card glass-card m-6 border-l-4 
+                    {% if ticket.priority == 'Urgent' %}border-red-500
+                    {% elif ticket.priority == 'High' %}border-orange-500
+                    {% elif ticket.priority == 'Medium' %}border-yellow-500
+                    {% elif ticket.priority == 'Low' %}border-green-500
+                    {% else %}border-gray-400{% endif %}" data-ticket-id="{{ ticket.ticket_id }}">
+                <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
+                    <!-- Ticket Info -->
+                    <div class="flex-1 min-w-0">
+                        <!-- Header -->
+                        <div class="flex flex-wrap items-start gap-3 mb-4">
+                            <div class="flex items-center space-x-3">
+                                <span class="text-sm font-bold text-gray-700 bg-gray-100/50 px-3 py-1.5 rounded-xl">
+                                    <i class="fas fa-hashtag mr-1"></i>{{ ticket.ticket_id }}
+                                </span>
+                                <span class="priority-badge 
+                                        {% if ticket.priority == 'Urgent' %}priority-urgent
+                                        {% elif ticket.priority == 'High' %}priority-high
+                                        {% elif ticket.priority == 'Medium' %}priority-medium
+                                        {% else %}priority-low{% endif %}">
+                                    <i class="fas fa-flag mr-2"></i>{{ ticket.priority|default('Medium') }}
+                                </span>
+                            </div>
+
+                            <span class="director-badge text-sm">
+                                <i class="fas fa-user-tie mr-2"></i>Referred from {{
+                                ticket.forwarded_from_name|default('Unknown') }}
+                            </span>
+                        </div>
+
+                        <!-- Subject -->
+                        <h3 class="text-xl font-semibold text-gray-800 mb-4 line-clamp-2">
+                            {{ ticket.subject|default('No Subject') }}
+                        </h3>
+
+                        <!-- Grid Info -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                            <!-- Customer Info -->
+                            <div class="space-y-2">
+                                <div class="flex items-center space-x-2">
+                                    <i class="fas fa-user text-gray-400"></i>
+                                    <span class="text-sm text-gray-500">Customer</span>
+                                </div>
+                                <p class="font-medium text-gray-800 truncate">{{ ticket.name|default('Unknown') }}
+                                </p>
+                                <p class="text-sm text-gray-600 truncate">{{ ticket.email|default('No email') }}</p>
+                            </div>
+
+                            <!-- Vehicle Info -->
+                            <div class="space-y-2">
+                                <div class="flex items-center space-x-2">
+                                    <i class="fas fa-car text-gray-400"></i>
+                                    <span class="text-sm text-gray-500">Vehicle Registration</span>
+                                </div>
+                                <p class="font-medium text-gray-800 truncate">
+                                    {{ ticket.vehicle_registration|default('Not specified') }}
+                                </p>
+                            </div>
+
+                            <!-- Date Info -->
+                            <div class="space-y-2">
+                                <div class="flex items-center space-x-2">
+                                    <i class="fas fa-calendar text-gray-400"></i>
+                                    <span class="text-sm text-gray-500">Referred Date</span>
+                                </div>
+                                <p class="font-medium text-gray-800 truncate">
+                                    {{ ticket.formatted_date|default('Unknown') }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Issue Summary -->
+                        <div class="space-y-2">
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-file-alt text-gray-400"></i>
+                                <span class="text-sm text-gray-500">Issue Summary</span>
+                            </div>
+                            <div class="bg-gray-50/50 rounded-xl p-4">
+                                <p class="text-gray-700 break-words line-clamp-3">
+                                    {{ ticket.body|default('No description available')|truncate(300) }}
+                                </p>
+                                <div class="mt-2 flex items-center text-sm text-gray-500">
+                                    <i class="fas fa-clock mr-1"></i>
+                                    {{ ticket.body|length if ticket.body else 0 }} characters
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="lg:w-64 flex flex-col space-y-3">
+                        <a href="/ticket/{{ ticket.ticket_id }}" class="glass-btn text-center">
+                            <i class="fas fa-cogs mr-2"></i>Review & Manage
+                        </a>
+
+                        <div class="flex flex-col space-y-2">
+                            <button onclick="openForwardModal('{{ ticket.ticket_id }}', '{{ ticket.subject|e }}')"
+                                class="w-full bg-white/80 hover:bg-white border border-gray-300 text-gray-700 px-4 py-3 rounded-xl font-medium transition-all hover:shadow-lg">
+                                <i class="fas fa-forward mr-2"></i>Forward to Team
+                            </button>
+
+                            <button
+                                class="w-full bg-white/80 hover:bg-white border border-gray-300 text-gray-700 px-4 py-3 rounded-xl font-medium transition-all hover:shadow-lg">
+                                <i class="fas fa-comment-medical mr-2"></i>Add Technical Note
+                            </button>
+                        </div>
+
+                        <div class="pt-4 border-t border-gray-200/50">
+                            <div class="text-xs text-gray-500">
+                                <div class="flex items-center">
+                                    <i class="fas fa-history mr-2"></i>
+                                    Last updated: {{ ticket.formatted_date }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <!-- Empty State -->
+        <div class="text-center py-16">
+            <div class="mb-6">
+                <div
+                    class="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-green-100 to-emerald-100 flex items-center justify-center">
+                    <i class="fas fa-clipboard-check text-emerald-600 text-3xl"></i>
+                </div>
+            </div>
+            <h3 class="text-2xl font-semibold text-gray-800 mb-3">No Tickets Awaiting Review</h3>
+            <p class="text-gray-500 max-w-md mx-auto mb-6">
+                All technical reviews are up to date! You're all caught up with your technical responsibilities.
+            </p>
+            <div class="space-y-3 max-w-sm mx-auto">
+                <div class="text-sm text-gray-500 bg-gray-50/50 p-4 rounded-xl">
+                    <i class="fas fa-lightbulb text-amber-500 mr-2"></i>
+                    Check back later for new technical referrals
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    // Create floating particles
+    function createParticles() {
+        const particlesContainer = document.getElementById('particles');
+        const particleCount = 40;
+
+        for (let i = 0; i < particleCount; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+
+            // Random position
+            particle.style.left = Math.random() * 100 + 'vw';
+            particle.style.top = Math.random() * 100 + 'vh';
+
+            // Random size
+            const size = Math.random() * 3 + 1;
+            particle.style.width = size + 'px';
+            particle.style.height = size + 'px';
+
+            // Random opacity
+            particle.style.opacity = Math.random() * 0.3 + 0.1;
+
+            // Random animation
+            const duration = Math.random() * 20 + 10;
+            particle.style.animation = `float ${duration}s infinite linear`;
+
+            // Create custom animation
+            const style = document.createElement('style');
+            style.textContent = `
+                    @keyframes float {
+                        0% {
+                            transform: translate(0, 0) rotate(0deg);
+                        }
+                        25% {
+                            transform: translate(${Math.random() * 100 - 50}px, ${Math.random() * 100 - 50}px) rotate(90deg);
+                        }
+                        50% {
+                            transform: translate(${Math.random() * 100 - 50}px, ${Math.random() * 100 - 50}px) rotate(180deg);
+                        }
+                        75% {
+                            transform: translate(${Math.random() * 100 - 50}px, ${Math.random() * 100 - 50}px) rotate(270deg);
+                        }
+                        100% {
+                            transform: translate(0, 0) rotate(360deg);
+                        }
+                    }
+                `;
+            document.head.appendChild(style);
+
+            particlesContainer.appendChild(particle);
+        }
+    }
+
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', function () {
+        createParticles();
+
+        // Add hover effects
+        const cards = document.querySelectorAll('.glass-card');
+        cards.forEach(card => {
+            card.addEventListener('mouseenter', function () {
+                this.style.transform = 'translateY(-8px)';
+            });
+
+            card.addEventListener('mouseleave', function () {
+                this.style.transform = 'translateY(0)';
+            });
+        });
+
+        // Add scroll animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver(function (entries) {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Observe all animated elements
+        document.querySelectorAll('.slide-up').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(20px)';
+            el.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+            observer.observe(el);
+        });
+
+        // Performance optimization: Auto-refresh removed - using real-time WebSocket updates instead
+    });
+
+    // Mobile menu toggle
+    function toggleMobileMenu() {
+        const menu = document.getElementById('mobileMenu');
+        if (menu) {
+            menu.classList.toggle('active');
+        }
+    }
+
+    // ===== SOCKET.IO REAL-TIME UPDATES FOR TECH DIRECTOR =====
+    (function () {
+        // Dynamic loading of scripts
+        const loadScript = (src) => {
+            return new Promise((resolve, reject) => {
+                if (document.querySelector(`script[src="${src}"]`)) {
+                    resolve();
+                    return;
+                }
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        };
+
+        // Load dependencies then initialize
+        Promise.all([
+            loadScript('https://cdn.socket.io/4.7.2/socket.io.min.js'),
+            loadScript('/static/js/socket-manager.js')
+        ]).then(() => {
+            initRealTimeUpdates();
+        }).catch(err => console.error('Failed to load WebSocket scripts:', err));
+
+        function initRealTimeUpdates() {
+            // Initialize with explicit user context from Jinja2
+            const socketManager = new SocketManager({
+                userId: '{{ session.get("member_id") }}',
+                role: 'Technical Director', // Explicitly join as Tech Director
+                debug: true
+            });
+
+            // Notification Sound
+            const notificationSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+
+            // --- Event Handlers ---
+
+            // Ticket Referred
+            const handleReferral = (data) => {
+                console.log('[SOCKET] Ticket referred:', data);
+                notificationSound.play().catch(e => console.log('Audio blocked:', e));
+                addNewReferredTicket(data);
+                updateTicketCount(1);
+                socketManager.showToast(`New Referral: #${data.ticket_id}`, data.subject, 'success');
+            };
+
+            socketManager.on('ticket_referred_to_director', handleReferral);
+            socketManager.on('ticket_referred_to_you', handleReferral);
+
+            // Ticket Forwarded (Remove from list)
+            socketManager.on('ticket_forwarded', (data) => {
+                console.log('[SOCKET] Ticket forwarded:', data);
+                // If it was forwarded BY us (or to someone else), remove it
+                TicketUIUpdater.removeTicket(data.ticket_id);
+                // The TicketUIUpdater handles count update
+            });
+
+            // Status/Priority Changes
+            socketManager.on('ticket_status_changed', (data) => {
+                TicketUIUpdater.updateStatus(data.ticket_id, data.new_status);
+                socketManager.showToast(`Status Updated: #${data.ticket_id}`, data.new_status, 'info');
+            });
+
+            socketManager.on('ticket_priority_changed', (data) => {
+                TicketUIUpdater.updatePriority(data.ticket_id, data.new_priority);
+                socketManager.showToast(`Priority Updated: #${data.ticket_id}`, data.new_priority, 'info');
+            });
+        }
+
+        // Expanded "Add Ticket" logic with Empty State Fix
+        function addNewReferredTicket(data) {
+            let ticketsContainer = document.querySelector('.divide-y');
+
+            // Fix for Empty State: Create container if it doesn't exist
+            if (!ticketsContainer) {
+                // Look for the main card container
+                const listSection = document.querySelector('.glass-card.overflow-hidden.slide-up');
+                if (listSection) {
+                    // Remove "No Tickets" placeholder if present
+                    const emptyState = listSection.querySelector('.text-center.py-16');
+                    if (emptyState) emptyState.remove();
+
+                    // Create the list container
+                    ticketsContainer = document.createElement('div');
+                    ticketsContainer.className = 'divide-y divide-gray-200/30';
+                    listSection.appendChild(ticketsContainer);
+                } else {
+                    console.error('Could not find ticket list container section');
+                    return;
+                }
+            }
+
+            // Prevent duplicates
+            if (document.querySelector(`[data-ticket-id="${data.ticket_id}"]`)) return;
+
+            const priority = data.priority || 'Medium';
+            const borderMap = { 'Urgent': 'border-red-500', 'High': 'border-orange-500', 'Medium': 'border-yellow-500', 'Low': 'border-green-500' };
+            const priorityMap = { 'Urgent': 'priority-urgent', 'High': 'priority-high', 'Medium': 'priority-medium', 'Low': 'priority-low' };
+
+            const ticketHtml = `
+                <div class="ticket-card glass-card m-6 border-l-4 ${borderMap[priority] || 'border-gray-400'}" data-ticket-id="${data.ticket_id}" style="animation: slideUp 0.5s ease-out;">
+                    <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex flex-wrap items-start gap-3 mb-4">
+                                <span class="text-sm font-bold text-gray-700 bg-gray-100/50 px-3 py-1.5 rounded-xl"><i class="fas fa-hashtag mr-1"></i>${data.ticket_id}</span>
+                                <span class="priority-badge ${priorityMap[priority] || 'priority-medium'}"><i class="fas fa-flag mr-2"></i>${priority}</span>
+                                <span class="director-badge text-sm"><i class="fas fa-user-tie mr-2"></i>Referred from ${data.referred_by_name || 'Unknown'}</span>
+                            </div>
+                            <h3 class="text-xl font-semibold text-gray-800 mb-4 line-clamp-2">${data.subject || 'No Subject'}</h3>
+                        </div>
+                        <div class="flex flex-col gap-3 lg:flex-shrink-0">
+                            <a href="/ticket/${data.ticket_id}" class="glass-btn text-sm"><i class="fas fa-eye mr-2"></i>View Details</a>
+                            <button onclick="openForwardModal('${data.ticket_id}', '${(data.subject || '').replace(/'/g, "\\'")}')" class="px-4 py-2 rounded-xl text-sm font-medium transition-all" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.25);"><i class="fas fa-share mr-2"></i>Forward to Team</button>
+                        </div>
+                    </div>
+                </div>`;
+            ticketsContainer.insertAdjacentHTML('afterbegin', ticketHtml);
+        }
+
+        // Helper to update global counters
+        function updateTicketCount(delta) {
+            document.querySelectorAll('.text-3xl.font-bold').forEach(el => {
+                const count = parseInt(el.textContent) || 0;
+                el.textContent = Math.max(0, count + delta);
+            });
+        }
+
+        // (showToast removed as it's now in SocketManager/TicketUIUpdater)
+    })();
+
+    // ===== FORWARD MODAL FUNCTIONS =====
+    let currentForwardTicketId = null;
+
+    function openForwardModal(ticketId, ticketSubject) {
+        currentForwardTicketId = ticketId;
+        document.getElementById('forwardTicketId').textContent = ticketId;
+        document.getElementById('forwardTicketSubject').textContent = ticketSubject || 'No Subject';
+        document.getElementById('forwardMember').value = '';
+        document.getElementById('forwardNote').value = '';
+        document.getElementById('forwardModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeForwardModal() {
+        document.getElementById('forwardModal').classList.add('hidden');
+        document.body.style.overflow = 'auto';
+        currentForwardTicketId = null;
+    }
+
+    async function submitForward() {
+        const memberId = document.getElementById('forwardMember').value;
+        const note = document.getElementById('forwardNote').value;
+
+        if (!memberId) {
+            alert('Please select a team member to forward to.');
+            return;
+        }
+
+        if (!currentForwardTicketId) {
+            alert('No ticket selected. Please try again.');
+            return;
+        }
+
+        const submitBtn = document.getElementById('forwardSubmitBtn');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Forwarding...';
+        submitBtn.disabled = true;
+
+        try {
+            const response = await fetch(`/api/tickets/${currentForwardTicketId}/assign`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    assigned_to: memberId,
+                    is_forwarded: true,
+                    note: note
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // Success - close modal, UI will update via WebSocket event
+                closeForwardModal();
+
+                // Manually remove ticket card (WebSocket also handles this as backup)
+                const ticketCard = document.querySelector(`[data-ticket-id="${currentForwardTicketId}"]`);
+                if (ticketCard) {
+                    ticketCard.style.transition = 'all 0.3s ease';
+                    ticketCard.style.opacity = '0';
+                    ticketCard.style.transform = 'translateX(100px)';
+                    setTimeout(() => {
+                        ticketCard.remove();
+                        // Update ticket count inline - no page reload needed!
+                        document.querySelectorAll('.text-3xl.font-bold').forEach(el => {
+                            const count = parseInt(el.textContent) || 0;
+                            el.textContent = Math.max(0, count - 1);
+                        });
+                    }, 300);
+                }
+
+                // Note: No page reload needed - real-time WebSocket updates handle everything!
+            } else {
+                alert('Error: ' + (result.error || 'Failed to forward ticket'));
+            }
+        } catch (error) {
+            console.error('Error forwarding ticket:', error);
+            alert('Failed to forward ticket. Please try again.');
+        } finally {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }
+    }
+
+    // Close modal on escape key
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            closeForwardModal();
+        }
+    });
+</script>
+
+<!-- Forward Modal -->
+<div id="forwardModal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog"
+    aria-modal="true">
+    <!-- Backdrop -->
+    <div class="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onclick="closeForwardModal()"></div>
+
+    <!-- Modal Content -->
+    <div class="flex min-h-full items-center justify-center p-4">
+        <div class="relative w-full max-w-md transform overflow-hidden rounded-2xl shadow-2xl transition-all"
+            style="background: rgba(20, 20, 30, 0.95); border: 1px solid rgba(255, 255, 255, 0.1);">
+
+            <!-- Header -->
+            <div class="p-6 border-b"
+                style="border-color: rgba(255, 255, 255, 0.1); background: linear-gradient(135deg, rgba(255, 117, 143, 0.1), rgba(168, 85, 247, 0.05));">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center"
+                            style="background: linear-gradient(135deg, #ff758f, #ff7eb3);">
+                            <i class="fas fa-share text-white"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-white">Forward Ticket</h3>
+                            <p class="text-sm" style="color: rgba(255, 255, 255, 0.5);">Assign to team member</p>
+                        </div>
+                    </div>
+                    <button onclick="closeForwardModal()" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Body -->
+            <div class="p-6 space-y-5">
+                <!-- Ticket Info -->
+                <div class="p-4 rounded-xl"
+                    style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.08);">
+                    <div class="flex items-center space-x-2 mb-2">
+                        <i class="fas fa-ticket-alt text-pink-400"></i>
+                        <span class="text-sm font-medium text-pink-400">Ticket</span>
+                    </div>
+                    <p class="text-white font-semibold" id="forwardTicketId">-</p>
+                    <p class="text-sm text-gray-400 mt-1 line-clamp-2" id="forwardTicketSubject">-</p>
+                </div>
+
+                <!-- Member Selection -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">
+                        <i class="fas fa-user-friends mr-2"></i>Forward to Team Member
+                    </label>
+                    <select id="forwardMember"
+                        class="w-full px-4 py-3 rounded-xl text-white transition-all focus:outline-none focus:ring-2 focus:ring-pink-500"
+                        style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15);">
+                        <option value="">Select a member...</option>
+                        {% for member in members %}
+                        {% if member.role != 'Technical Director' and member.is_active != False %}
+                        <option value="{{ member._id }}">{{ member.name }} ({{ member.role }})</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Note -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">
+                        <i class="fas fa-comment mr-2"></i>Note (Optional)
+                    </label>
+                    <textarea id="forwardNote" rows="3" placeholder="Add a note for the team member..."
+                        class="w-full px-4 py-3 rounded-xl text-white placeholder-gray-500 transition-all focus:outline-none focus:ring-2 focus:ring-pink-500 resize-none"
+                        style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15);"></textarea>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="p-6 border-t flex space-x-3" style="border-color: rgba(255, 255, 255, 0.1);">
+                <button onclick="closeForwardModal()"
+                    class="flex-1 px-4 py-3 rounded-xl font-medium transition-all hover:bg-white/10"
+                    style="background: rgba(255, 255, 255, 0.05); color: rgba(255, 255, 255, 0.7); border: 1px solid rgba(255, 255, 255, 0.1);">
+                    Cancel
+                </button>
+                <button id="forwardSubmitBtn" onclick="submitForward()"
+                    class="flex-1 px-4 py-3 rounded-xl font-medium text-white transition-all hover:opacity-90"
+                    style="background: linear-gradient(135deg, #ff758f, #ff7eb3); box-shadow: 0 4px 15px rgba(255, 117, 143, 0.3);">
+                    <i class="fas fa-share mr-2"></i>Forward Ticket
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+
+</html>

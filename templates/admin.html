@@ -1,0 +1,2054 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - AutoAssistGroup Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ===== DARK PROFESSIONAL THEME ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            background: #0a0a0f;
+            color: #fff;
+        }
+
+        /* Background */
+        .bg-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            background: linear-gradient(180deg, #0a0a0f 0%, #141420 100%);
+        }
+
+        .bg-image {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background-image: url('/static/css/portal_bg.png');
+            background-size: cover;
+            background-position: center;
+            opacity: 0.15;
+        }
+
+        /* ===== NAVBAR ===== */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 12px 24px;
+        }
+
+        @media (min-width: 768px) {
+            .navbar {
+                padding: 12px 48px;
+            }
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .nav-link {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 12px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+            color: #fff;
+        }
+
+        .nav-link-active {
+            background: rgba(255, 117, 143, 0.15);
+            border-color: rgba(255, 117, 143, 0.3);
+            color: #ff758f;
+        }
+
+        .nav-link i {
+            margin-right: 6px;
+            font-size: 11px;
+            opacity: 0.8;
+        }
+
+        /* ===== MAIN CONTAINER ===== */
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px 20px;
+            padding-top: 80px;
+            padding-bottom: 60px;
+        }
+
+        @media (min-width: 768px) {
+            .main-container {
+                padding: 32px 48px;
+                padding-top: 80px;
+            }
+        }
+
+        /* ===== PAGE HEADER ===== */
+        .page-header {
+            margin-bottom: 32px;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+
+        .page-subtitle {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* ===== STATS GRID ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        @media (min-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .stat-card:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        .stat-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 12px;
+            font-size: 18px;
+        }
+
+        .stat-icon.blue {
+            background: rgba(59, 130, 246, 0.15);
+            color: #3b82f6;
+        }
+
+        .stat-icon.green {
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+        }
+
+        .stat-icon.yellow {
+            background: rgba(234, 179, 8, 0.15);
+            color: #eab308;
+        }
+
+        .stat-icon.purple {
+            background: rgba(168, 85, 247, 0.15);
+            color: #a855f7;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        /* ===== BREAKDOWN CARDS ===== */
+        .breakdown-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        @media (min-width: 768px) {
+            .breakdown-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .breakdown-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .breakdown-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .breakdown-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .breakdown-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+        }
+
+        .breakdown-badge {
+            font-size: 12px;
+            font-weight: 500;
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+
+        .breakdown-count {
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        /* Badge colors */
+        .badge-urgent {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+
+        .badge-high {
+            background: rgba(249, 115, 22, 0.15);
+            color: #f97316;
+        }
+
+        .badge-medium {
+            background: rgba(234, 179, 8, 0.15);
+            color: #eab308;
+        }
+
+        .badge-low {
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+        }
+
+        .badge-technical {
+            background: rgba(59, 130, 246, 0.15);
+            color: #3b82f6;
+        }
+
+        .badge-payment {
+            background: rgba(168, 85, 247, 0.15);
+            color: #a855f7;
+        }
+
+        .badge-general {
+            background: rgba(156, 163, 175, 0.15);
+            color: #9ca3af;
+        }
+
+        .badge-account {
+            background: rgba(14, 165, 233, 0.15);
+            color: #0ea5e9;
+        }
+
+        /* ===== GLASS CARDS ===== */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            margin-bottom: 24px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .card-title {
+            display: flex;
+            align-items: center;
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .card-title i {
+            margin-right: 10px;
+            opacity: 0.7;
+        }
+
+        .card-badge {
+            font-size: 12px;
+            font-weight: 500;
+            padding: 6px 14px;
+            background: rgba(255, 117, 143, 0.15);
+            border: 1px solid rgba(255, 117, 143, 0.3);
+            border-radius: 8px;
+            color: #ff758f;
+        }
+
+        .card-body {
+            padding: 20px 24px;
+        }
+
+        /* ===== TICKET LIST ===== */
+        .ticket-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .ticket-item {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .ticket-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .ticket-item.important {
+            border-left: 3px solid #ff758f;
+        }
+
+        .ticket-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .ticket-meta {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .ticket-id {
+            font-size: 12px;
+            font-weight: 600;
+            color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .ticket-badge {
+            font-size: 11px;
+            font-weight: 500;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+
+        .ticket-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .ticket-body {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 8px;
+            display: -webkit-box;
+            -webkit-line-clamp: 6;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .ticket-info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .ticket-info i {
+            margin-right: 4px;
+        }
+
+        .ticket-actions {
+            display: flex;
+            gap: 8px;
+            margin-left: 12px;
+        }
+
+        .ticket-action-btn {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 6px;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .ticket-action-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+        }
+
+        .ticket-action-btn.star:hover {
+            color: #eab308;
+        }
+
+        .ticket-action-btn.delete:hover {
+            color: #ef4444;
+        }
+
+        /* ===== MANAGEMENT SECTIONS ===== */
+        .management-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .management-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 10px;
+            padding: 16px;
+            transition: all 0.2s ease;
+        }
+
+        .management-card:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .management-card-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .management-card-info h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 2px;
+        }
+
+        .management-card-info p {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .management-card-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .management-action-btn {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 6px;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .management-action-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+        }
+
+        .management-action-btn.edit:hover {
+            color: #3b82f6;
+        }
+
+        .management-action-btn.deactivate:hover {
+            color: #ef4444;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            font-size: 11px;
+            font-weight: 500;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-top: 8px;
+        }
+
+        .status-badge.active {
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+        }
+
+        .status-badge.inactive {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+
+        .status-badge i {
+            margin-right: 4px;
+            font-size: 10px;
+        }
+
+        /* Member list compact */
+        .member-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .member-item:hover {
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .member-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .member-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: rgba(255, 117, 143, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .member-details h5 {
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 2px;
+        }
+
+        .member-details p {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .member-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .role-badge {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .role-badge.admin {
+            background: rgba(59, 130, 246, 0.15);
+            color: #3b82f6;
+        }
+
+        .role-badge.director {
+            background: rgba(249, 115, 22, 0.15);
+            color: #f97316;
+        }
+
+        .role-badge.member {
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+        }
+
+        /* Portal access guide */
+        .access-guide {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 10px;
+            margin-top: 16px;
+        }
+
+        .access-guide-title {
+            grid-column: 1 / -1;
+            font-size: 12px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 4px;
+        }
+
+        .access-item {
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .access-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .access-dot.blue {
+            background: #3b82f6;
+        }
+
+        .access-dot.orange {
+            background: #f97316;
+        }
+
+        .access-dot.green {
+            background: #22c55e;
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 18px;
+            background: rgba(255, 117, 143, 0.2);
+            border: 1px solid rgba(255, 117, 143, 0.4);
+            border-radius: 8px;
+            color: #ff758f;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            background: rgba(255, 117, 143, 0.3);
+        }
+
+        .btn-primary i {
+            margin-right: 6px;
+        }
+
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 18px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+        }
+
+        /* Show more button */
+        .show-more-section {
+            padding: 16px 24px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .show-more-btn {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 117, 143, 0.1);
+            border: 1px solid rgba(255, 117, 143, 0.2);
+            border-radius: 8px;
+            color: #ff758f;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .show-more-btn:hover {
+            background: rgba(255, 117, 143, 0.15);
+        }
+
+        .show-more-btn i {
+            margin-right: 8px;
+        }
+
+        /* ===== USER AVATAR ===== */
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: rgba(255, 117, 143, 0.15);
+            border: 1px solid rgba(255, 117, 143, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 600;
+            color: #ff758f;
+        }
+
+        /* ===== MOBILE MENU ===== */
+        .mobile-menu {
+            display: none;
+            padding: 16px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            margin-top: 16px;
+        }
+
+        .mobile-menu.open {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .menu-btn {
+            display: none;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .menu-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+        }
+
+        @media (max-width: 768px) {
+            .menu-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .nav-links.desktop {
+                display: none;
+            }
+        }
+
+        /* ===== TOAST NOTIFICATIONS ===== */
+        .toast {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 1000;
+            padding: 14px 20px;
+            border-radius: 10px;
+            backdrop-filter: blur(20px);
+            animation: slideIn 0.3s ease;
+            max-width: 350px;
+        }
+
+        .toast-success {
+            background: rgba(34, 197, 94, 0.15);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: #22c55e;
+        }
+
+        .toast-error {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* ===== MODAL ===== */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #16161f;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            width: 90%;
+            max-width: 480px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 6px;
+        }
+
+        .form-input,
+        .form-select {
+            width: 100%;
+            padding: 10px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: rgba(255, 117, 143, 0.5);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-cancel {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 18px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-cancel:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+        }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Hidden utility */
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Background -->
+    <div class="bg-gradient"></div>
+    {% if system_settings.show_background %}
+    <div class="bg-image"></div>
+    {% endif %}
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="flex items-center justify-between">
+            <!-- Logo -->
+            <div class="flex items-center">
+                <a href="{% if current_user_role == 'Technical Director' %}/tech-director-dashboard{% else %}/{% endif %}"
+                    class="flex items-center">
+                    <img src="/static/logo.png" alt="AutoAssistGroup Logo" class="h-8 md:h-10">
+                </a>
+            </div>
+
+            <!-- Desktop Nav Links -->
+            <div class="nav-links desktop hidden md:flex">
+                <a href="/" class="nav-link">
+                    <i class="fas fa-ticket-alt"></i>Tickets
+                </a>
+                <a href="/dashboard" class="nav-link">
+                    <i class="fas fa-chart-line"></i>Dashboard
+                </a>
+                <a href="/create-ticket" class="nav-link">
+                    <i class="fas fa-plus-circle"></i>Create Ticket
+                </a>
+                {% if current_user_role == 'Administrator' %}
+                <a href="/technicians" class="nav-link">
+                    <i class="fas fa-tools"></i>Technicians
+                </a>
+                <a href="/members" class="nav-link">
+                    <i class="fas fa-users"></i>Members
+                </a>
+                <a href="/admin" class="nav-link nav-link-active">
+                    <i class="fas fa-cog"></i>Admin Panel
+                </a>
+                {% endif %}
+            </div>
+
+            <!-- User Section -->
+            <div class="flex items-center gap-3">
+                {% if current_user %}
+                <div class="hidden sm:flex items-center gap-2">
+                    <div class="user-avatar">{{ current_user[0]|upper }}</div>
+                    <span class="text-sm" style="color: rgba(255,255,255,0.7);">{{ current_user }}</span>
+                </div>
+                <a href="/logout" class="nav-link">
+                    <i class="fas fa-sign-out-alt"></i>Logout
+                </a>
+                {% else %}
+                <a href="/login" class="nav-link">
+                    <i class="fas fa-sign-in-alt"></i>Login
+                </a>
+                {% endif %}
+
+                <!-- Mobile menu button -->
+                <button class="menu-btn" onclick="toggleMobileMenu()">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile menu -->
+        <div id="mobileMenu" class="mobile-menu">
+            <a href="/" class="nav-link">
+                <i class="fas fa-ticket-alt"></i>Tickets
+            </a>
+            <a href="/dashboard" class="nav-link">
+                <i class="fas fa-chart-line"></i>Dashboard
+            </a>
+            <a href="/create-ticket" class="nav-link">
+                <i class="fas fa-plus-circle"></i>Create Ticket
+            </a>
+            {% if current_user_role == 'Administrator' %}
+            <a href="/technicians" class="nav-link">
+                <i class="fas fa-tools"></i>Technicians
+            </a>
+            <a href="/members" class="nav-link">
+                <i class="fas fa-users"></i>Members
+            </a>
+            <a href="/admin" class="nav-link nav-link-active">
+                <i class="fas fa-cog"></i>Admin Panel
+            </a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1 class="page-title">Admin Panel</h1>
+            <p class="page-subtitle">Manage your system settings, users, and tickets</p>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon blue">
+                    <i class="fas fa-ticket-alt"></i>
+                </div>
+                <div class="stat-label">Total Tickets</div>
+                <div class="stat-value">{{ total_tickets }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green">
+                    <i class="fas fa-folder-open"></i>
+                </div>
+                <div class="stat-label">Open Tickets</div>
+                <div class="stat-value">{{ open_tickets }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon yellow">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-label">Waiting</div>
+                <div class="stat-value">{{ waiting_tickets }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon purple">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-label">Resolved</div>
+                <div class="stat-value">{{ resolved_tickets }}</div>
+            </div>
+        </div>
+
+        <!-- Settings Section -->
+        <div class="glass-section mt-8">
+            <div class="section-header">
+                <h2 class="section-title">System Settings</h2>
+            </div>
+
+            <div class="settings-grid" style="display: grid; gap: 20px;">
+                <div class="setting-item glass-card"
+                    style="display: flex; justify-content: space-between; align-items: center; padding: 20px;">
+                    <div class="setting-info">
+                        <h3 class="setting-title"
+                            style="font-size: 16px; font-weight: 600; color: #fff; margin-bottom: 4px;">Enable
+                            Background Wallpaper</h3>
+                        <p class="setting-desc" style="font-size: 13px; color: rgba(255, 255, 255, 0.5);">Show the
+                            cosmic background on all internal pages (Login/Portal always have background)</p>
+                    </div>
+                    <label class="toggle-switch"
+                        style="position: relative; display: inline-block; width: 50px; height: 26px;">
+                        <input type="checkbox" id="bgToggle" onchange="toggleBackground(this.checked)">
+                        <span class="slider round"
+                            style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255, 255, 255, 0.1); border-radius: 34px; transition: .4s;"></span>
+                        <style>
+                            .slider:before {
+                                position: absolute;
+                                content: "";
+                                height: 18px;
+                                width: 18px;
+                                left: 4px;
+                                bottom: 4px;
+                                background-color: white;
+                                border-radius: 50%;
+                                transition: .4s;
+                            }
+
+                            input:checked+.slider {
+                                background-color: #3b82f6;
+                            }
+
+                            input:checked+.slider:before {
+                                transform: translateX(24px);
+                            }
+                        </style>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- Breakdown Cards -->
+    <div class="breakdown-grid">
+        <!-- Priority Breakdown -->
+        <div class="breakdown-card">
+            <div class="breakdown-title">Priorities</div>
+            <div class="breakdown-list">
+                {% for priority, count in priorities.items() %}
+                <div class="breakdown-item">
+                    <span
+                        class="breakdown-badge {% if priority == 'Urgent' %}badge-urgent{% elif priority == 'Fast' or priority == 'High' %}badge-high{% elif priority == 'Medium' %}badge-medium{% else %}badge-low{% endif %}">
+                        {{ priority }}
+                    </span>
+                    <span class="breakdown-count">{{ count }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Type Breakdown -->
+        <div class="breakdown-card">
+            <div class="breakdown-title">Types</div>
+            <div class="breakdown-list">
+                {% for cls, count in classifications.items() %}
+                <div class="breakdown-item">
+                    <span
+                        class="breakdown-badge {% if cls == 'Technical Issue' %}badge-technical{% elif cls == 'Payment' %}badge-payment{% elif cls == 'Account' %}badge-account{% else %}badge-general{% endif %}">
+                        {{ cls }}
+                    </span>
+                    <span class="breakdown-count">{{ count }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Tickets -->
+    <div class="glass-card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-list-ul"></i>Recent Tickets
+            </h2>
+            <span class="card-badge">Total: {{ total_tickets }}</span>
+        </div>
+        <div class="card-body">
+            <div class="ticket-list" id="ticketsContainer">
+                {% for ticket in tickets %}
+                <a href="/ticket/{{ ticket.ticket_id }}"
+                    class="ticket-item {% if ticket.is_important %}important{% endif %} {% if loop.index > 5 %}hidden{% endif %}"
+                    data-ticket-index="{{ loop.index }}">
+                    <div class="ticket-content">
+                        <div class="ticket-meta">
+                            <span class="ticket-id">#{{ ticket.ticket_id }}</span>
+                            <span
+                                class="ticket-badge {% if ticket.priority == 'Urgent' %}badge-urgent{% elif ticket.priority == 'Fast' %}badge-high{% elif ticket.priority == 'Medium' %}badge-medium{% else %}badge-low{% endif %}">
+                                {{ ticket.priority }}
+                            </span>
+                            <span
+                                class="ticket-badge {% if ticket.status == 'Open' %}badge-technical{% else %}badge-low{% endif %}">
+                                {{ ticket.status }}
+                            </span>
+                            {% if ticket.classification %}
+                            <span class="ticket-badge badge-general">{{ ticket.classification }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="ticket-title">{{ ticket.subject }}</div>
+                        <div class="ticket-body">{{ ticket.body }}</div>
+                        <div class="ticket-info">
+                            <span><i class="fas fa-user"></i>{{ ticket.name }}</span>
+                            <span><i class="fas fa-envelope"></i>{{ ticket.email }}</span>
+                            <span><i class="fas fa-clock"></i>{{ ticket.formatted_date }}</span>
+                        </div>
+                    </div>
+                    <div class="ticket-actions" onclick="event.preventDefault(); event.stopPropagation();">
+                        <button class="ticket-action-btn star" onclick="event.preventDefault();" title="Mark Important">
+                            <i class="fas fa-star{% if not ticket.is_important %}-o{% endif %}"></i>
+                        </button>
+                        <button class="ticket-action-btn delete"
+                            onclick="event.preventDefault(); deleteTicket('{{ ticket.ticket_id }}');" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% if tickets|length > 5 %}
+        <div class="show-more-section">
+            <button id="showMoreTickets" class="show-more-btn">
+                <i class="fas fa-chevron-down"></i>
+                <span id="showMoreText">Show More Tickets ({{ tickets|length - 5 }} hidden)</span>
+            </button>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Technician Management -->
+    <div class="glass-card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-tools"></i>Technician Management
+            </h2>
+            <button class="btn-primary" id="addTechnicianBtn">
+                <i class="fas fa-plus"></i>Add Technician
+            </button>
+        </div>
+        <div class="card-body">
+            <div class="management-grid" id="techniciansContainer">
+                {% for technician in technicians %}
+                <div class="management-card" data-technician-id="{{ technician._id }}">
+                    <div class="management-card-header">
+                        <div class="management-card-info">
+                            <h4>{{ technician.name }}</h4>
+                            <p><i class="fas fa-calendar-plus"></i> Added: {{
+                                technician.created_at.strftime('%Y-%m-%d') if technician.created_at else 'N/A' }}
+                            </p>
+                        </div>
+                        <div class="management-card-actions">
+                            <button class="management-action-btn edit" data-technician-id="{{ technician._id }}"
+                                data-technician-name="{{ technician.name }}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            {% if technician.is_active %}
+                            <button class="management-action-btn deactivate" data-technician-id="{{ technician._id }}"
+                                data-technician-name="{{ technician.name }}" title="Deactivate">
+                                <i class="fas fa-user-times"></i>
+                            </button>
+                            {% else %}
+                            <button class="management-action-btn activate" data-technician-id="{{ technician._id }}"
+                                data-technician-name="{{ technician.name }}" title="Activate">
+                                <i class="fas fa-user-check"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <span class="status-badge {% if technician.is_active %}active{% else %}inactive{% endif %}">
+                        <i class="fas fa-{% if technician.is_active %}check{% else %}times{% endif %}-circle"></i>
+                        {{ 'Active' if technician.is_active else 'Inactive' }}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Member Management -->
+    <div class="glass-card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-users-cog"></i>Member Management
+            </h2>
+            <button class="btn-primary" id="addMemberBtnMain">
+                <i class="fas fa-plus"></i>Add Member
+            </button>
+        </div>
+        <div class="card-body">
+            <div class="ticket-list" id="membersMainList">
+                {% for member in members %}
+                <div class="member-item" data-member-id="{{ member._id }}">
+                    <div class="member-info">
+                        <div class="member-avatar">
+                            {{ '👩' if member.gender == 'female' else '👨' }}
+                        </div>
+                        <div class="member-details">
+                            <h5>{{ member.name }}</h5>
+                            <p>{{ member.role }} · {{ member.user_id }}</p>
+                        </div>
+                    </div>
+                    <div class="member-actions">
+                        <span
+                            class="role-badge {% if member.role == 'Administrator' %}admin{% elif member.role == 'Technical Director' %}director{% else %}member{% endif %}">
+                            {{ member.role }}
+                        </span>
+                        <button class="management-action-btn edit" data-member-id="{{ member._id }}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        {% if member.user_id not in ['admin001', 'marc001'] %}
+                        <button class="management-action-btn deactivate" data-member-id="{{ member._id }}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Portal Access Guide -->
+            <div class="access-guide">
+                <div class="access-guide-title">Portal Access Guide:</div>
+                <div class="access-item">
+                    <span class="access-dot blue"></span>
+                    <span><strong>Administrator:</strong> Admin Portal only</span>
+                </div>
+                <div class="access-item">
+                    <span class="access-dot orange"></span>
+                    <span><strong>Technical Director:</strong> Tech Portal only</span>
+                </div>
+                <div class="access-item">
+                    <span class="access-dot green"></span>
+                    <span><strong>Other Roles:</strong> User Portal</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- Template data -->
+    <script type="application/json" id="technicians-data">{{ technicians | tojson | safe }}</script>
+
+    <script>
+        // Toast notification
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'slideIn 0.3s ease reverse';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Mobile menu toggle
+        function toggleMobileMenu() {
+            const mobileMenu = document.getElementById('mobileMenu');
+            if (mobileMenu) mobileMenu.classList.toggle('open');
+        }
+
+        // Toggle Background Setting
+        async function fetchSettings() {
+            try {
+                const response = await fetch('/api/system-settings');
+                const data = await response.json();
+                if (data.success) {
+                    const bgToggle = document.getElementById('bgToggle');
+                    if (bgToggle) {
+                        bgToggle.checked = data.settings.show_background;
+                    }
+                    applyBackgroundSetting(data.settings.show_background);
+                }
+            } catch (error) {
+                console.error('Error fetching settings:', error);
+            }
+        }
+
+        async function toggleBackground(enabled) {
+            try {
+                const response = await fetch('/api/system-settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ show_background: enabled })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    applyBackgroundSetting(enabled);
+                    showToast('Background setting updated successfully');
+                }
+            } catch (error) {
+                console.error('Error saving settings:', error);
+            }
+        }
+
+        function applyBackgroundSetting(show) {
+            // Apply immediately to current page
+            const bgImage = document.querySelector('.bg-image');
+            if (bgImage) {
+                bgImage.style.display = show ? 'block' : 'none';
+            }
+        }
+
+        // Initial load
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchSettings();
+        });
+
+        // Delete ticket
+        async function deleteTicket(ticketId) {
+            if (!confirm(`Are you sure you want to permanently delete ticket ${ticketId}?`)) return;
+
+            try {
+                const response = await fetch(`/api/tickets/${ticketId}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast(`Ticket ${ticketId} deleted successfully`);
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    showToast(data.error || 'Failed to delete ticket', 'error');
+                }
+            } catch (error) {
+                showToast('An error occurred while deleting the ticket', 'error');
+            }
+        }
+
+        // Show more tickets
+        document.addEventListener('DOMContentLoaded', function () {
+            const showMoreBtn = document.getElementById('showMoreTickets');
+            if (showMoreBtn) {
+                let expanded = false;
+                showMoreBtn.addEventListener('click', function () {
+                    const hiddenTickets = document.querySelectorAll('.ticket-item.hidden');
+                    const allTickets = document.querySelectorAll('.ticket-item[data-ticket-index]');
+
+                    if (!expanded) {
+                        hiddenTickets.forEach(t => t.classList.remove('hidden'));
+                        document.getElementById('showMoreText').innerHTML = '<i class="fas fa-chevron-up"></i> Show Less';
+                        expanded = true;
+                    } else {
+                        allTickets.forEach(t => {
+                            if (parseInt(t.dataset.ticketIndex) > 5) {
+                                t.classList.add('hidden');
+                            }
+                        });
+                        document.getElementById('showMoreText').innerHTML = `<i class="fas fa-chevron-down"></i> Show More Tickets (${allTickets.length - 5} hidden)`;
+                        expanded = false;
+                    }
+                });
+            }
+
+            showToast('Admin panel loaded successfully');
+
+            // ============ TECHNICIAN MANAGEMENT ============
+            setupTechnicianManagement();
+
+            // ============ MEMBER MANAGEMENT ============
+            setupMemberManagement();
+        });
+        
+        // Technician Management Functions
+        function setupTechnicianManagement() {
+            console.log('🔧 Setting up Technician Management...');
+            const addTechBtn = document.getElementById('addTechnicianBtn');
+            const techContainer = document.getElementById('techniciansContainer');
+            if (!addTechBtn || !techContainer) {
+                console.error('❌ Missing elements: addTechBtn=', !!addTechBtn, 'techContainer=', !!techContainer);
+                return;
+            }
+
+            console.log('✅ Binding Add Technician button');
+            addTechBtn.addEventListener('click', () => {
+                console.log('➕ Add Technician clicked');
+                openTechnicianModal();
+            });
+
+            // Use embedded template data to prefill edit modal (no extra API needed)
+            let techIndex = {};
+            try {
+                const raw = document.getElementById('technicians-data')?.textContent || '[]';
+                const techs = JSON.parse(raw);
+                if (Array.isArray(techs)) {
+                    techs.forEach(t => {
+                        if (t && t._id) techIndex[String(t._id)] = t;
+                    });
+                }
+            } catch (e) {
+                console.warn('Failed to parse technicians-data', e);
+            }
+
+            const editButtons = techContainer.querySelectorAll('.management-action-btn.edit');
+            console.log(`✅ Found ${editButtons.length} Edit buttons`);
+            editButtons.forEach(btn => {
+                btn.addEventListener('click', function () {
+                    console.log('✏️ Edit Technician clicked:', this.dataset.technicianId);
+                    const techId = this.dataset.technicianId;
+                    const data = techIndex[String(techId)] || { _id: techId, name: this.dataset.technicianName };
+                    openTechnicianModal(data);
+                });
+            });
+
+            const deactivateButtons = techContainer.querySelectorAll('.management-action-btn.deactivate');
+            console.log(`✅ Found ${deactivateButtons.length} Deactivate buttons`);
+            deactivateButtons.forEach(btn => {
+                btn.addEventListener('click', function () {
+                    console.log('🚫 Deactivate Technician clicked:', this.dataset.technicianId);
+                    const techId = this.dataset.technicianId;
+                    const techName = this.dataset.technicianName || 'this technician';
+                    setTechnicianActive(techId, false, techName);
+                });
+            });
+
+            const activateButtons = techContainer.querySelectorAll('.management-action-btn.activate');
+            console.log(`✅ Found ${activateButtons.length} Activate buttons`);
+            activateButtons.forEach(btn => {
+                btn.addEventListener('click', function () {
+                    console.log('✅ Activate Technician clicked:', this.dataset.technicianId);
+                    const techId = this.dataset.technicianId;
+                    const techName = this.dataset.technicianName || 'this technician';
+                    setTechnicianActive(techId, true, techName);
+                });
+            });
+            
+            console.log('✅ Technician Management setup complete');
+        }
+
+        function openTechnicianModal(techData = null) {
+            let modal = document.getElementById('technicianCrudModal');
+            if (!modal) {
+                modal = createTechnicianModal();
+                document.body.appendChild(modal);
+            }
+
+            const form = document.getElementById('technicianCrudForm');
+            const title = document.getElementById('technicianCrudTitle');
+            const submitBtn = document.getElementById('technicianCrudSubmitBtn');
+
+            if (techData && techData._id) {
+                title.textContent = 'Edit Technician';
+                submitBtn.textContent = 'Update Technician';
+                form.dataset.mode = 'edit';
+                form.dataset.technicianId = techData._id;
+                document.getElementById('techCrudName').value = techData.name || '';
+                document.getElementById('techCrudRole').value = techData.role || 'Technician';
+                document.getElementById('techCrudEmail').value = techData.email || '';
+                document.getElementById('techCrudEmployeeId').value = techData.employee_id || '';
+            } else {
+                title.textContent = 'Add Technician';
+                submitBtn.textContent = 'Create Technician';
+                form.dataset.mode = 'create';
+                form.dataset.technicianId = '';
+                form.reset();
+                document.getElementById('techCrudRole').value = 'Technician';
+            }
+
+            modal.classList.add('show');
+        }
+
+        function closeTechnicianModal() {
+            const modal = document.getElementById('technicianCrudModal');
+            if (modal) modal.classList.remove('show');
+        }
+        
+        // Make functions globally accessible for onclick handlers
+        window.closeTechnicianModal = closeTechnicianModal;
+        window.openTechnicianModal = openTechnicianModal;
+
+        function createTechnicianModal() {
+            const modal = document.createElement('div');
+            modal.id = 'technicianCrudModal';
+            modal.className = 'modal-overlay';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 600px;">
+                    <div class="modal-header">
+                        <h3 id="technicianCrudTitle">Add Technician</h3>
+                        <button type="button" onclick="closeTechnicianModal()" class="modal-close">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <form id="technicianCrudForm">
+                        <div class="modal-body" style="padding: 20px;">
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label class="form-label">Name *</label>
+                                <input type="text" id="techCrudName" class="form-input" required>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label class="form-label">Role *</label>
+                                <select id="techCrudRole" class="form-select" required>
+                                    <option value="Technician">Technician</option>
+                                    <option value="Senior Technician">Senior Technician</option>
+                                    <option value="Lead Technician">Lead Technician</option>
+                                    <option value="Specialist">Specialist</option>
+                                    <option value="Supervisor">Supervisor</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label class="form-label">Employee ID</label>
+                                <input type="text" id="techCrudEmployeeId" class="form-input" placeholder="Optional">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label class="form-label">Email</label>
+                                <input type="email" id="techCrudEmail" class="form-input" placeholder="Optional">
+                            </div>
+                        </div>
+                        <div class="modal-footer" style="padding: 15px 20px; border-top: 1px solid #e5e7eb; display: flex; justify-content: flex-end; gap: 10px;">
+                            <button type="button" onclick="closeTechnicianModal()" class="btn-cancel">Cancel</button>
+                            <button type="submit" id="technicianCrudSubmitBtn" class="btn-primary">Create Technician</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+
+            modal.querySelector('#technicianCrudForm').addEventListener('submit', async function (e) {
+                e.preventDefault();
+                await saveTechnician();
+            });
+
+            modal.addEventListener('click', function (e) {
+                if (e.target === modal) closeTechnicianModal();
+            });
+
+            return modal;
+        }
+
+        async function saveTechnician() {
+            const form = document.getElementById('technicianCrudForm');
+            const mode = form.dataset.mode;
+            const submitBtn = document.getElementById('technicianCrudSubmitBtn');
+            const originalText = submitBtn.textContent;
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Saving...';
+
+            try {
+                const payload = {
+                    name: document.getElementById('techCrudName').value.trim(),
+                    role: document.getElementById('techCrudRole').value,
+                    employee_id: document.getElementById('techCrudEmployeeId').value.trim(),
+                    email: document.getElementById('techCrudEmail').value.trim()
+                };
+
+                // Don't send empty optional fields
+                if (!payload.employee_id) delete payload.employee_id;
+                if (!payload.email) delete payload.email;
+
+                let url = '/api/technicians';
+                let method = 'POST';
+                if (mode === 'edit') {
+                    url = `/api/technicians/${form.dataset.technicianId}`;
+                    method = 'PUT';
+                }
+
+                const res = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                    credentials: 'include'
+                });
+                const json = await res.json().catch(() => ({}));
+
+                if (!res.ok || json.success === false) {
+                    showToast(json.error || json.message || `Failed to save technician (${res.status})`, 'error');
+                    return;
+                }
+
+                showToast(json.message || 'Technician saved successfully');
+                closeTechnicianModal();
+                setTimeout(() => window.location.reload(), 700);
+            } catch (e) {
+                console.error('saveTechnician error', e);
+                showToast('Error saving technician', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        }
+
+        async function setTechnicianActive(technicianId, active, technicianName) {
+            const action = active ? 'activate' : 'deactivate';
+            const msg = active
+                ? `Activate ${technicianName}?`
+                : `Deactivate ${technicianName}? This removes them from ticket dropdowns.`;
+            if (!confirm(msg)) return;
+
+            try {
+                const res = await fetch(`/api/technicians/${technicianId}/${action}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include'
+                });
+                const json = await res.json().catch(() => ({}));
+
+                if (!res.ok || json.success === false) {
+                    showToast(json.error || json.message || `Failed to ${action} technician (${res.status})`, 'error');
+                    return;
+                }
+
+                showToast(json.message || `Technician ${action}d`);
+                setTimeout(() => window.location.reload(), 700);
+            } catch (e) {
+                console.error('setTechnicianActive error', e);
+                showToast(`Error trying to ${action} technician`, 'error');
+            }
+        }
+
+        // Member Management Functions
+        function setupMemberManagement() {
+            console.log('👥 Setting up Member Management...');
+            const addMemberBtn = document.getElementById('addMemberBtnMain');
+            const membersList = document.getElementById('membersMainList');
+            
+            if (!addMemberBtn || !membersList) {
+                console.error('❌ Missing elements: addMemberBtn=', !!addMemberBtn, 'membersList=', !!membersList);
+                return;
+            }
+            
+            console.log('✅ Binding Add Member button');
+            // Add Member button
+            addMemberBtn.addEventListener('click', () => {
+                console.log('➕ Add Member clicked');
+                openMemberModal();
+            });
+            
+            // Edit buttons
+            const memberEditButtons = membersList.querySelectorAll('.management-action-btn.edit');
+            console.log(`✅ Found ${memberEditButtons.length} Member Edit buttons`);
+            memberEditButtons.forEach(btn => {
+                btn.addEventListener('click', async function() {
+                    console.log('✏️ Edit Member clicked:', this.dataset.memberId);
+                    const memberId = this.dataset.memberId;
+                    await loadMemberForEdit(memberId);
+                });
+            });
+            
+            // Delete/Deactivate buttons
+            const memberDeleteButtons = membersList.querySelectorAll('.management-action-btn.deactivate');
+            console.log(`✅ Found ${memberDeleteButtons.length} Member Delete buttons`);
+            memberDeleteButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    console.log('🗑️ Delete Member clicked:', this.dataset.memberId);
+                    const memberId = this.dataset.memberId;
+                    const memberItem = this.closest('.member-item');
+                    const memberName = memberItem ? memberItem.querySelector('h5').textContent : 'this member';
+                    deleteMember(memberId, memberName);
+                });
+            });
+            
+            console.log('✅ Member Management setup complete');
+        }
+        
+        function openMemberModal(memberData = null) {
+            // Create or get modal
+            let modal = document.getElementById('memberModal');
+            if (!modal) {
+                modal = createMemberModal();
+                document.body.appendChild(modal);
+            }
+            
+            const form = document.getElementById('memberForm');
+            const title = document.getElementById('memberModalTitle');
+            const submitBtn = document.getElementById('memberSubmitBtn');
+            
+            if (memberData) {
+                // Edit mode
+                title.textContent = 'Edit Member';
+                submitBtn.textContent = 'Update Member';
+                form.dataset.mode = 'edit';
+                form.dataset.memberId = memberData._id;
+                
+                document.getElementById('memberName').value = memberData.name || '';
+                document.getElementById('memberEmail').value = memberData.email || '';
+                document.getElementById('memberUserId').value = memberData.user_id || '';
+                document.getElementById('memberRole').value = memberData.role || 'Member';
+                document.getElementById('memberGender').value = memberData.gender || '';
+                document.getElementById('memberPassword').required = false;
+                document.getElementById('memberPassword').placeholder = 'Leave empty to keep current password';
+            } else {
+                // Add mode
+                title.textContent = 'Add New Member';
+                submitBtn.textContent = 'Create Member';
+                form.dataset.mode = 'create';
+                form.reset();
+                document.getElementById('memberPassword').required = true;
+                document.getElementById('memberPassword').placeholder = 'Enter password';
+            }
+            
+            modal.classList.add('show');
+        }
+        
+        function createMemberModal() {
+            const modal = document.createElement('div');
+            modal.id = 'memberModal';
+            modal.className = 'modal-overlay';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 600px;">
+                    <div class="modal-header">
+                        <h3 id="memberModalTitle">Add New Member</h3>
+                        <button type="button" onclick="closeMemberModal()" class="modal-close">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <form id="memberForm">
+                        <div class="modal-body" style="padding: 20px;">
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label class="form-label">Full Name *</label>
+                                <input type="text" id="memberName" class="form-input" required>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label class="form-label">Email *</label>
+                                <input type="email" id="memberEmail" class="form-input" required>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label class="form-label">User ID *</label>
+                                <input type="text" id="memberUserId" class="form-input" required>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label class="form-label">Role *</label>
+                                <select id="memberRole" class="form-select" required>
+                                    <option value="Member">Member</option>
+                                    <option value="Administrator">Administrator</option>
+                                    <option value="Technical Director">Technical Director</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label class="form-label">Gender</label>
+                                <select id="memberGender" class="form-select">
+                                    <option value="">Select...</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label class="form-label">Password <span id="passwordRequired">*</span></label>
+                                <input type="password" id="memberPassword" class="form-input" required>
+                            </div>
+                        </div>
+                        <div class="modal-footer" style="padding: 15px 20px; border-top: 1px solid #e5e7eb; display: flex; justify-content: flex-end; gap: 10px;">
+                            <button type="button" onclick="closeMemberModal()" class="btn-cancel">Cancel</button>
+                            <button type="submit" id="memberSubmitBtn" class="btn-primary">Create Member</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            // Form submission
+            modal.querySelector('#memberForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                await saveMember();
+            });
+            
+            // Close on overlay click
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) closeMemberModal();
+            });
+            
+            return modal;
+        }
+        
+        function closeMemberModal() {
+            const modal = document.getElementById('memberModal');
+            if (modal) modal.classList.remove('show');
+        }
+        
+        // Make member functions globally accessible for onclick handlers
+        window.closeMemberModal = closeMemberModal;
+        window.openMemberModal = openMemberModal;
+        
+        async function loadMemberForEdit(memberId) {
+            try {
+                const response = await fetch(`/api/members/${memberId}`, {
+                    credentials: 'include'
+                });
+                const result = await response.json();
+                
+                if (result.success && result.member) {
+                    openMemberModal(result.member);
+                } else {
+                    showToast(result.error || 'Failed to load member', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading member:', error);
+                showToast('Error loading member data', 'error');
+            }
+        }
+        
+        async function saveMember() {
+            const form = document.getElementById('memberForm');
+            const mode = form.dataset.mode;
+            const submitBtn = document.getElementById('memberSubmitBtn');
+            const originalText = submitBtn.textContent;
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Saving...';
+            
+            try {
+                const data = {
+                    name: document.getElementById('memberName').value.trim(),
+                    email: document.getElementById('memberEmail').value.trim(),
+                    user_id: document.getElementById('memberUserId').value.trim(),
+                    role: document.getElementById('memberRole').value,
+                    gender: document.getElementById('memberGender').value
+                };
+                
+                const password = document.getElementById('memberPassword').value.trim();
+                if (password || mode === 'create') {
+                    data.password = password;
+                }
+                
+                let url, method;
+                if (mode === 'edit') {
+                    url = `/api/members/${form.dataset.memberId}`;
+                    method = 'PUT';
+                } else {
+                    url = '/api/members';
+                    method = 'POST';
+                }
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data),
+                    credentials: 'include'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast(result.message || 'Member saved successfully');
+                    closeMemberModal();
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    showToast(result.error || 'Failed to save member', 'error');
+                }
+            } catch (error) {
+                console.error('Error saving member:', error);
+                showToast('An error occurred while saving member', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        }
+        
+        async function deleteMember(memberId, memberName) {
+            if (!confirm(`Are you sure you want to deactivate ${memberName}? This will disable their access.`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/members/${memberId}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast(result.message || 'Member deactivated successfully');
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    showToast(result.error || 'Failed to deactivate member', 'error');
+                }
+            } catch (error) {
+                console.error('Error deleting member:', error);
+                showToast('An error occurred while deactivating member', 'error');
+            }
+        }
+    </script>
+</body>
+
+</html>

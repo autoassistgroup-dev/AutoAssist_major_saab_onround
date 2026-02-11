@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="AutoAssistGroup Support Ticket #{{ ticket.ticket_id }} - {{ (ticket.subject or 'No Subject')[:100] }}">
+    <meta name="robots" content="noindex, nofollow">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="theme-color" content="#4f46e5">
+    <title>Ticket #{{ ticket.ticket_id }} - AutoAssistGroup Portal</title>
+
+    <!-- Preconnect to external domains for performance -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- Optimized external stylesheets -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" media="all">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="all">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"
+        media="all">
+    <link href="/static/css/animations.css" rel="stylesheet">
+    <!-- Socket.IO for real-time updates -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+
+    <!-- ===== CSS STYLES (18 files) ===== -->
+    <style>
+        {
+            # CSS Base & Theme (must come first) #
+        }
+
+            {
+            % include 'ticket_detail_parts/css/_css_base.html' %
+        }
+
+            {
+            % include 'ticket_detail_parts/css/_css_theme.html' %
+        }
+
+            {
+            % include 'ticket_detail_parts/css/_css_scrollbar.html' %
+        }
+
+            {
+            # Layout & Structure #
+        }
+
+            {
+            % include 'ticket_detail_parts/css/_css_navbar.html' %
+        }
+
+            {
+            % include 'ticket_detail_parts/css/_css_compact.html' %
+        }
+
+            {
+            % include 'ticket_detail_parts/css/_css_glass.html' %
+        }
+
+            {
+            % include 'ticket_detail_parts/css/_css_sidebar.html' %
+        }
+
+            {
+            % include 'ticket_detail_parts/css/_css_sticky.html' %
+        }
+
+            {
+            % include 'ticket_detail_parts/css/_css_responsive.html' %
+        }
+
+            {
+            # Components #
+        }
+
+            {
+            % include 'ticket_detail_parts/css/_css_gradients.html' %
+        }
+
+            {
+            % include 'ticket_detail_parts/css/_css_priority.html' %
+        }
+
+            {
+            % include 'ticket_detail_parts/css/_css_status.html' %
+        }
+
+            {
+            % include 'ticket_detail_parts/css/_css_messages.html' %
+        }
+
+            {
+            # Forms & Modals #
+        }
+
+            {
+            % include 'ticket_detail_parts/css/_css_reply_form.html' %
+        }
+
+            {
+            % include 'ticket_detail_parts/css/_css_attachments.html' %
+        }
+
+            {
+            % include 'ticket_detail_parts/css/_css_dragdrop.html' %
+        }
+
+            {
+            % include 'ticket_detail_parts/css/_css_email_modal.html' %
+        }
+
+            {
+            % include 'ticket_detail_parts/css/_css_vehicle_modal.html' %
+        }
+    </style>
+</head>
+
+<!-- ===== BODY START & NOTIFICATIONS ===== -->
+{% include 'ticket_detail_parts/modals/_body_start.html' %}
+
+<!-- ===== MODALS (9 files) ===== -->
+{% include 'ticket_detail_parts/modals/_modal_message.html' %}
+{% include 'ticket_detail_parts/modals/_modal_confirm.html' %}
+{% include 'ticket_detail_parts/modals/_modal_forward.html' %}
+{% include 'ticket_detail_parts/modals/_modal_note.html' %}
+{% include 'ticket_detail_parts/modals/_modal_edit_template.html' %}
+{% include 'ticket_detail_parts/modals/_modal_document.html' %}
+{% include 'ticket_detail_parts/modals/_modal_vehicle_claim.html' %}
+{% include 'ticket_detail_parts/modals/_modal_assign.html' %}
+{% include 'ticket_detail_parts/modals/_modal_email_template.html' %}
+
+<!-- ===== MAIN CONTENT (Ticket Header, Conversation, Sidebar) ===== -->
+{% include 'ticket_detail_parts/modals/_main_content.html' %}
+
+<!-- ===== JSON DATA BLOCKS ===== -->
+{% include 'ticket_detail_parts/_main_layout.html' %}
+
+<!-- ===== JAVASCRIPT (13 files) ===== -->
+{# Script start & JSON data #}
+{% include 'ticket_detail_parts/js/_js_start.html' %}
+{% include 'ticket_detail_parts/js/_js_data.html' %}
+
+{# DOM Ready & Initialization #}
+{% include 'ticket_detail_parts/js/_js_dom_ready.html' %}
+
+{# Core Functions #}
+{% include 'ticket_detail_parts/js/_js_modal_funcs.html' %}
+{% include 'ticket_detail_parts/js/_js_notes.html' %}
+{% include 'ticket_detail_parts/js/_js_templates.html' %}
+
+{# Attachments & Drag-Drop #}
+{% include 'ticket_detail_parts/js/_js_attachments.html' %}
+{% include 'ticket_detail_parts/js/_js_attachment_handlers.html' %}
+{% include 'ticket_detail_parts/js/_js_dragdrop.html' %}
+
+{# Vehicle, Reply Form & Status #}
+{% include 'ticket_detail_parts/js/_js_vehicle_claim.html' %}
+{% include 'ticket_detail_parts/js/_js_reply_form.html' %}
+{% include 'ticket_detail_parts/js/_js_status.html' %}
+
+{# Real-time Socket.IO #}
+{% include 'ticket_detail_parts/js/_js_socket.html' %}
+
+</body>
+
+</html>

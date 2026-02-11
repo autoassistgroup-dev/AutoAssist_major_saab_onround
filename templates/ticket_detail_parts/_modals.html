@@ -1,0 +1,1683 @@
+<body class="min-h-screen max-w-screen-ultra">
+    <!-- Animated Gradient Background -->
+    {% if system_settings.show_background %}
+    <div class="background-layer">
+        <div class="gradient-orb orb-1"></div>
+        <div class="gradient-orb orb-2"></div>
+        <div class="gradient-orb orb-3"></div>
+        <div class="gradient-orb orb-4"></div>
+    </div>
+    {% endif %}
+
+    <!-- Notification System -->
+    <div id="notification" class="notification hidden">
+        <i class="fas fa-check-circle mr-2"></i>
+        <span id="notification-message"></span>
+    </div>
+
+    <!-- Message Expansion Modal -->
+    <div id="messageModal" class="modal-overlay">
+        <div class="modal-content p-6 bg-[#1a1a2e] border border-white/10">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-white">Full Message</h3>
+                <button id="closeMessageModal" class="text-gray-400 hover:text-white transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="modalMessageContent"
+                class="p-4 bg-white/5 border border-white/5 rounded-lg whitespace-pre-wrap text-gray-300 leading-relaxed">
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="modal-overlay">
+        <div class="modal-content p-6 bg-[#1a1a2e] border border-white/10">
+            <h3 class="text-xl font-semibold mb-4 text-white">Confirm Ticket Closure</h3>
+            <p class="mb-6 text-gray-400">Are you sure you want to close this ticket? This action cannot be undone.</p>
+            <div class="flex justify-end space-x-3">
+                <button id="cancelClose"
+                    class="px-4 py-2 bg-white/10 text-gray-300 rounded-lg hover:bg-white/20 transition">
+                    Cancel
+                </button>
+                <button id="confirmClose"
+                    class="px-4 py-2 text-white rounded-lg hover:opacity-90 transition bg-indigo-600">
+                    Confirm Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forward Modal -->
+    <div id="forwardModal" class="modal-overlay">
+        <div class="modal-content p-6 bg-[#1a1a2e] border border-white/10">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-white">Forward Ticket</h3>
+                <button id="closeForwardModal" class="text-gray-400 hover:text-white transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="mb-4">
+                <label for="forwardMemberSelect" class="block text-gray-300 text-sm font-medium mb-1">Select
+                    Member</label>
+                <select id="forwardMemberSelect"
+                    class="w-full px-4 py-3 border border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white/5 text-white shadow-sm transition-all duration-200 font-medium">
+                    <option value="" class="bg-[#1a1a2e] text-gray-500">Select a member...</option>
+                    {% for member in members %}
+                    <option value="{{ member['_id'] }}" class="bg-[#1a1a2e]">{{ member.name }} ({{ member.role }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-4">
+                <label for="forwardNotes" class="block text-gray-300 text-sm font-medium mb-1">Notes</label>
+                <textarea id="forwardNotes"
+                    class="w-full px-3 py-2 border border-white/10 bg-white/5 text-white rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Add any notes explaining why the ticket is being forwarded"></textarea>
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button id="cancelForward"
+                    class="px-4 py-2 bg-white/10 text-gray-300 rounded-lg hover:bg-white/20 transition">
+                    Cancel
+                </button>
+                <button id="confirmForward"
+                    class="px-4 py-2 text-white rounded-lg hover:opacity-90 transition bg-indigo-600">
+                    Forward Ticket
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Note Modal -->
+    <div id="noteModal" class="modal-overlay">
+        <div class="modal-content p-6 bg-[#1a1a2e] border border-white/10">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-white">Add Private Note</h3>
+                <button id="closeNoteModal" class="text-gray-400 hover:text-white transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mb-4">
+                <label class="block text-gray-300 text-sm font-medium mb-1">Title</label>
+                <input type="text" id="noteTitle"
+                    class="w-full px-3 py-2 border border-white/10 bg-white/5 text-white rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Note title">
+            </div>
+            <div class="mb-4">
+                <label class="block text-gray-300 text-sm font-medium mb-1">Content</label>
+                <textarea id="noteContent" rows="4"
+                    class="w-full px-3 py-2 border border-white/10 bg-white/5 text-white rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Write your note here..."></textarea>
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button id="cancelNote"
+                    class="px-4 py-2 bg-white/10 text-gray-300 rounded-lg hover:bg-white/20 transition">
+                    Cancel
+                </button>
+                <button id="saveNote" class="px-4 py-2 text-white rounded-lg hover:opacity-90 transition bg-indigo-600">
+                    Save Note
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Template Modal -->
+    <div id="editTemplateModal" class="modal-overlay">
+        <div class="modal-content p-6 bg-[#1a1a2e] border border-white/10">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-white" id="editTemplateTitle">Add New Template</h3>
+                <button id="closeEditTemplateModal" class="text-gray-400 hover:text-white transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mb-4">
+                <label class="block text-gray-300 text-sm font-medium mb-1">Title</label>
+                <input type="text" id="templateTitle"
+                    class="w-full px-3 py-2 border border-white/10 bg-white/5 text-white rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Template title">
+            </div>
+            <div class="mb-4">
+                <label class="block text-gray-300 text-sm font-medium mb-1">Content</label>
+                <textarea id="templateContent" rows="6"
+                    class="w-full px-3 py-2 border border-white/10 bg-white/5 text-white rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Enter your template content here..."></textarea>
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button id="cancelEditTemplate"
+                    class="px-4 py-2 bg-white/10 text-gray-300 rounded-lg hover:bg-white/20 transition">
+                    Cancel
+                </button>
+                <button id="saveTemplate"
+                    class="px-4 py-2 text-white rounded-lg hover:opacity-90 transition bg-indigo-600">
+                    Save Template
+                </button>
+                <button id="deleteTemplate"
+                    class="px-4 py-2 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500/20 transition hidden">
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Document Modal -->
+    <div id="documentModal" class="modal-overlay">
+        <div class="modal-content p-6 bg-[#1a1a2e] border border-white/10">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-white" id="documentModalTitle">Add New Document</h3>
+                <button id="closeDocumentModal" class="text-gray-400 hover:text-white transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mb-4">
+                <label class="block text-gray-300 text-sm font-medium mb-1">Document Name</label>
+                <input type="text" id="documentName"
+                    class="w-full px-3 py-2 border border-white/10 bg-white/5 text-white rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Document name">
+            </div>
+            <div class="mb-4">
+                <label class="block text-gray-300 text-sm font-medium mb-1">Document Type</label>
+                <select id="documentType"
+                    class="w-full px-3 py-2 border border-white/10 bg-white/5 text-white rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    <option value="form" class="bg-[#1a1a2e]">Form</option>
+                    <option value="guide" class="bg-[#1a1a2e]">Guide</option>
+                    <option value="manual" class="bg-[#1a1a2e]">Manual</option>
+                    <option value="template" class="bg-[#1a1a2e]">Template Document</option>
+                    <option value="other" class="bg-[#1a1a2e]">Other</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label class="block text-gray-300 text-sm font-medium mb-1">File</label>
+                <div class="flex items-center">
+                    <div class="file-input-wrapper w-full font-medium">
+                        <div
+                            class="file-input-button w-full flex items-center justify-center py-2 bg-white/5 hover:bg-white/10 border border-white/10 transition rounded-lg text-gray-400">
+                            <i class="fas fa-upload mr-2"></i> Choose File
+                        </div>
+                        <input type="file" id="documentFile" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xlsx,.xls">
+                    </div>
+                </div>
+                <p id="selectedFileName" class="mt-2 text-sm text-gray-500">No file selected</p>
+            </div>
+            <div class="mb-4">
+                <label class="block text-gray-300 text-sm font-medium mb-1">Description</label>
+                <textarea id="documentDescription" rows="3"
+                    class="w-full px-3 py-2 border border-white/10 bg-white/5 text-white rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Enter a short description of this document..."></textarea>
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button id="cancelDocument"
+                    class="px-4 py-2 bg-white/10 text-gray-300 rounded-lg hover:bg-white/20 transition">
+                    Cancel
+                </button>
+                <button id="saveDocument"
+                    class="px-4 py-2 text-white rounded-lg hover:opacity-90 transition bg-indigo-600">
+                    Save Document
+                </button>
+                <button id="deleteDocument"
+                    class="px-4 py-2 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500/20 transition hidden">
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vehicle & Claim Edit Modal -->
+    <div id="vehicleClaimModal" class="modal-overlay">
+        <div class="modal-content">
+            <!-- Header -->
+            <div class="modal-header"
+                style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-bottom: 1px solid rgba(99, 102, 241, 0.2); padding: 20px 24px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                    <div>
+                        <h3
+                            style="color: #f8fafc; font-size: 1.25rem; font-weight: 600; margin: 0; letter-spacing: -0.01em;">
+                            Vehicle & Claim Information</h3>
+                        <p style="color: #94a3b8; font-size: 0.875rem; margin: 4px 0 0 0; font-weight: 400;">Edit
+                            vehicle details and upload claim documents</p>
+                    </div>
+                    <button id="closeVehicleClaimModal"
+                        style="width: 32px; height: 32px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;">
+                        <i class="fas fa-times" style="color: #cbd5e1; font-size: 14px;"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body">
+                <!-- Vehicle Details Section -->
+                <div class="section-card">
+                    <div class="section-title">
+                        <i class="fas fa-car" style="color: #818cf8;"></i>
+                        <span>Vehicle Details</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+                        <div class="form-group">
+                            <label class="form-label">Registration</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-id-card input-icon"></i>
+                                <input type="text" id="editVehicleRegistration" class="form-input"
+                                    placeholder="e.g., ABC 123">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Service Date</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-calendar-check input-icon"></i>
+                                <input type="date" id="editServiceDate" class="form-input">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Claim Date</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-calendar-alt input-icon"></i>
+                                <input type="date" id="editClaimDate" class="form-input">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Claim Details Section -->
+                <div class="section-card">
+                    <div class="section-title">
+                        <i class="fas fa-clipboard-list" style="color: #a78bfa;"></i>
+                        <span>Claim Details</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+                        <div class="form-group">
+                            <label class="form-label">Type of Claim</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-tag input-icon"></i>
+                                <input type="text" id="editTypeOfClaim" class="form-input"
+                                    placeholder="e.g., Warranty, Repair">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">VHC Link</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-link input-icon"></i>
+                                <input type="url" id="editVhcLink" class="form-input" placeholder="https://...">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Days Between</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-clock input-icon"></i>
+                                <input type="number" id="editDaysBetween" class="form-input" placeholder="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Checklist Section -->
+                <div class="section-card">
+                    <div class="section-title">
+                        <i class="fas fa-tasks" style="color: #34d399;"></i>
+                        <span>Claim Checklist</span>
+                    </div>
+                    <div class="checkbox-grid">
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="editAdvisoriesFollowed">
+                            <span>Advisories Followed</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="editWithinWarranty">
+                            <span>Within Warranty</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="editNewFaultCodes">
+                            <span>New Fault Codes</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="editDpfLightOn">
+                            <span>DPF Light On</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="editEmlLightOn">
+                            <span>EML Light On</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Documents Section -->
+                <div class="section-card" style="margin-bottom: 0;">
+                    <div class="section-title">
+                        <i class="fas fa-file-alt" style="color: #60a5fa;"></i>
+                        <span>Claim Documents</span>
+                        <span style="margin-left: auto; font-size: 0.7rem; color: #6b7280; font-weight: 400;">Receipts,
+                            Photos, Reports</span>
+                    </div>
+
+                    <!-- Upload Zone - Clickable -->
+                    <div class="file-input-wrapper" style="margin-bottom: 12px;">
+                        <label for="claimDocumentFile" class="upload-zone file-input-button" style="cursor: pointer;">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <span style="color: #d1d5db; font-size: 0.8rem;">Drop files here or click to upload</span>
+                            <span style="color: #6b7280; font-size: 0.7rem;">PDF, DOC, JPG, PNG, XLS</span>
+                        </label>
+                        <input type="file" id="claimDocumentFile" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xlsx,.xls"
+                            multiple style="display: none;">
+                    </div>
+
+                    <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+                        <input type="text" id="claimDocumentDescription" class="form-input"
+                            style="padding-left: 1rem; flex: 1;" placeholder="Description (optional)">
+                        <button type="button" id="uploadClaimDocBtn" class="btn-upload">
+                            <i class="fas fa-upload" style="margin-right: 6px;"></i>Upload
+                        </button>
+                    </div>
+
+                    <!-- Existing Documents List -->
+                    <div id="claimDocumentsList" style="max-height: 100px; overflow-y: auto;">
+                        <p style="color: #6b7280; font-size: 0.85rem; text-align: center; padding: 8px 0;">No claim
+                            documents uploaded yet.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="modal-footer"
+                style="background: #0f172a; border-top: 1px solid rgba(99, 102, 241, 0.15); padding: 16px 24px; display: flex; justify-content: flex-end; gap: 12px;">
+                <button id="cancelVehicleClaim"
+                    style="padding: 10px 20px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #cbd5e1; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
+                    <i class="fas fa-times" style="font-size: 12px;"></i>Cancel
+                </button>
+                <button id="saveVehicleClaim"
+                    style="padding: 10px 20px; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); border: none; border-radius: 6px; color: #ffffff; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);">
+                    <i class="fas fa-save" style="font-size: 12px;"></i>Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assignment/Forward/Takeover Modal -->
+    <div id="assignModal" class="modal-overlay">
+        <div class="modal-content p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-white" id="assignModalTitle">Assign Ticket</h3>
+                <button id="closeAssignModal" class="text-gray-400 hover:text-white transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mb-4">
+                <label class="block text-gray-300 text-sm font-medium mb-1">Select Member</label>
+                <select id="assignMemberSelect"
+                    class="w-full px-4 py-3 border border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white/5 shadow-sm transition-all duration-200 text-white font-medium">
+                    {% for member in members %}
+                    <option value="{{ member._id }}" class="bg-[#1a1a2e] text-white py-2">{{ member.name }} - {{
+                        member.role }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-4" id="forwardNotesContainer" style="display: none;">
+                <label class="block text-gray-300 text-sm font-medium mb-1">Notes</label>
+                <textarea id="assignNotes"
+                    class="w-full px-3 py-2 border border-white/10 bg-white/5 text-white rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Add any notes for the forwarded ticket"></textarea>
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button id="cancelAssign"
+                    class="px-4 py-2 bg-white/10 text-gray-300 rounded-lg hover:bg-white/20 transition">
+                    Cancel
+                </button>
+                <button id="confirmAssign"
+                    class="px-4 py-2 text-white rounded-lg hover:opacity-90 transition bg-indigo-600">
+                    Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Email Template Modal -->
+    <div id="emailTemplateModal" class="modal-overlay">
+        <div class="modal-content p-6 email-template-modal bg-[#1a1a2e]"
+            style="max-width: 800px; max-height: 90vh; width: 90vw;">
+            <!-- Header Section -->
+            <div class="flex justify-between items-center mb-4 pb-3 border-b border-white/10">
+                <h3 class="text-xl font-semibold text-white">
+                    <i class="fas fa-envelope-open-text text-indigo-400 mr-2"></i>Email Template
+                </h3>
+                <button id="closeEmailTemplateModal"
+                    class="text-gray-400 hover:text-white transition-colors p-2 rounded-full hover:bg-white/10">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Scrollable Content Area -->
+            <div class="email-template-content overflow-y-auto" style="max-height: calc(90vh - 200px);">
+                <!-- Info Tip -->
+                <div class="mb-6 p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-lg">
+                    <p class="text-sm text-indigo-300 leading-relaxed">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        <strong>Tip:</strong> You can edit the subject and body directly, or load a template and then
+                        customize it. The fields are always editable!
+                    </p>
+                </div>
+
+                <!-- Template Type Selection -->
+                <div class="mb-6">
+                    <label class="block text-gray-300 text-sm font-medium mb-2">
+                        <i class="fas fa-file-alt mr-2 text-indigo-400"></i>Template Type
+                    </label>
+                    <select id="templateTypeSelect"
+                        class="w-full px-4 py-3 border border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white/5 text-white shadow-sm transition-all duration-200">
+                        <option value="warranty_claim" class="bg-[#1a1a2e]">Warranty Claim Template</option>
+                    </select>
+                </div>
+
+                <!-- Recipient Email -->
+                <div class="mb-6">
+                    <label class="block text-gray-300 text-sm font-medium mb-2">
+                        <i class="fas fa-envelope mr-2 text-purple-400"></i>Recipient Email
+                    </label>
+                    <input type="email" id="recipientEmail"
+                        class="w-full px-4 py-3 border border-white/10 rounded-lg bg-white/5 text-gray-400 cursor-not-allowed"
+                        readonly value="{{ ticket.email }}">
+                </div>
+
+                <!-- Email Subject -->
+                <div class="mb-6">
+                    <label class="block text-gray-300 text-sm font-medium mb-2">
+                        <i class="fas fa-tag mr-2 text-orange-400"></i>Subject
+                    </label>
+                    <input type="text" id="emailSubject"
+                        class="w-full px-4 py-3 border border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white/5 text-white cursor-text hover:bg-white/10 transition-colors shadow-sm"
+                        placeholder="Enter email subject...">
+                </div>
+
+                <!-- Email Body -->
+                <div class="mb-6">
+                    <label class="block text-gray-300 text-sm font-medium mb-2">
+                        <i class="fas fa-edit mr-2 text-indigo-400"></i>Email Body
+                    </label>
+                    <textarea id="emailBody"
+                        class="w-full px-4 py-3 border border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white/5 text-white cursor-text hover:bg-white/10 transition-colors shadow-sm resize-vertical"
+                        rows="12" placeholder="Enter email body..."></textarea>
+                </div>
+
+                <!-- Attachments Section -->
+                <div class="mb-6">
+                    <label class="block text-gray-300 text-sm font-medium mb-2">
+                        <i class="fas fa-paperclip mr-2 text-indigo-400"></i>Available Attachments
+                    </label>
+                    <div id="availableAttachments"
+                        class="space-y-3 max-h-48 overflow-y-auto bg-white/5 rounded-lg p-4 border border-white/10">
+                        <!-- Attachments will be populated via JavaScript -->
+                        <div class="text-center text-gray-500 py-8">
+                            <i class="fas fa-paperclip text-2xl mb-2 text-gray-600"></i>
+                            <p class="text-sm">No attachments available</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fixed Footer with Action Buttons -->
+            <div class="border-t border-white/10 pt-4 mt-4 bg-transparent">
+                <div class="flex flex-wrap justify-end gap-3">
+                    <button id="cancelEmailTemplate"
+                        class="px-4 py-2 bg-white/10 text-gray-300 rounded-lg hover:bg-white/20 transition-colors font-medium">
+                        <i class="fas fa-times mr-2"></i>Cancel
+                    </button>
+                    <button id="regenerateAttachments"
+                        class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium"
+                        title="Regenerate attachment data for this ticket">
+                        <i class="fas fa-sync-alt mr-2"></i>Regenerate
+                    </button>
+                    <button id="loadTemplate"
+                        class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium">
+                        <i class="fas fa-download mr-2"></i>Load Template
+                    </button>
+                    <button id="editTemplate"
+                        class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors font-medium"
+                        style="display: none;">
+                        <i class="fas fa-edit mr-2"></i>Edit Template
+                    </button>
+                    <button id="clearFields"
+                        class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium">
+                        <i class="fas fa-eraser mr-2"></i>Clear
+                    </button>
+                    <button id="sendEmail"
+                        class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
+                        <i class="fas fa-paper-plane mr-2"></i>Send Email
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Layout Container - Left-Right Layout -->
+    <div class="main-layout">
+        <!-- Sidebar Toggle Button -->
+        <button class="sidebar-toggle" id="sidebarToggleMobile" title="Toggle Sidebar">
+            <i class="fas fa-bars"></i>
+        </button>
+
+        <!-- Parallel Container for App and Sidebar -->
+        <div class="parallel-container">
+            <!-- App Container - Left Side -->
+            <div class="app-container">
+                <div class="container main-content max-w-screen-ultra expanded">
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-2 sm:space-y-0">
+                        <a href="/"
+                            class="text-indigo-600 hover:text-indigo-800 flex items-center transition text-sm md:text-base">
+                            <i class="fas fa-arrow-left mr-1 md:mr-2"></i> Back
+                        </a>
+
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-lg overflow-hidden transition-all hover:shadow-xl">
+                        <div class="p-5 ticket-header priority-{{ ticket.priority|lower }} ticket-header-ultra">
+                            <div class="ticket-header-main">
+                                <h1 class="text-xl font-bold text-gray-800 break-words line-clamp-3">#{{
+                                    ticket.ticket_id }} - {{ ticket.subject or 'No Subject' }}</h1>
+                                <div class="flex flex-wrap items-center gap-3 mt-2 badge-container-ultra"
+                                    style="display: flex !important; flex-direction: row !important; flex-wrap: wrap !important;">
+                                    <!-- Priority Selection Dropdown (with icon) -->
+                                    <div class="relative inline-flex items-center">
+                                        <i class="fas fa-exclamation-circle text-xs mr-1 
+                                        {% if ticket.priority == 'Urgent' %}text-red-400
+                                        {% elif ticket.priority == 'High' %}text-orange-400
+                                        {% elif ticket.priority == 'Medium' %}text-yellow-400
+                                        {% elif ticket.priority == 'Low' %}text-emerald-400
+                                        {% else %}text-gray-400{% endif %}"></i>
+                                        <select id="prioritySelect"
+                                            class="pl-2 pr-6 py-1 text-xs rounded-md font-medium appearance-none cursor-pointer
+                                            bg-slate-700/80 border border-slate-600 text-white
+                                            hover:bg-slate-600/80 hover:border-slate-500 transition-all focus:outline-none focus:ring-1 focus:ring-slate-500"
+                                            style="min-width: 90px; height: 28px;"
+                                            data-ticket-id="{{ ticket.ticket_id }}">
+                                            <option value="Urgent" {% if ticket.priority=='Urgent' %}selected{% endif
+                                                %}>🔴 Urgent</option>
+                                            <option value="High" {% if ticket.priority=='High' %}selected{% endif %}>🟠
+                                                High</option>
+                                            <option value="Medium" {% if ticket.priority=='Medium' %}selected{% endif
+                                                %}>🟡 Medium</option>
+                                            <option value="Low" {% if ticket.priority=='Low' %}selected{% endif %}>🟢
+                                                Low</option>
+                                        </select>
+                                        <i
+                                            class="fas fa-chevron-down absolute right-2 top-1/2 transform -translate-y-1/2 text-xs text-gray-400 pointer-events-none"></i>
+                                    </div>
+
+                                    <!-- Technician Assignment Dropdown (with icon) -->
+                                    <div class="relative inline-flex items-center">
+                                        <i class="fas fa-wrench text-xs mr-1 text-indigo-400"></i>
+                                        {% if technicians and technicians|length > 0 %}
+                                        <select id="technicianSelect"
+                                            class="pl-2 pr-6 py-1 text-xs rounded-md font-medium appearance-none cursor-pointer
+                                            bg-slate-700/80 border border-slate-600 text-white
+                                            hover:bg-slate-600/80 hover:border-slate-500 transition-all focus:outline-none focus:ring-1 focus:ring-slate-500"
+                                            style="min-width: 150px; height: 28px;"
+                                            data-ticket-id="{{ ticket.ticket_id }}">
+                                            <option value="">Select Technician</option>
+                                            {% for tech in technicians %}
+                                            <option value="{{ tech._id }}" {% if (ticket.assigned_technician_id and
+                                                ticket.assigned_technician_id|string==tech._id|string) or
+                                                (ticket.technician_id and ticket.technician_id|string==tech._id|string)
+                                                %}selected{% endif %}>
+                                                {{ tech.name }} ({{ tech.role or 'Technician' }})
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                        <i
+                                            class="fas fa-chevron-down absolute right-2 top-1/2 transform -translate-y-1/2 text-xs text-gray-400 pointer-events-none"></i>
+                                        {% else %}
+                                        <!-- Empty state: No active technicians -->
+                                        <span
+                                            class="px-2 py-1 text-xs rounded-md font-medium text-amber-400 bg-amber-900/30 border border-amber-500/30"
+                                            title="No active technicians available. Add technicians via Admin Panel.">
+                                            <i class="fas fa-exclamation-triangle mr-1"></i>No technicians
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="flex flex-wrap items-center gap-3 mt-2">
+                                <!-- Importance Button - Available for ALL users including Technical Director -->
+                                <button id="importantBtn"
+                                    class="importance-btn {% if ticket.is_important %}important{% endif %} transition-all"
+                                    title="Mark as important">
+                                    <span class="star-icon">
+                                        <i
+                                            class="{% if ticket.is_important %}fas fa-star{% else %}far fa-star{% endif %}"></i>
+                                    </span>
+                                </button>
+
+
+                                <!-- Status Dropdown - Available for ALL users including Technical Director -->
+                                <!-- Status Dropdown -->
+                                <div class="status-dropdown">
+                                    <button id="statusDropdownBtn"
+                                        class="status-dropdown-btn whitespace-nowrap flex-shrink-0 h-9 flex items-center justify-center">
+                                        <span id="currentStatusDisplay">{{ ticket.status or 'Set Status' }}</span>
+                                        <i class="fas fa-chevron-down"></i>
+                                    </button>
+                                    <div id="statusDropdownContent" class="status-dropdown-content">
+                                        <div class="status-option" data-status="Open">Open</div>
+                                        <div class="status-option" data-status="New">New</div>
+                                        <div class="status-option" data-status="Form Sent">Form Sent</div>
+                                        <div class="status-option" data-status="Awaiting Submission">Awaiting
+                                            Submission
+                                        </div>
+                                        <div class="status-option" data-status="Under Review">Under Review</div>
+                                        <div class="status-option" data-status="Info Requested">Info Requested</div>
+                                        <div class="status-option" data-status="Warranty Form Received">Warranty
+                                            Form
+                                            Received</div>
+                                        <div class="status-option" data-status="Referred to Tech Director">Referred
+                                            to
+                                            Tech Director</div>
+                                        <div class="status-option" data-status="Approved – Revisit Booked">Approved
+                                            –
+                                            Revisit Booked</div>
+                                        <div class="status-option" data-status="Declined – Not Covered">Declined –
+                                            Not
+                                            Covered</div>
+                                        <div class="status-option" data-status="Revisit">Revisit</div>
+                                        <div class="status-option" data-status="Closed">Closed</div>
+                                    </div>
+                                </div>
+
+                                <!-- Close Ticket Button - Available for ALL users including Technical Director -->
+                                {% if ticket.status and ticket.status.lower() not in ['resolved', 'closed',
+                                'declined',
+                                'cancelled'] %}
+                                <button id="closeResolvedBtn"
+                                    class="px-3 py-1 flex items-center justify-center rounded-md bg-slate-700 text-white hover:bg-slate-600 transition whitespace-nowrap text-xs font-medium border border-slate-600">
+                                    <i class="fas fa-lock mr-1"></i> Close Ticket
+                                </button>
+                                {% endif %}
+
+                                <!-- Assignment Management - Available for ALL users including Technical Director -->
+                                {% if not is_tech_director %}
+                                <!-- Take Over Button (Not for Tech Director) -->
+                                {% if not ticket.assignment or ticket.assignment|length == 0 %}
+                                <button id="takeOverBtn"
+                                    class="px-3 py-1 flex items-center justify-center rounded-md bg-blue-600 text-white hover:bg-blue-500 transition whitespace-nowrap text-xs font-medium border border-blue-500">
+                                    <i class="fas fa-hand-paper mr-1"></i> Take Over
+                                </button>
+                                {% elif ticket.assignment and ticket.assignment|length > 0 and
+                                ticket.assigned_member
+                                and ticket.assigned_member|length > 0 %}
+                                <!-- Show assignment status -->
+                                <div
+                                    class="inline-flex items-center px-2 py-1 rounded-md bg-slate-700/80 border border-slate-600 text-white text-xs font-medium">
+                                    {% if ticket.assignment[0].is_forwarded %}
+                                    <div class="flex items-center">
+                                        <i class="fas fa-share mr-1 text-xs"></i>
+                                        <span class="font-medium">
+                                            {% if ticket.forwarded_to_member and ticket.forwarded_to_member|length > 0
+                                            %}
+                                            Forwarded to {{ ticket.forwarded_to_member[0].name }}
+                                            {% elif ticket.assigned_member and ticket.assigned_member|length > 0 %}
+                                            Forwarded to {{ ticket.assigned_member[0].name }}
+                                            {% else %}
+                                            Forwarded
+                                            {% endif %}
+                                            {% if ticket.forwarded_from_member and ticket.forwarded_from_member|length >
+                                            0 %}
+                                            (from {{ ticket.forwarded_from_member[0].name }})
+                                            {% endif %}
+                                        </span>
+                                        {% if ticket.forwarded_to_member and ticket.forwarded_to_member|length > 0 and
+                                        ticket.forwarded_to_member[0]._id|string == session.member_id|string %}
+                                        <span class="ml-1 opacity-75 font-bold">(You)</span>
+                                        {% elif ticket.assigned_member and ticket.assigned_member|length > 0 and
+                                        ticket.assigned_member[0]._id|string == session.member_id|string %}
+                                        <span class="ml-1 opacity-75 font-bold">(You)</span>
+                                        {% endif %}
+                                    </div>
+                                    {% else %}
+                                    <div class="flex items-center">
+                                        <i class="fas fa-hand-paper mr-1 text-xs"></i>
+                                        <span class="font-medium">Taken over by {{ ticket.assigned_member[0].name
+                                            }}</span>
+                                        {% if ticket.assigned_member[0]._id|string == session.member_id|string %}
+                                        <span class="ml-1 opacity-75 font-bold">(You)</span>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+                                    {% if ticket.assignment[0].assigned_at %}
+                                    <div class="text-xs opacity-60 mt-1">{{
+                                        ticket.assignment[0].assigned_at|format_datetime }}</div>
+                                    {% endif %}
+                                    {% if ticket.assignment[0].notes %}
+                                    <div class="text-xs opacity-60 mt-1 italic">Note: {{ ticket.assignment[0].notes
+                                        }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+
+                                <!-- Refer to Tech Director Button (Not for Tech Director) -->
+                                {% set can_refer_to_td = (ticket.status != 'Referred to Tech Director') and
+                                (ticket.status != 'Closed') and (ticket.status != 'Resolved') %}
+                                {% set was_forwarded_back = (ticket.assignment and ticket.assignment|length > 0 and
+                                ticket.assigned_member and ticket.assigned_member|length > 0 and
+                                ticket.assignment[0].get('is_forwarded', False) and
+                                ticket.assignment[0].get('forwarded_from_tech_director', False)) %}
+
+                                {% if can_refer_to_td %}
+                                {% if was_forwarded_back %}
+                                <button id="referToTechDirectorBtn"
+                                    class="px-3 py-1 flex items-center justify-center rounded-md bg-blue-600 text-white hover:bg-blue-500 transition whitespace-nowrap text-xs font-medium border border-blue-500"
+                                    title="Re-refer this ticket to Technical Director (previously returned)">
+                                    <i class="fas fa-redo mr-1"></i> Re-refer to Tech Director
+                                </button>
+                                {% else %}
+                                <button id="referToTechDirectorBtn"
+                                    class="px-3 py-1 flex items-center justify-center rounded-md bg-amber-600 text-white hover:bg-amber-500 transition whitespace-nowrap text-xs font-medium border border-amber-500"
+                                    title="Refer this ticket to Technical Director for expert review">
+                                    <i class="fas fa-user-cog mr-1"></i> Refer to Tech
+                                </button>
+                                {% endif %}
+                                {% else %}
+                                {% if ticket.status == 'Referred to Tech Director' %}
+                                <div
+                                    class="px-2 py-1 rounded-md bg-amber-700/80 text-white border border-amber-600 text-xs font-medium">
+                                    <i class="fas fa-check-circle mr-1"></i> With Tech Director
+                                </div>
+                                {% else %}
+                                <div
+                                    class="px-2 py-1 rounded-md bg-slate-700 text-gray-300 border border-slate-600 text-xs font-medium">
+                                    <i class="fas fa-lock mr-1"></i> Cannot Refer
+                                </div>
+                                {% endif %}
+                                {% endif %}
+                                {% endif %}
+
+                                <!-- Email Template Button - Available for ALL users including Technical Director (only for open tickets) -->
+                                {% if ticket.status and ticket.status.lower() not in ['resolved', 'closed',
+                                'declined',
+                                'cancelled'] %}
+                                <button id="emailTemplateBtn"
+                                    class="px-3 h-9 flex items-center justify-center rounded-xl bg-purple-100 text-purple-800 hover:bg-purple-200 transition whitespace-nowrap flex-shrink-0"
+                                    title="Send email using template">
+                                    <i class="fas fa-envelope-open-text mr-1"></i> Email Template
+                                </button>
+                                {% endif %}
+
+                                <!-- Forward Button - Available for both regular users and Technical Director (only for open tickets) -->
+                                {% if ticket.status and ticket.status.lower() not in ['resolved', 'closed',
+                                'declined',
+                                'cancelled'] %}
+                                {% set is_forwarded = ticket.is_forwarded and ticket.forwarded_to %}
+                                {% if is_forwarded and ticket.forwarded_to_member and ticket.forwarded_to_member|length
+                                > 0 %}
+                                <div id="forwardStatusBadge"
+                                    class="px-3 h-9 flex items-center justify-center rounded-xl bg-blue-50 text-blue-700 border border-blue-200 whitespace-nowrap flex-shrink-0">
+                                    <i class="fas fa-share mr-1"></i> Forwarded to {{ ticket.forwarded_to_member[0].name
+                                    }}
+                                </div>
+                                {% else %}
+                                <button id="forwardBtn"
+                                    class="px-3 h-9 flex items-center justify-center rounded-xl {% if is_tech_director %}bg-blue-100 text-blue-800 hover:bg-blue-200{% else %}bg-green-100 text-green-800 hover:bg-green-200{% endif %} transition whitespace-nowrap flex-shrink-0">
+                                    <i class="fas fa-share mr-1"></i> {% if is_tech_director %}Forward to Support
+                                    Team{%
+                                    else %}Forward{% endif %}
+                                </button>
+                                {% endif %}
+                                {% endif %}
+
+                                {% if is_tech_director %}
+                                <!-- Technical Director View - Show assignment status -->
+                                {% if ticket.assignment and ticket.assignment|length > 0 and ticket.assigned_member
+                                and
+                                ticket.assigned_member|length > 0 %}
+                                <div class="px-3 py-1 rounded-lg border border-gray-200 bg-gray-50">
+                                    {% if ticket.assignment[0].is_forwarded %}
+                                    <i class="fas fa-share mr-1 text-blue-600"></i>
+                                    {% if ticket.forwarded_to_member and ticket.forwarded_to_member|length > 0 %}
+                                    Forwarded to {{ ticket.forwarded_to_member[0].name }}
+                                    {% elif ticket.assigned_member and ticket.assigned_member|length > 0 %}
+                                    Forwarded to {{ ticket.assigned_member[0].name }}
+                                    {% else %}
+                                    Forwarded
+                                    {% endif %}
+                                    {% if ticket.forwarded_from_member and ticket.forwarded_from_member|length > 0 %}
+                                    (from {{ ticket.forwarded_from_member[0].name }})
+                                    {% endif %}
+                                    {% else %}
+                                    <i class="fas fa-hand-paper mr-1 text-green-600"></i>
+                                    Taken over by {{ ticket.assigned_member[0].name }}
+                                    {% endif %}
+                                    {% if ticket.assignment[0].assigned_at %}
+                                    <div class="text-xs opacity-75 mt-1">{{
+                                        ticket.assignment[0].assigned_at|format_datetime }}</div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Ticket Details -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <div class="detail-card">
+                                <h3 class="text-sm font-medium text-gray-500">Customer</h3>
+                                <p class="text-gray-800 font-medium break-words truncate">
+                                    {% if customer_title or customer_first_name or customer_surname %}
+                                    {% if customer_title %}{{ customer_title }} {% endif %}
+                                    {% if customer_first_name %}{{ customer_first_name }} {% endif %}
+                                    {% if customer_surname %}{{ customer_surname }}{% endif %}
+                                    {% else %}
+                                    {{ ticket.name }}
+                                    {% endif %}
+                                </p>
+                                <p class="text-gray-600 text-sm break-words truncate">{{ ticket.email }}</p>
+                                {% if ticket.phone %}
+                                <p class="text-gray-600 text-sm mt-1 break-words truncate"><i
+                                        class="fas fa-phone mr-1"></i> {{ ticket.phone }}</p>
+                                {% endif %}
+                            </div>
+
+                            <div class="detail-card">
+                                <h3 class="text-sm font-medium text-gray-500">Created</h3>
+                                <p class="text-gray-800">{{ formatted_date }}</p>
+                            </div>
+
+                            <div class="detail-card">
+                                <h3 class="text-sm font-medium text-gray-500">Last Updated</h3>
+                                <p class="text-gray-800">{{ ticket.updated_at|format_datetime }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Vehicle Information - Always visible -->
+                        <div class="mb-3">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-sm font-medium text-gray-500">Vehicle & Claim Information</h3>
+                                <button id="editVehicleInfoBtn"
+                                    class="text-xs text-indigo-600 hover:text-indigo-800 flex items-center gap-1 px-2 py-1 rounded hover:bg-indigo-50 transition-colors"
+                                    title="Edit Vehicle & Claim Info">
+                                    <i class="fas fa-edit"></i>
+                                    <span>Edit</span>
+                                </button>
+                            </div>
+
+                            {% if vehicle_registration or service_date or claim_date or type_of_claim %}
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 vehicle-info-grid">
+                                {% if vehicle_registration %}
+                                <div class="detail-card flex items-center">
+                                    <div class="p-3 rounded-full bg-blue-100 mr-4">
+                                        <i class="fas fa-car text-blue-600"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-xs font-medium text-gray-500">Registration</h4>
+                                        <p class="text-gray-800 font-semibold break-words truncate">{{
+                                            vehicle_registration }}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                {% if service_date %}
+                                <div class="detail-card flex items-center">
+                                    <div class="p-3 rounded-full bg-purple-100 mr-4">
+                                        <i class="fas fa-calendar-check text-purple-600"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-xs font-medium text-gray-500">Service Date</h4>
+                                        <p class="text-gray-800 font-semibold">{{ service_date }}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                {% if claim_date %}
+                                <div class="detail-card flex items-center">
+                                    <div class="p-3 rounded-full bg-green-100 mr-4">
+                                        <i class="fas fa-file-invoice text-green-600"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-xs font-medium text-gray-500">Claim Date</h4>
+                                        <p class="text-gray-800 font-semibold">{{ claim_date }}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Technician Field -->
+                                {% if technician %}
+                                <div class="detail-card flex items-center">
+                                    <div class="p-3 rounded-full bg-indigo-100 mr-4">
+                                        <i class="fas fa-user-cog text-indigo-600"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-xs font-medium text-gray-500">Technician</h4>
+                                        <p class="text-gray-800 font-semibold">{{ technician }}</p>
+                                        {% if technician_info %}
+                                        <p class="text-gray-600 text-xs mt-1">
+                                            <i class="fas fa-id-badge mr-1"></i> {{ technician_info.user_id }}
+                                            {% if technician_info.role %}
+                                            <span
+                                                class="ml-2 px-2 py-1 bg-indigo-100 text-indigo-800 text-xs rounded-full">{{
+                                                technician_info.role }}</span>
+                                            {% endif %}
+                                        </p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Type of Claim -->
+                                {% if type_of_claim %}
+                                <div class="detail-card flex items-center">
+                                    <div class="p-3 rounded-full bg-orange-100 mr-4">
+                                        <i class="fas fa-clipboard-list text-orange-600"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-xs font-medium text-gray-500">Type of Claim</h4>
+                                        <p class="text-gray-800 font-semibold">{{ type_of_claim }}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Days Between Service and Claim -->
+                                {% if days_between_service_claim %}
+                                <div class="detail-card flex items-center">
+                                    <div class="p-3 rounded-full bg-pink-100 mr-4">
+                                        <i class="fas fa-clock text-pink-600"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-xs font-medium text-gray-500">Days Between Service & Claim
+                                        </h4>
+                                        <p class="text-gray-800 font-semibold">{{ days_between_service_claim }}
+                                            day{% if
+                                            days_between_service_claim != '1' %}s{% endif %}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- VHC Link -->
+                                {% if vhc_link %}
+                                <div class="detail-card flex items-center">
+                                    <div class="p-3 rounded-full bg-cyan-100 mr-4">
+                                        <i class="fas fa-link text-cyan-600"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-xs font-medium text-gray-500">VHC (Vehicle Health Check)
+                                        </h4>
+                                        <a href="{{ vhc_link }}" target="_blank"
+                                            class="text-indigo-600 hover:text-indigo-800 flex items-center">
+                                            <i class="fas fa-external-link-alt mr-1"></i> View Report
+                                        </a>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            <!-- Empty state when no vehicle data exists -->
+                            <div class="detail-card p-4 text-center">
+                                <div class="text-gray-400 mb-2">
+                                    <i class="fas fa-car text-3xl"></i>
+                                </div>
+                                <p class="text-gray-500 text-sm">No vehicle or claim information added yet.</p>
+                                <p class="text-gray-400 text-xs mt-1">Click "Edit" to add details.</p>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Checklist Information -->
+                        {% if advisories_followed or within_warranty or new_fault_codes or dpf_light_on or
+                        eml_light_on
+                        %}
+                        <div class="mb-3">
+                            <h3 class="text-sm font-medium text-gray-500 mb-2">Claim Checklist</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 checklist-grid">
+                                <div class="detail-card">
+                                    <ul class="space-y-3">
+                                        {% if advisories_followed == '1' %}
+                                        <li class="flex items-center">
+                                            <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                                            <span>Advisories Followed</span>
+                                        </li>
+                                        {% endif %}
+
+                                        {% if within_warranty == '1' %}
+                                        <li class="flex items-center">
+                                            <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                                            <span>Within Warranty Period</span>
+                                        </li>
+                                        {% endif %}
+
+                                        {% if new_fault_codes == '1' %}
+                                        <li class="flex items-center">
+                                            <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                                            <span>Provided New Fault Codes</span>
+                                        </li>
+                                        {% endif %}
+                                    </ul>
+                                </div>
+                                <div class="detail-card">
+                                    <ul class="space-y-3">
+                                        {% if dpf_light_on == '1' %}
+                                        <li class="flex items-center">
+                                            <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                                            <span>DPF Light On</span>
+                                        </li>
+                                        {% endif %}
+
+                                        {% if eml_light_on == '1' %}
+                                        <li class="flex items-center">
+                                            <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                                            <span>EML Light On</span>
+                                        </li>
+                                        {% endif %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Original Ticket Attachments Section -->
+                        {% if ticket.attachments and ticket.attachments|length > 0 %}
+                        <div class="mb-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-sm font-medium text-gray-500 flex items-center">
+                                    <i class="fas fa-paperclip mr-2 text-purple-500"></i>Original Ticket Attachments
+                                </h3>
+                                <span class="text-xs text-gray-400">({{ ticket.attachments|length }})</span>
+                            </div>
+                            <div class="space-y-2">
+                                {% for attachment in ticket.attachments %}
+                                {% set att_name = attachment.filename or attachment.fileName or attachment.name or
+                                'attachment' %}
+                                <div
+                                    class="detail-card p-3 flex items-center justify-between hover:bg-opacity-80 transition">
+                                    <div class="flex items-center flex-1 min-w-0">
+                                        {% if att_name.endswith('.pdf') %}
+                                        <i class="fas fa-file-pdf text-red-500 mr-2"></i>
+                                        {% elif att_name.endswith(('.jpg', '.jpeg', '.png', '.gif')) %}
+                                        <i class="fas fa-file-image text-blue-500 mr-2"></i>
+                                        {% elif att_name.endswith(('.doc', '.docx')) %}
+                                        <i class="fas fa-file-word text-blue-600 mr-2"></i>
+                                        {% else %}
+                                        <i class="fas fa-file text-gray-500 mr-2"></i>
+                                        {% endif %}
+                                        <span class="text-sm text-gray-300 truncate mr-2" title="{{ att_name }}">
+                                            {{ att_name }}
+                                        </span>
+                                        {% if attachment.size %}
+                                        <span class="text-xs text-gray-500">
+                                            ({{ (attachment.size / 1024) | round(1) }} KB)
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex gap-1 ml-2 flex-shrink-0">
+                                        {% set can_preview = att_name.endswith(('.jpg', '.jpeg', '.png',
+                                        '.gif', '.pdf', '.txt', '.md')) %}
+                                        {% if can_preview %}
+                                        <button data-action="preview" data-ticket-id="{{ ticket.ticket_id|e }}"
+                                            data-index="{{ loop.index0 }}" data-filename="{{ att_name|e }}"
+                                            class="bg-blue-100 hover:bg-blue-200 text-blue-600 px-1.5 py-1 rounded text-[10px] transition att-preview-btn"
+                                            title="Preview {{ att_name }}">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        {% endif %}
+                                        <button data-action="download" data-ticket-id="{{ ticket.ticket_id|e }}"
+                                            data-index="{{ loop.index0 }}" data-filename="{{ att_name|e }}"
+                                            class="bg-green-100 hover:bg-green-200 text-green-600 px-1.5 py-1 rounded text-[10px] transition att-download-btn"
+                                            title="Download {{ att_name }}">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Claim Documents Section -->
+                        <div class="mb-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-sm font-medium text-gray-500 flex items-center">
+                                    <i class="fas fa-file-alt mr-2 text-indigo-500"></i>Claim Documents
+                                </h3>
+                                <span id="ticketClaimDocsCount" class="text-xs text-gray-400"></span>
+                            </div>
+                            <div id="ticketClaimDocsList" class="space-y-2">
+                                <p class="text-gray-400 text-sm text-center py-4">Loading documents...</p>
+                            </div>
+                        </div>
+
+                        <!-- Enhanced Outcome Section -->
+                        <div class="mb-4 bg-white border border-gray-200 rounded-lg p-4 shadow-sm outcome-section">
+                            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-3">
+                                <h3 class="text-lg font-semibold text-gray-800 flex items-center">
+                                    <i class="fas fa-clipboard-check mr-3 text-purple-600"></i> Outcome Assessment
+                                </h3>
+                                <button id="editOutcomeBtn"
+                                    class="px-4 py-2 text-sm bg-purple-100 text-purple-800 rounded-lg hover:bg-purple-200 transition">
+                                    <i class="fas fa-edit mr-2"></i> Edit Outcome
+                                </button>
+                            </div>
+
+                            <!-- Outcome Display View -->
+                            <div id="outcomeDisplayView">
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-3">
+                                    {% if outcome_category %}
+                                    <div class="detail-card flex items-center">
+                                        <div class="p-2 rounded-full bg-purple-100 mr-3">
+                                            <i class="fas fa-tags text-purple-600"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="text-xs font-medium text-gray-500 mb-1">Outcome Category</h4>
+                                            <span class="px-2 py-1 text-xs rounded-full font-medium
+                                        {% if outcome_category == 'Technician Issue' %}bg-red-100 text-red-800
+                                        {% elif outcome_category == 'New Fault' %}bg-orange-100 text-orange-800
+                                        {% elif outcome_category == 'Advisories Not Followed' %}bg-yellow-100 text-yellow-800
+                                        {% elif outcome_category == 'Driving Style' %}bg-blue-100 text-blue-800
+                                        {% elif outcome_category == 'Customer Issue' %}bg-pink-100 text-pink-800
+                                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                                {{ outcome_category }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <div class="detail-card flex items-center">
+                                        <div class="p-2 rounded-full bg-gray-100 mr-3">
+                                            <i class="fas fa-tags text-gray-400"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="text-xs font-medium text-gray-500 mb-1">Outcome Category</h4>
+                                            <span class="text-sm text-gray-400">Not set</span>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+
+                                    <div class="detail-card">
+                                        <h4 class="text-xs font-medium text-gray-500 mb-1">Actions Completed</h4>
+                                        <div class="space-y-1">
+                                            {% if revisit_carried_out == '1' %}
+                                            <div class="flex items-center text-green-700">
+                                                <i class="fas fa-check-circle mr-2"></i>
+                                                <span class="text-xs">Revisit Carried Out</span>
+                                            </div>
+                                            {% endif %}
+                                            {% if clean_under_warranty == '1' %}
+                                            <div class="flex items-center text-green-700">
+                                                <i class="fas fa-check-circle mr-2"></i>
+                                                <span class="text-xs">Clean Carried Out Under Warranty</span>
+                                            </div>
+                                            {% endif %}
+                                            {% if not revisit_carried_out and not clean_under_warranty %}
+                                            <span class="text-xs text-gray-400">No actions completed</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="detail-card col-span-1 lg:col-span-2">
+                                    <h4 class="text-xs font-medium text-gray-700 mb-2 flex items-center">
+                                        <i class="fas fa-sticky-note mr-2 text-purple-600"></i> Outcome Notes
+                                    </h4>
+                                    <div class="bg-gray-50 rounded-lg p-3 min-h-[60px]">
+                                        {% if outcome_notes %}
+                                        <p class="text-gray-700 text-xs whitespace-pre-wrap leading-relaxed">{{
+                                            outcome_notes }}</p>
+                                        {% else %}
+                                        <span class="text-xs text-gray-400 italic">No notes added</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Outcome Edit Form (Initially Hidden) -->
+                            <div id="outcomeEditView"
+                                class="hidden bg-gray-50 rounded-lg p-4 border-2 border-purple-200 mt-2">
+                                <div class="mb-3">
+                                    <h4 class="text-base font-semibold text-gray-800 flex items-center">
+                                        <i class="fas fa-edit mr-2 text-purple-600"></i> Edit Outcome Assessment
+                                    </h4>
+                                </div>
+
+                                <form id="outcomeForm" class="space-y-4">
+                                    <!-- Grid Layout for Form Fields -->
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <!-- Outcome Dropdown -->
+                                        <div class="md:col-span-2">
+                                            <label class="block text-xs font-medium text-gray-700 mb-1">
+                                                <i class="fas fa-tags mr-1"></i> Outcome Category
+                                            </label>
+                                            <select id="outcomeCategory"
+                                                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                                                <option value="">Select outcome</option>
+                                                <option value="Technician Issue" {% if
+                                                    outcome_category=='Technician Issue' %}selected{% endif %}>
+                                                    Technician Issue</option>
+                                                <option value="New Fault" {% if outcome_category=='New Fault'
+                                                    %}selected{% endif %}>New Fault</option>
+                                                <option value="Advisories Not Followed" {% if
+                                                    outcome_category=='Advisories Not Followed' %}selected{% endif %}>
+                                                    Advisories Not Followed</option>
+                                                <option value="Driving Style" {% if outcome_category=='Driving Style'
+                                                    %}selected{% endif %}>Driving
+                                                    Style</option>
+                                                <option value="Customer Issue" {% if outcome_category=='Customer Issue'
+                                                    %}selected{% endif %}>
+                                                    Customer Issue</option>
+                                                <option value="Other" {% if outcome_category=='Other' %}selected{% endif
+                                                    %}>Other</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- Checkboxes -->
+                                        <div class="md:col-span-2">
+                                            <label class="block text-xs font-medium text-gray-700 mb-2">
+                                                <i class="fas fa-check-square mr-1"></i> Actions Completed
+                                            </label>
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                <label
+                                                    class="flex items-center bg-white p-2 rounded-lg border border-gray-200 hover:border-purple-300 transition cursor-pointer">
+                                                    <input type="checkbox" id="revisitCarriedOut"
+                                                        class="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                                                        {% if revisit_carried_out=='1' %}checked{% endif %}>
+                                                    <span class="ml-2 text-xs text-gray-700">Revisit Carried
+                                                        Out</span>
+                                                </label>
+                                                <label
+                                                    class="flex items-center bg-white p-2 rounded-lg border border-gray-200 hover:border-purple-300 transition cursor-pointer">
+                                                    <input type="checkbox" id="cleanUnderWarranty"
+                                                        class="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                                                        {% if clean_under_warranty=='1' %}checked{% endif %}>
+                                                    <span class="ml-2 text-xs text-gray-700">Clean Carried Out Under
+                                                        Warranty</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Outcome Notes - Full Width -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                                            <i class="fas fa-sticky-note mr-1"></i> Outcome Notes
+                                        </label>
+                                        <textarea id="outcomeNotes"
+                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
+                                            rows="5"
+                                            placeholder="Add detailed outcome information, explanations, or next steps...">{{ outcome_notes or '' }}</textarea>
+                                    </div>
+
+                                    <!-- Action Buttons -->
+                                    <div
+                                        class="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-gray-200">
+                                        <button type="button" id="cancelOutcomeBtn"
+                                            class="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition font-medium">
+                                            <i class="fas fa-times mr-2"></i>Cancel
+                                        </button>
+                                        <button type="submit" id="saveOutcomeBtn"
+                                            class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-medium">
+                                            <i class="fas fa-save mr-2"></i>Save Outcome
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        {# Display Email Attachments (New System) - With Duplicate Removal #}
+                        {% if ticket.simple_attachments and ticket.simple_attachments|length > 0 %}
+
+                        {% set unique_attachments = [] %}
+                        {% set processed_base_names = [] %}
+                        {% for attachment in ticket.simple_attachments %}
+                        {% set base_filename = attachment.fileName %}
+                        {% if base_filename.startswith('20') and base_filename[8] == '_' and base_filename[15] ==
+                        '_' %}
+                        {% set base_filename = base_filename[16:] %}
+                        {% endif %}
+                        {% if base_filename not in processed_base_names %}
+                        {% set _ = processed_base_names.append(base_filename) %}
+                        {% set _ = unique_attachments.append(attachment) %}
+                        {% endif %}
+                        {% endfor %}
+
+                        <div class="mb-3">
+                            <h3 class="text-sm font-medium text-gray-500 mb-2">Attachments ({{
+                                unique_attachments|length
+                                }})</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 attachments-container">
+                                {% for attachment in unique_attachments %}
+                                <div class="detail-card flex items-start">
+                                    <div class="p-3 rounded-full mr-4 
+                                {% if attachment.is_warranty %}bg-green-100{% else %}bg-blue-100{% endif %}">
+                                        {% if attachment.fileName.lower().endswith('.pdf') %}
+                                        <i
+                                            class="fas fa-file-pdf {% if attachment.is_warranty %}text-green-600{% else %}text-red-600{% endif %}"></i>
+                                        {% elif attachment.fileName.lower().endswith(('.jpg', '.jpeg', '.png',
+                                        '.gif'))
+                                        %}
+                                        <i
+                                            class="fas fa-file-image {% if attachment.is_warranty %}text-green-600{% else %}text-purple-600{% endif %}"></i>
+                                        {% elif attachment.fileName.lower().endswith(('.doc', '.docx')) %}
+                                        <i
+                                            class="fas fa-file-word {% if attachment.is_warranty %}text-green-600{% else %}text-blue-600{% endif %}"></i>
+                                        {% elif attachment.fileName.lower().endswith(('.xls', '.xlsx')) %}
+                                        <i
+                                            class="fas fa-file-excel {% if attachment.is_warranty %}text-green-600{% else %}text-green-500{% endif %}"></i>
+                                        {% else %}
+                                        <i
+                                            class="fas fa-file {% if attachment.is_warranty %}text-green-600{% else %}text-gray-600{% endif %}"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <h4 class="text-xs font-medium text-gray-500">
+                                                {{ attachment.fileName | truncate(40) }}
+                                            </h4>
+                                            {% if attachment.is_warranty %}
+                                            <span
+                                                class="bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs font-medium">
+                                                <i class="fas fa-shield-alt mr-1"></i>Warranty
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="flex items-center gap-4">
+                                            <button
+                                                onclick="downloadEmailAttachment('{{ ticket.ticket_id }}', '{{ loop.index0 }}', '{{ attachment.fileName }}')"
+                                                class="text-indigo-600 hover:text-indigo-800 flex items-center text-sm transition">
+                                                <i class="fas fa-download mr-1"></i> Download
+                                            </button>
+                                            {% if attachment.fileName.lower().endswith(('.jpg', '.jpeg', '.png',
+                                            '.gif',
+                                            '.pdf')) %}
+                                            <button
+                                                onclick="previewEmailAttachment('{{ ticket.ticket_id }}', '{{ loop.index0 }}', '{{ attachment.fileName }}')"
+                                                class="text-gray-600 hover:text-gray-800 flex items-center text-sm transition">
+                                                <i class="fas fa-eye mr-1"></i> Preview
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                        {% if attachment.size %}
+                                        <p class="text-xs text-gray-400 mt-1">{{ attachment.size_formatted or
+                                            (attachment.size | filesizeformat) }}</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+
+
+
+                        <!-- Original Message -->
+                        <div class="mb-6">
+                            <h3 class="text-sm font-medium text-indigo-400 mb-2 professional-header">Original Message
+                            </h3>
+                            <div class="original-message-container" id="originalMessageContainer">
+                                <div class="original-message-content {% if (ticket.body or '')|length > 1500 %}truncated{% endif %}"
+                                    id="originalMessage">
+                                    {{ ticket.body or '' }}
+                                </div>
+                                {% if (ticket.body or '')|length > 1500 %}
+                                <button class="read-more-btn" onclick="expandMessage('originalMessage')"
+                                    id="originalMessageReadMore">
+                                    <i class="fas fa-chevron-down mr-1"></i> Read More
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Conversation Section -->
+                    <div class="px-6 py-4 border-t">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                            <i class="fas fa-comments mr-2 text-indigo-600"></i> Conversation
+                        </h2>
+
+                        {% if not replies %}
+                        <div class="text-center text-gray-500 py-8 bg-gray-50 rounded-lg">
+                            <i class="fas fa-comment-slash text-3xl mb-2 text-gray-400"></i>
+                            <p>No replies yet. Be the first to respond!</p>
+                        </div>
+                        {% endif %}
+
+                        <div class="conversation-container" id="repliesContainer">
+                            {% for reply in replies %}
+                            {# robustly detect internal users #}
+                            {% set is_internal = (reply.role in ['Admin', 'Support', 'Technical Director', 'Technician']
+                            or reply.sender_type == 'agent' or reply.is_internal) %}
+                            <div
+                                class="message {% if not is_internal %}customer-message{% else %}support-message{% endif %}">
+                                <div class="message-header">
+                                    <span class="font-medium flex items-center">
+                                        {% if not is_internal %}
+                                        <i class="fas fa-user-circle customer-icon"></i> {{ reply.sender_name or
+                                        ticket.name or 'Customer' }}
+                                        {% else %}
+                                        <i class="fas fa-headset support-icon"></i> {{ reply.sender_name or 'Support
+                                        Team' }}
+                                        {% endif %}
+                                    </span>
+                                    <span class="message-time">
+                                        <i class="fas fa-clock mr-1"></i>{{ reply.created_at | format_datetime }}
+                                    </span>
+                                </div>
+                                <div class="reply-message-box {% if reply.message|length > 800 %}truncated{% endif %}"
+                                    id="message-{{ loop.index }}">
+                                    <div class="message-content">
+                                        {{ reply.message }}
+                                    </div>
+                                    <div class="expand-btn" onclick="expandMessage('message-{{ loop.index }}')">
+                                        <i class="fas fa-chevron-down mr-1"></i> Read More
+                                    </div>
+                                </div>
+
+                                {% set downloadable_attachments = [] %}
+                                {% for attachment in reply.attachments %}
+                                {% if attachment.type == 'file' or attachment.source == 'webhook_base64' or
+                                attachment.source == 'webhook' or not attachment.type %}
+                                {% set _ = downloadable_attachments.append(attachment) %}
+                                {% endif %}
+                                {% endfor %}
+
+
+
+                                {% if downloadable_attachments and downloadable_attachments|length > 0 %}
+                                <div class="mt-2 border-t border-gray-100 pt-2">
+                                    <div class="text-xs text-gray-500 mb-1 flex items-center justify-between">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-paperclip mr-1"></i>
+                                            Attachments ({{ downloadable_attachments|length }}):
+                                        </div>
+                                        <!-- Regenerate button for webhook attachments -->
+                                        {% if reply.source == 'webhook' or reply.source == 'n8n' %}
+                                        <button onclick="regenerateWebhookAttachments()"
+                                            class="text-xs bg-orange-100 hover:bg-orange-200 text-orange-600 px-2 py-1 rounded transition"
+                                            title="Regenerate webhook attachments if they're not working">
+                                            <i class="fas fa-sync-alt mr-1"></i>Regenerate
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex flex-wrap gap-2">
+                                        {% for attachment in downloadable_attachments %}
+                                        {% if attachment.type == 'file' or attachment.source in ['webhook_base64',
+                                        'webhook'] or not attachment.type %}
+                                        <div
+                                            class="bg-gray-50 border border-gray-200 rounded-lg p-2 flex items-center justify-between text-xs max-w-xs">
+                                            <div class="flex items-center min-w-0 flex-1">
+                                                {% set filename = attachment.filename or attachment.name or
+                                                attachment.original_name or 'Unknown File' %}
+                                                {% if filename.endswith('.pdf') %}
+                                                <i class="fas fa-file-pdf text-red-500 mr-2 flex-shrink-0"></i>
+                                                {% elif filename.endswith('.doc') or filename.endswith('.docx') %}
+                                                <i class="fas fa-file-word text-blue-500 mr-2 flex-shrink-0"></i>
+                                                {% elif filename.endswith('.xls') or filename.endswith('.xlsx') %}
+                                                <i class="fas fa-file-excel text-green-500 mr-2 flex-shrink-0"></i>
+                                                {% elif filename.endswith('.jpg') or filename.endswith('.jpeg') or
+                                                filename.endswith('.png') or filename.endswith('.gif') %}
+                                                <i class="fas fa-file-image text-purple-500 mr-2 flex-shrink-0"></i>
+                                                {% else %}
+                                                <i class="fas fa-file text-gray-500 mr-2 flex-shrink-0"></i>
+                                                {% endif %}
+                                                <div class="min-w-0 flex-1">
+                                                    <div class="font-medium truncate max-w-[120px]"
+                                                        title="{{ filename }}">{{ filename }}</div>
+                                                    {% if attachment.size and attachment.size > 0 %}
+                                                    <div class="text-gray-400 text-[10px]">({{ (attachment.size /
+                                                        1024)
+                                                        | round(1) }} KB)</div>
+                                                    {% endif %}
+
+                                                </div>
+                                            </div>
+                                            <div class="flex gap-1 ml-2">
+                                                {% set source = attachment.source|default('reply') %}
+                                                {% set can_preview = filename.endswith('.jpg') or
+                                                filename.endswith('.jpeg') or filename.endswith('.png') or
+                                                filename.endswith('.gif') or filename.endswith('.pdf') or
+                                                filename.endswith('.txt') or filename.endswith('.md') %}
+                                                {% set can_download = attachment.type == 'file' or attachment.source
+                                                ==
+                                                'webhook_base64' or attachment.source == 'webhook' %}
+                                                {% if can_preview %}
+                                                <button
+                                                    onclick="previewAttachment('{{ reply._id|e }}', '{{ loop.index0 }}', '{{ filename|e }}', '{{ source|e }}')"
+                                                    class="bg-blue-100 hover:bg-blue-200 text-blue-600 px-1.5 py-1 rounded text-[10px] transition"
+                                                    title="Preview {{ filename }}">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                {% endif %}
+                                                <button
+                                                    onclick="downloadAttachment('{{ reply._id|e }}', '{{ loop.index0 }}', '{{ filename|e }}', '{{ source|e }}')"
+                                                    class="bg-green-100 hover:bg-green-200 text-green-600 px-1.5 py-1 rounded text-[10px] transition"
+                                                    title="Download {{ filename }}">
+                                                    <i class="fas fa-download"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        {% elif attachment.type == 'common-document' %}
+                                        <button onclick="viewCommonDocument('{{ attachment.ref }}')"
+                                            class="bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded flex items-center text-xs transition">
+                                            <i class="fas fa-file-alt text-blue-500 mr-1"></i>
+                                            <span>{{ attachment.name|default('Common Document') }}</span>
+                                        </button>
+                                        {% elif attachment.type == 'text_reference' %}
+                                        <div class="bg-green-50 px-2 py-1 rounded flex items-center text-xs cursor-pointer hover:bg-green-100 transition-colors"
+                                            onclick="handleTextReferenceAttachment('{{ attachment.name|e }}', '{{ attachment.description|e }}')"
+                                            title="Click to view text reference details">
+                                            <i class="fas fa-paperclip text-green-500 mr-1"></i>
+                                            <span class="font-medium">{{ attachment.name }}</span>
+                                            {% if attachment.description %}
+                                            <span class="text-gray-500 ml-1">- {{ attachment.description }}</span>
+                                            {% endif %}
+                                            <span class="text-blue-500 ml-2 text-[10px]">(Text Reference - Click to
+                                                view)</span>
+                                        </div>
+                                        {% endif %}
+                                        {% endfor %}
+                                    </div>
+
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Reply Form (only for open tickets) -->
+                        {% if ticket.status and ticket.status.lower() not in ['resolved', 'closed', 'declined',
+                        'cancelled'] %}
+                        <form id="replyForm" class="mt-8 reply-form">
+                            <div class="mb-4 relative">
+                                <div class="flex items-start">
+                                    <div class="flex-grow">
+                                        <!-- Enhanced Modern chat-style input area with drag & drop -->
+                                        <div id="replyDropzone"
+                                            class="bg-white/5 border border-white/10 rounded-lg shadow-sm overflow-hidden transition-all duration-200"
+                                            data-dropzone="true">
+                                            <!-- Text input area -->
+                                            <textarea id="response" name="response" rows="3"
+                                                class="w-full px-4 py-3 outline-none border-0 resize-none auto-expand-textarea bg-transparent text-white"
+                                                placeholder="Type your response here... (Drag & drop files or documents here!)"
+                                                style="min-height: 60px; max-height: 300px; overflow-y: auto;">{{ ticket.draft_body }}</textarea>
+
+                                            <!-- Hidden file input -->
+                                            <input id="response_attachments" name="response_attachments" type="file"
+                                                multiple class="hidden"
+                                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xlsx,.xls,.txt,.csv,.zip"
+                                                title="Select files to attach to your reply (Max 10MB per file)">
+
+                                            <!-- Enhanced Preview area for ALL attachments (files + common documents) -->
+                                            <div id="enhancedAttachmentPreview"
+                                                class="px-4 py-2 border-t border-white/5 hidden">
+                                                <div class="flex items-center justify-between mb-2">
+                                                    <div class="text-xs text-gray-400">📎 Attachments:</div>
+                                                    <button type="button" id="clearAllAttachments"
+                                                        class="text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 px-2 py-1 rounded transition">
+                                                        Clear All
+                                                    </button>
+                                                </div>
+                                                <div id="attachmentPreviewList" class="space-y-2"></div>
+                                            </div>
+
+                                            <!-- Bottom toolbar -->
+                                            <div
+                                                class="flex items-center justify-between px-4 py-2 border-t border-white/10">
+                                                <div class="flex items-center space-x-2">
+                                                    <!-- Attachment button -->
+                                                    <button type="button" id="attachmentBtn"
+                                                        class="text-gray-400 hover:text-green-400 focus:outline-none p-1 rounded-full hover:bg-white/5 transition"
+                                                        title="Attach files">
+                                                        <i class="fas fa-paperclip text-lg"></i>
+                                                        <span
+                                                            class="attachment-count hidden absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">0</span>
+                                                    </button>
+
+                                                    <!-- Quick response button removed as requested -->
+
+                                                    <!-- Send button -->
+                                                    <button type="submit" id="sendBtn"
+                                                        class="inline-flex items-center justify-center p-2 rounded-full bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none">
+                                                        <i class="fas fa-paper-plane"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                        </form>
+                        {% else %}
+                        <!-- Ticket is closed - show message instead of reply form -->
+                        <div class="mt-8 p-6 bg-gray-50 border border-gray-200 rounded-lg text-center">
+                            <div class="flex items-center justify-center mb-3">
+                                <i class="fas fa-lock text-gray-500 text-2xl mr-3"></i>
+                                <h3 class="text-lg font-semibold text-gray-700">Ticket Closed</h3>
+                            </div>
+                            <p class="text-gray-600">This ticket has been {{ ticket.status.lower() }} and is no
+                                longer
+                                accepting new replies.</p>
+                            {% if ticket.closed_by and ticket.closed_at %}
+                            <p class="text-sm text-gray-500 mt-2">Closed by {{ ticket.closed_by }} on {{
+                                ticket.closed_at|format_datetime }}</p>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                        <!-- File Attachments Section (Hidden) - this is the dropzone for drag and drop -->
+                        <div id="attachmentSection" class="hidden">
+                            <div id="attachmentDropzone"
+                                class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-indigo-400 transition">
+                                <div class="space-y-1 text-center">
+                                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none"
+                                        viewBox="0 0 48 48" aria-hidden="true">
+                                        <path
+                                            d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                    <div class="text-sm text-gray-600">
+                                        <label for="response_attachments"
+                                            class="relative cursor-pointer rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none">
+                                            <span>Upload files</span>
+                                        </label>
+                                        <p class="pl-1">or drag and drop</p>
+                                    </div>
+                                    <p class="text-xs text-gray-500">PDF, Word, Excel, Images up to 10MB each</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Template data -->

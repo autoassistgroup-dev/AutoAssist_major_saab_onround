@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{% if selected_role %}{{ selected_role|title }} Login{% else %}Login{% endif %} - AutoAssistGroup</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0a0a0f;
+            color: #fff;
+        }
+
+        /* Background */
+        .bg-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            background: linear-gradient(180deg, #0a0a0f 0%, #141420 100%);
+        }
+
+        .bg-image {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background-image: url('/static/css/login_bg.png');
+            background-size: cover;
+            background-position: center;
+            opacity: 0.3;
+        }
+
+        /* Login card - matching portal cards */
+        .login-card {
+            width: 100%;
+            max-width: 420px;
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 36px 32px;
+            margin: 16px;
+        }
+
+        /* Back link */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 13px;
+            font-weight: 400;
+            text-decoration: none;
+            transition: color 0.2s;
+            margin-bottom: 24px;
+        }
+
+        .back-link:hover {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .back-link i {
+            margin-right: 8px;
+            font-size: 11px;
+        }
+
+        /* Logo */
+        .logo-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .logo-container img {
+            height: 44px;
+            width: auto;
+        }
+
+        /* Title */
+        .page-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: #fff;
+            text-align: center;
+            margin-bottom: 8px;
+            letter-spacing: -0.3px;
+        }
+
+        .page-subtitle {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.5);
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        /* Member list */
+        .member-list {
+            max-height: 180px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .member-list::-webkit-scrollbar {
+            width: 3px;
+        }
+
+        .member-list::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .member-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 3px;
+        }
+
+        .member-option {
+            display: flex;
+            align-items: center;
+            padding: 12px 14px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .member-option:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        .member-option.selected {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .avatar-circle {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.9);
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+
+        .member-info {
+            flex: 1;
+        }
+
+        .member-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #fff;
+        }
+
+        .member-role {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .selection-indicator {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s;
+        }
+
+        .member-option.selected .selection-indicator {
+            background: rgba(255, 255, 255, 0.9);
+            border-color: transparent;
+        }
+
+        .member-option.selected .selection-indicator::after {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: #0a0a0f;
+            border-radius: 50%;
+        }
+
+        /* Divider */
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+            color: rgba(255, 255, 255, 0.35);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .divider span {
+            padding: 0 12px;
+        }
+
+        /* Form inputs */
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            font-size: 15px;
+            color: #fff;
+            transition: all 0.2s;
+        }
+
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.35);
+        }
+
+        .form-input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.4);
+            cursor: pointer;
+            padding: 4px;
+            transition: color 0.2s;
+        }
+
+        .password-toggle:hover {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* Submit button - matching portal buttons */
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .submit-btn:hover {
+            background: rgba(255, 255, 255, 0.18);
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+
+        .submit-btn i {
+            margin-right: 8px;
+            opacity: 0.8;
+        }
+
+        /* Flash messages */
+        .flash-message {
+            display: flex;
+            align-items: center;
+            padding: 12px 14px;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .flash-message i {
+            margin-right: 10px;
+            color: #ef4444;
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .login-card {
+                padding: 28px 24px;
+                margin: 12px;
+                border-radius: 16px;
+            }
+
+            .page-title {
+                font-size: 20px;
+            }
+
+            .member-option {
+                padding: 10px 12px;
+            }
+
+            .avatar-circle {
+                width: 34px;
+                height: 34px;
+                font-size: 13px;
+            }
+
+            .form-input,
+            .submit-btn {
+                padding: 12px 14px;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .login-card {
+                padding: 40px 36px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-gradient"></div>
+    <div class="bg-image"></div>
+
+    <div class="login-card">
+        <a href="/portal" class="back-link">
+            <i class="fas fa-chevron-left"></i> Back to Portals
+        </a>
+
+        <div class="logo-container">
+            <img src="/static/logo.png" alt="AutoAssistGroup">
+        </div>
+
+        <h1 class="page-title">
+            {% if selected_role == 'admin' %}Admin Portal{% elif selected_role == 'tech-director' %}Director Access{%
+            elif selected_role == 'user' %}Member Login{% else %}Welcome Back{% endif %}
+        </h1>
+        <p class="page-subtitle">Sign in to access your dashboard</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="flash-message">
+            <i class="fas fa-exclamation-circle"></i>
+            <span>{{ message }}</span>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <form action="/login{% if selected_role %}?role={{ selected_role }}{% endif %}" method="POST" id="loginForm">
+            {% if members and members|length > 0 %}
+            <div class="member-list">
+                {% for member in members %}
+                <div class="member-option" onclick="selectMember(this, '{{ member._id }}', '{{ member.user_id }}')"
+                    data-member-id="{{ member._id }}">
+                    <div class="avatar-circle">{{ member.name[0].upper() }}</div>
+                    <div class="member-info">
+                        <div class="member-name">{{ member.name }}</div>
+                        <div class="member-role">{{ member.role }}</div>
+                    </div>
+                    <div class="selection-indicator"></div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="divider">
+                <span>or sign in manually</span>
+            </div>
+
+            <input type="hidden" id="member_id" name="member_id" value="">
+            {% endif %}
+
+            <div class="form-group">
+                <label class="form-label">User ID</label>
+                <input type="text" id="user_id" name="user_id" class="form-input" placeholder="Enter your user ID"
+                    required autocomplete="username">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <div class="input-wrapper">
+                    <input type="password" id="password" name="password" class="form-input"
+                        placeholder="Enter your password" required autocomplete="current-password">
+                    <i class="fas fa-eye password-toggle" onclick="togglePassword()" id="passwordToggle"></i>
+                </div>
+            </div>
+
+            <button type="submit" class="submit-btn">
+                <i class="fas fa-sign-in-alt"></i> Sign In
+            </button>
+        </form>
+    </div>
+
+    <script>
+        function togglePassword() {
+            const input = document.getElementById('password');
+            const icon = document.getElementById('passwordToggle');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        function selectMember(element, memberId, userId) {
+            document.querySelectorAll('.member-option').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+            document.getElementById('member_id').value = memberId;
+            document.getElementById('user_id').value = userId;
+            document.getElementById('password').focus();
+        }
+
+        document.getElementById('user_id').addEventListener('input', function () {
+            document.getElementById('member_id').value = '';
+            document.querySelectorAll('.member-option').forEach(el => el.classList.remove('selected'));
+        });
+
+        document.getElementById('loginForm').addEventListener('submit', function () {
+            const btn = this.querySelector('.submit-btn');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing In...';
+            btn.disabled = true;
+        });
+    </script>
+</body>
+
+</html>

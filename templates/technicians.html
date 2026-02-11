@@ -1,0 +1,1494 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Technicians Management - AutoAssistGroup Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ===== DARK PROFESSIONAL THEME ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            background: #0a0a0f;
+            color: #fff;
+        }
+
+        /* Background */
+        .bg-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            background: linear-gradient(180deg, #0a0a0f 0%, #141420 100%);
+        }
+
+        .bg-image {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background-image: url('/static/css/portal_bg.png');
+            background-size: cover;
+            background-position: center;
+            opacity: 0.15;
+        }
+
+        /* ===== NAVBAR ===== */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 12px 24px;
+        }
+
+        @media (min-width: 768px) {
+            .navbar {
+                padding: 12px 48px;
+            }
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .nav-link {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 12px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+            color: #fff;
+        }
+
+        .nav-link-active {
+            background: rgba(255, 117, 143, 0.15);
+            border-color: rgba(255, 117, 143, 0.3);
+            color: #ff758f;
+        }
+
+        .nav-link i {
+            margin-right: 6px;
+            font-size: 11px;
+            opacity: 0.8;
+        }
+
+        /* ===== MAIN CONTAINER ===== */
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px 20px;
+            padding-top: 80px;
+            padding-bottom: 60px;
+        }
+
+        @media (min-width: 768px) {
+            .main-container {
+                padding: 32px 48px;
+                padding-top: 80px;
+            }
+        }
+
+        /* ===== HEADER SECTION ===== */
+        .header-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .header-content {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        @media (min-width: 768px) {
+            .header-content {
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+            }
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 4px;
+            background: linear-gradient(135deg, #ff758f 0%, #ff7eb3 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .page-subtitle {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 20px;
+            background: rgba(255, 117, 143, 0.2);
+            border: 1px solid rgba(255, 117, 143, 0.4);
+            border-radius: 10px;
+            color: #ff758f;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+
+        @media (min-width: 768px) {
+            .btn-primary {
+                width: auto;
+            }
+        }
+
+        .btn-primary:hover {
+            background: rgba(255, 117, 143, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary i {
+            margin-right: 8px;
+        }
+
+        /* ===== STATS GRID ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        @media (min-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 18px;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+
+        .stat-card:hover {
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .stat-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 14px;
+            font-size: 16px;
+        }
+
+        .stat-icon.blue {
+            background: rgba(59, 130, 246, 0.15);
+            color: #3b82f6;
+        }
+
+        .stat-icon.green {
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+        }
+
+        .stat-icon.orange {
+            background: rgba(249, 115, 22, 0.15);
+            color: #f97316;
+        }
+
+        .stat-icon.purple {
+            background: rgba(168, 85, 247, 0.15);
+            color: #a855f7;
+        }
+
+        .stat-info h3 {
+            font-size: 12px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 4px;
+        }
+
+        .stat-info p {
+            font-size: 22px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .stat-info p.pink {
+            color: #ff758f;
+        }
+
+        .stat-info p.green {
+            color: #22c55e;
+        }
+
+        .stat-info p.orange {
+            color: #f97316;
+        }
+
+        .stat-info p.purple {
+            color: #a855f7;
+        }
+
+        /* ===== MAIN CONTENT CARD ===== */
+        .content-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .content-header {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 20px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        @media (min-width: 640px) {
+            .content-header {
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+            }
+        }
+
+        .content-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .content-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 10px 14px;
+            width: 100%;
+            max-width: 260px;
+        }
+
+        .search-box i {
+            color: rgba(255, 255, 255, 0.4);
+            margin-right: 10px;
+            font-size: 13px;
+        }
+
+        .search-box input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #fff;
+            font-size: 13px;
+        }
+
+        .search-box input::placeholder {
+            color: rgba(255, 255, 255, 0.35);
+        }
+
+        .refresh-btn {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            color: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .refresh-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #ff758f;
+        }
+
+        .content-body {
+            padding: 24px;
+        }
+
+        /* ===== TECHNICIAN GRID ===== */
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        @media (min-width: 768px) {
+            .tech-grid {
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            }
+        }
+
+        /* ===== TECHNICIAN CARD ===== */
+        .tech-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.2s ease;
+        }
+
+        .tech-card:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .tech-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(255, 117, 143, 0.2) 0%, rgba(255, 126, 179, 0.2) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 24px;
+            color: #ff758f;
+        }
+
+        .tech-content {
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            font-size: 11px;
+            font-weight: 500;
+            padding: 4px 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+
+        .status-badge.active {
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+        }
+
+        .status-badge.inactive {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+
+        .status-badge i {
+            margin-right: 5px;
+            font-size: 10px;
+        }
+
+        .tech-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .tech-role {
+            font-size: 13px;
+            font-weight: 500;
+            color: #3b82f6;
+            margin-bottom: 8px;
+        }
+
+        .tech-email {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .tech-email i {
+            margin-right: 6px;
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 11px;
+        }
+
+        .tech-meta {
+            display: flex;
+            justify-content: space-between;
+            padding-top: 14px;
+            margin-top: 14px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .tech-meta span {
+            display: flex;
+            align-items: center;
+        }
+
+        .tech-meta i {
+            margin-right: 5px;
+            font-size: 10px;
+        }
+
+        .tech-actions {
+            display: flex;
+            gap: 8px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            margin-top: 14px;
+        }
+
+        .tech-action-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tech-action-btn.edit {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+
+        .tech-action-btn.edit:hover {
+            background: #3b82f6;
+            color: #fff;
+        }
+
+        .tech-action-btn.deactivate {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        .tech-action-btn.deactivate:hover {
+            background: #ef4444;
+            color: #fff;
+        }
+
+        .tech-action-btn.activate {
+            background: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+        }
+
+        .tech-action-btn.activate:hover {
+            background: #22c55e;
+            color: #fff;
+        }
+
+        /* ===== EMPTY STATE ===== */
+        .empty-state {
+            text-align: center;
+            padding: 48px 24px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 2px dashed rgba(255, 117, 143, 0.2);
+            border-radius: 12px;
+        }
+
+        .empty-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(255, 117, 143, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 32px;
+            color: rgba(255, 117, 143, 0.5);
+        }
+
+        .empty-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .empty-desc {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.5);
+            max-width: 400px;
+            margin: 0 auto 24px;
+        }
+
+        /* ===== USER AVATAR ===== */
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: rgba(255, 117, 143, 0.15);
+            border: 1px solid rgba(255, 117, 143, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 600;
+            color: #ff758f;
+        }
+
+        /* ===== MODAL ===== */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            padding: 20px;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #16161f;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 480px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 8px;
+            color: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 8px;
+        }
+
+        .form-label .required {
+            color: #ef4444;
+        }
+
+        .form-input,
+        .form-select {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.35);
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 117, 143, 0.5);
+        }
+
+        .form-select {
+            cursor: pointer;
+        }
+
+        .form-select option {
+            background: #1a1a24;
+            color: #fff;
+        }
+
+        .form-hint {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.4);
+            margin-top: 6px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        @media (max-width: 480px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 12px;
+            padding: 20px 24px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .btn-cancel {
+            flex: 1;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-cancel:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+        }
+
+        .btn-submit {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px;
+            background: rgba(255, 117, 143, 0.2);
+            border: 1px solid rgba(255, 117, 143, 0.4);
+            border-radius: 10px;
+            color: #ff758f;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-submit:hover {
+            background: rgba(255, 117, 143, 0.3);
+        }
+
+        /* Confirm Modal */
+        .confirm-modal .modal-content {
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .confirm-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: rgba(234, 179, 8, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 28px;
+            color: #eab308;
+        }
+
+        .confirm-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .confirm-message {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 24px;
+        }
+
+        .confirm-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .confirm-actions button {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-confirm-cancel {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .btn-confirm-cancel:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+        }
+
+        .btn-confirm-action {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #ef4444;
+        }
+
+        .btn-confirm-action:hover {
+            background: #ef4444;
+            color: #fff;
+        }
+
+        /* ===== NOTIFICATION ===== */
+        .notification {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 300;
+            padding: 16px 20px;
+            border-radius: 12px;
+            min-width: 280px;
+            transform: translateX(150%);
+            transition: transform 0.3s ease;
+            backdrop-filter: blur(20px);
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background: rgba(34, 197, 94, 0.15);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .notification.error {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .notification-content {
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .notification-icon {
+            margin-right: 12px;
+            font-size: 16px;
+        }
+
+        .notification.success .notification-icon {
+            color: #22c55e;
+        }
+
+        .notification.error .notification-icon {
+            color: #ef4444;
+        }
+
+        .notification-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 2px;
+        }
+
+        .notification-message {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* ===== MOBILE MENU ===== */
+        .mobile-menu {
+            display: none;
+            padding: 16px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            margin-top: 16px;
+        }
+
+        .mobile-menu.open {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .menu-btn {
+            display: none;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .menu-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+        }
+
+        @media (max-width: 768px) {
+            .menu-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .nav-links.desktop {
+                display: none;
+            }
+        }
+
+        /* Hidden utility */
+        .hidden {
+            display: none !important;
+        }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Background -->
+    <div class="bg-gradient"></div>
+    {% if system_settings.show_background %}
+    <div class="bg-image"></div>
+    {% endif %}
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="flex items-center justify-between">
+            <!-- Logo -->
+            <div class="flex items-center">
+                <a href="{% if current_user_role == 'Technical Director' %}/tech-director-dashboard{% else %}/{% endif %}"
+                    class="flex items-center">
+                    <img src="/static/logo.png" alt="AutoAssistGroup Logo" class="h-8 md:h-10">
+                </a>
+            </div>
+
+            <!-- Desktop Nav Links -->
+            <div class="nav-links desktop hidden md:flex">
+                <a href="/" class="nav-link">
+                    <i class="fas fa-ticket-alt"></i>Tickets
+                </a>
+                <a href="/dashboard" class="nav-link">
+                    <i class="fas fa-chart-line"></i>Dashboard
+                </a>
+                <a href="/create-ticket" class="nav-link">
+                    <i class="fas fa-plus-circle"></i>Create Ticket
+                </a>
+                {% if current_user_role == 'Administrator' %}
+                <a href="/technicians" class="nav-link nav-link-active">
+                    <i class="fas fa-tools"></i>Technicians
+                </a>
+                <a href="/members" class="nav-link">
+                    <i class="fas fa-users"></i>Members
+                </a>
+                <a href="/admin" class="nav-link">
+                    <i class="fas fa-cog"></i>Admin Panel
+                </a>
+                {% endif %}
+            </div>
+
+            <!-- User Section -->
+            <div class="flex items-center gap-3">
+                {% if current_user %}
+                <div class="hidden sm:flex items-center gap-2">
+                    <div class="user-avatar">{{ current_user[0]|upper }}</div>
+                    <span class="text-sm" style="color: rgba(255,255,255,0.7);">{{ current_user }}</span>
+                </div>
+                <a href="/logout" class="nav-link">
+                    <i class="fas fa-sign-out-alt"></i>Logout
+                </a>
+                {% else %}
+                <a href="/login" class="nav-link">
+                    <i class="fas fa-sign-in-alt"></i>Login
+                </a>
+                {% endif %}
+
+                <!-- Mobile menu button -->
+                <button class="menu-btn" onclick="toggleMobileMenu()">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile menu -->
+        <div id="mobileMenu" class="mobile-menu">
+            <a href="/" class="nav-link">
+                <i class="fas fa-ticket-alt"></i>Tickets
+            </a>
+            <a href="/dashboard" class="nav-link">
+                <i class="fas fa-chart-line"></i>Dashboard
+            </a>
+            <a href="/create-ticket" class="nav-link">
+                <i class="fas fa-plus-circle"></i>Create Ticket
+            </a>
+            {% if current_user_role == 'Administrator' %}
+            <a href="/technicians" class="nav-link nav-link-active">
+                <i class="fas fa-tools"></i>Technicians
+            </a>
+            <a href="/members" class="nav-link">
+                <i class="fas fa-users"></i>Members
+            </a>
+            <a href="/admin" class="nav-link">
+                <i class="fas fa-cog"></i>Admin Panel
+            </a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <!-- Header Section -->
+        <div class="header-card">
+            <div class="header-content">
+                <div>
+                    <h1 class="page-title">Technicians Management</h1>
+                    <p class="page-subtitle">Manage field technicians and their information</p>
+                </div>
+                <button id="addTechnicianBtn" class="btn-primary">
+                    <i class="fas fa-plus"></i>Add New Technician
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon blue">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>Total Technicians</h3>
+                    <p class="pink">{{ technicians|length }}</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>Active</h3>
+                    <p class="green">{{ technicians|selectattr('is_active')|list|length }}</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon orange">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>Inactive</h3>
+                    <p class="orange">{{ technicians|rejectattr('is_active')|list|length }}</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon purple">
+                    <i class="fas fa-crown"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>Senior Techs</h3>
+                    <p class="purple">{{ technicians|selectattr('role', 'equalto', 'Senior Technician')|list|length }}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Card -->
+        <div class="content-card">
+            <div class="content-header">
+                <h2 class="content-title">Technicians Directory</h2>
+                <div class="content-actions">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="Search technicians..." id="searchInput">
+                    </div>
+                    <button id="refreshBtn" class="refresh-btn">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="content-body">
+                {% if technicians %}
+                <!-- Technicians Grid -->
+                <div class="tech-grid" id="techniciansContainer">
+                    {% for technician in technicians %}
+                    <div class="tech-card" data-technician-id="{{ technician._id }}">
+                        <div class="tech-avatar">
+                            <i class="fas fa-hard-hat"></i>
+                        </div>
+
+                        <div class="tech-content">
+                            <span class="status-badge {% if technician.is_active %}active{% else %}inactive{% endif %}">
+                                <i
+                                    class="fas fa-{% if technician.is_active %}check{% else %}times{% endif %}-circle"></i>
+                                {{ 'Active' if technician.is_active else 'Inactive' }}
+                            </span>
+
+                            <h3 class="tech-name">{{ technician.name }}</h3>
+                            <p class="tech-role">{{ technician.role or 'Technician' }}</p>
+                            <p class="tech-email">
+                                <i class="fas fa-envelope"></i>
+                                {{ technician.email or 'No email' }}
+                            </p>
+                        </div>
+
+                        <div class="tech-meta">
+                            <span>
+                                <i class="fas fa-calendar"></i>
+                                {{ technician.created_at.strftime('%Y-%m-%d') if technician.created_at else 'N/A' }}
+                            </span>
+                            <span>
+                                <i class="fas fa-id-badge"></i>
+                                {{ technician.employee_id or 'N/A' }}
+                            </span>
+                        </div>
+
+                        <div class="tech-actions">
+                            <button class="tech-action-btn edit edit-technician"
+                                data-technician-id="{{ technician._id }}" data-technician-name="{{ technician.name }}"
+                                data-technician-role="{{ technician.role or '' }}"
+                                data-technician-email="{{ technician.email or '' }}">
+                                <i class="fas fa-edit"></i>Edit
+                            </button>
+                            {% if technician.is_active %}
+                            <button class="tech-action-btn deactivate deactivate-technician"
+                                data-technician-id="{{ technician._id }}" data-technician-name="{{ technician.name }}">
+                                <i class="fas fa-ban"></i>Deactivate
+                            </button>
+                            {% else %}
+                            <button class="tech-action-btn activate activate-technician"
+                                data-technician-id="{{ technician._id }}" data-technician-name="{{ technician.name }}">
+                                <i class="fas fa-check"></i>Activate
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <!-- Empty State -->
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-tools"></i>
+                    </div>
+                    <h3 class="empty-title">No Technicians Yet</h3>
+                    <p class="empty-desc">Get started by adding your first technician to the system. Technicians can be
+                        assigned to tickets and managed from here.</p>
+                    <button id="addFirstTechnicianBtn" class="btn-primary">
+                        <i class="fas fa-plus"></i>Add Your First Technician
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Technician Modal -->
+    <div id="technicianModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle" class="modal-title">Add New Technician</h3>
+                <button id="closeModal" class="modal-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <form id="technicianForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">
+                            Technician Name <span class="required">*</span>
+                        </label>
+                        <input type="text" id="technicianName" class="form-input" placeholder="Enter full name"
+                            required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">
+                                Role <span class="required">*</span>
+                            </label>
+                            <select id="technicianRole" class="form-select" required>
+                                <option value="">Select role</option>
+                                <option value="Technician">Technician</option>
+                                <option value="Senior Technician">Senior Technician</option>
+                                <option value="Lead Technician">Lead Technician</option>
+                                <option value="Specialist">Specialist</option>
+                                <option value="Supervisor">Supervisor</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Employee ID</label>
+                            <input type="text" id="technicianEmployeeId" class="form-input" placeholder="Optional">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            Email Address <span class="required">*</span>
+                        </label>
+                        <input type="email" id="technicianEmail" class="form-input" placeholder="Enter email address"
+                            required>
+                        <p class="form-hint">Used for notifications and account access</p>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" id="cancelBtn" class="btn-cancel">Cancel</button>
+                    <button type="submit" id="submitBtn" class="btn-submit">
+                        <i class="fas fa-save"></i>
+                        <span id="submitBtnText">Save Technician</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="modal confirm-modal">
+        <div class="modal-content">
+            <div class="modal-body" style="padding-top: 32px;">
+                <div class="confirm-icon" id="confirmIcon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h3 class="confirm-title" id="confirmTitle">Confirm Action</h3>
+                <p class="confirm-message" id="confirmMessage">Are you sure you want to continue?</p>
+                <div class="confirm-actions">
+                    <button id="cancelConfirm" class="btn-confirm-cancel">Cancel</button>
+                    <button id="confirmAction" class="btn-confirm-action">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification">
+        <div class="notification-content">
+            <i id="notificationIcon" class="notification-icon fas fa-check-circle"></i>
+            <div>
+                <p id="notificationTitle" class="notification-title"></p>
+                <p id="notificationMessage" class="notification-message"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTechnicianId = null;
+        let currentAction = null;
+
+        // Elements
+        const technicianModal = document.getElementById('technicianModal');
+        const confirmModal = document.getElementById('confirmModal');
+        const technicianForm = document.getElementById('technicianForm');
+        const technicianName = document.getElementById('technicianName');
+        const technicianRole = document.getElementById('technicianRole');
+        const technicianEmail = document.getElementById('technicianEmail');
+        const modalTitle = document.getElementById('modalTitle');
+        const submitBtnText = document.getElementById('submitBtnText');
+        const searchInput = document.getElementById('searchInput');
+        const techniciansContainer = document.getElementById('techniciansContainer');
+
+        // Show notification
+        function showNotification(title, message, type = 'success') {
+            const notification = document.getElementById('notification');
+            const notificationTitle = document.getElementById('notificationTitle');
+            const notificationMessage = document.getElementById('notificationMessage');
+            const notificationIcon = document.getElementById('notificationIcon');
+
+            notificationTitle.textContent = title;
+            notificationMessage.textContent = message;
+
+            if (type === 'success') {
+                notificationIcon.className = 'notification-icon fas fa-check-circle';
+                notification.className = 'notification success show';
+            } else {
+                notificationIcon.className = 'notification-icon fas fa-exclamation-circle';
+                notification.className = 'notification error show';
+            }
+
+            setTimeout(() => notification.classList.remove('show'), 3000);
+        }
+
+        // Show/hide modals
+        function showModal(modal) {
+            modal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function hideModal(modal) {
+            modal.classList.remove('show');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Search functionality
+        if (searchInput && techniciansContainer) {
+            searchInput.addEventListener('input', function () {
+                const searchTerm = this.value.toLowerCase();
+                const cards = techniciansContainer.querySelectorAll('.tech-card');
+
+                cards.forEach(card => {
+                    const name = card.querySelector('.tech-name').textContent.toLowerCase();
+                    const email = card.querySelector('.tech-email').textContent.toLowerCase();
+                    const role = card.querySelector('.tech-role').textContent.toLowerCase();
+
+                    if (name.includes(searchTerm) || email.includes(searchTerm) || role.includes(searchTerm)) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        }
+
+        // Add technician button
+        document.getElementById('addTechnicianBtn')?.addEventListener('click', function () {
+            modalTitle.textContent = 'Add New Technician';
+            submitBtnText.textContent = 'Save Technician';
+            technicianForm.reset();
+            currentTechnicianId = null;
+            showModal(technicianModal);
+        });
+
+        document.getElementById('addFirstTechnicianBtn')?.addEventListener('click', function () {
+            modalTitle.textContent = 'Add New Technician';
+            submitBtnText.textContent = 'Save Technician';
+            technicianForm.reset();
+            currentTechnicianId = null;
+            showModal(technicianModal);
+        });
+
+        // Edit technician buttons
+        document.querySelectorAll('.edit-technician').forEach(btn => {
+            btn.addEventListener('click', function () {
+                currentTechnicianId = this.dataset.technicianId;
+                modalTitle.textContent = 'Edit Technician';
+                submitBtnText.textContent = 'Update Technician';
+                technicianName.value = this.dataset.technicianName;
+                technicianRole.value = this.dataset.technicianRole;
+                technicianEmail.value = this.dataset.technicianEmail;
+                showModal(technicianModal);
+            });
+        });
+
+        // Close modal buttons
+        document.getElementById('closeModal')?.addEventListener('click', () => hideModal(technicianModal));
+        document.getElementById('cancelBtn')?.addEventListener('click', () => hideModal(technicianModal));
+        document.getElementById('cancelConfirm')?.addEventListener('click', () => hideModal(confirmModal));
+
+        // Form submission
+        technicianForm?.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const data = {
+                name: technicianName.value,
+                role: technicianRole.value,
+                email: technicianEmail.value,
+                employee_id: document.getElementById('technicianEmployeeId')?.value || ''
+            };
+
+            try {
+                const url = currentTechnicianId
+                    ? `/api/technicians/${currentTechnicianId}`
+                    : '/api/technicians';
+                const method = currentTechnicianId ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data),
+                    credentials: 'include'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showNotification('Success', result.message || 'Technician saved successfully');
+                    hideModal(technicianModal);
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    showNotification('Error', result.error || 'Failed to save technician', 'error');
+                }
+            } catch (error) {
+                showNotification('Error', 'An error occurred', 'error');
+            }
+        });
+
+        // Deactivate/Activate buttons
+        document.querySelectorAll('.deactivate-technician, .activate-technician').forEach(btn => {
+            btn.addEventListener('click', function () {
+                currentTechnicianId = this.dataset.technicianId;
+                const name = this.dataset.technicianName;
+                const isDeactivate = this.classList.contains('deactivate-technician');
+
+                currentAction = isDeactivate ? 'deactivate' : 'activate';
+                document.getElementById('confirmTitle').textContent = `${isDeactivate ? 'Deactivate' : 'Activate'} Technician`;
+                document.getElementById('confirmMessage').textContent = `Are you sure you want to ${isDeactivate ? 'deactivate' : 'activate'} ${name}?`;
+
+                showModal(confirmModal);
+            });
+        });
+
+        // Confirm action
+        document.getElementById('confirmAction')?.addEventListener('click', async function () {
+            if (!currentTechnicianId || !currentAction) return;
+
+            try {
+                const response = await fetch(`/api/technicians/${currentTechnicianId}/${currentAction}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showNotification('Success', result.message || `Technician ${currentAction}d successfully`);
+                    hideModal(confirmModal);
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    showNotification('Error', result.error || 'Action failed', 'error');
+                }
+            } catch (error) {
+                showNotification('Error', 'An error occurred', 'error');
+            }
+        });
+
+        // Refresh button
+        document.getElementById('refreshBtn')?.addEventListener('click', () => window.location.reload());
+
+        // Mobile menu
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            menu.classList.toggle('open');
+        }
+
+        // Close modals on outside click
+        [technicianModal, confirmModal].forEach(modal => {
+            modal?.addEventListener('click', function (e) {
+                if (e.target === this) hideModal(this);
+            });
+        });
+    </script>
+</body>
+
+</html>

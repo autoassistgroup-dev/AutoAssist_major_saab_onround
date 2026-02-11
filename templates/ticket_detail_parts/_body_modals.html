@@ -1,0 +1,546 @@
+<body class="min-h-screen max-w-screen-ultra">
+    <!-- Animated Gradient Background -->
+    {% if system_settings.show_background %}
+    <div class="background-layer">
+        <div class="gradient-orb orb-1"></div>
+        <div class="gradient-orb orb-2"></div>
+        <div class="gradient-orb orb-3"></div>
+        <div class="gradient-orb orb-4"></div>
+    </div>
+    {% endif %}
+
+    <!-- Notification System -->
+    <div id="notification" class="notification hidden">
+        <i class="fas fa-check-circle mr-2"></i>
+        <span id="notification-message"></span>
+    </div>
+
+    <!-- Message Expansion Modal -->
+    <div id="messageModal" class="modal-overlay">
+        <div class="modal-content p-6 bg-[#1a1a2e] border border-white/10">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-white">Full Message</h3>
+                <button id="closeMessageModal" class="text-gray-400 hover:text-white transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="modalMessageContent"
+                class="p-4 bg-white/5 border border-white/5 rounded-lg whitespace-pre-wrap text-gray-300 leading-relaxed">
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="modal-overlay">
+        <div class="modal-content p-6 bg-[#1a1a2e] border border-white/10">
+            <h3 class="text-xl font-semibold mb-4 text-white">Confirm Ticket Closure</h3>
+            <p class="mb-6 text-gray-400">Are you sure you want to close this ticket? This action cannot be undone.</p>
+            <div class="flex justify-end space-x-3">
+                <button id="cancelClose"
+                    class="px-4 py-2 bg-white/10 text-gray-300 rounded-lg hover:bg-white/20 transition">
+                    Cancel
+                </button>
+                <button id="confirmClose"
+                    class="px-4 py-2 text-white rounded-lg hover:opacity-90 transition bg-indigo-600">
+                    Confirm Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forward Modal -->
+    <div id="forwardModal" class="modal-overlay">
+        <div class="modal-content p-6 bg-[#1a1a2e] border border-white/10">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-white">Forward Ticket</h3>
+                <button id="closeForwardModal" class="text-gray-400 hover:text-white transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="mb-4">
+                <label for="forwardMemberSelect" class="block text-gray-300 text-sm font-medium mb-1">Select
+                    Member</label>
+                <select id="forwardMemberSelect"
+                    class="w-full px-4 py-3 border border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white/5 text-white shadow-sm transition-all duration-200 font-medium">
+                    <option value="" class="bg-[#1a1a2e] text-gray-500">Select a member...</option>
+                    {% for member in members %}
+                    <option value="{{ member['_id'] }}" class="bg-[#1a1a2e]">{{ member.name }} ({{ member.role }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-4">
+                <label for="forwardNotes" class="block text-gray-300 text-sm font-medium mb-1">Notes</label>
+                <textarea id="forwardNotes"
+                    class="w-full px-3 py-2 border border-white/10 bg-white/5 text-white rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Add any notes explaining why the ticket is being forwarded"></textarea>
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button id="cancelForward"
+                    class="px-4 py-2 bg-white/10 text-gray-300 rounded-lg hover:bg-white/20 transition">
+                    Cancel
+                </button>
+                <button id="confirmForward"
+                    class="px-4 py-2 text-white rounded-lg hover:opacity-90 transition bg-indigo-600">
+                    Forward Ticket
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Note Modal -->
+    <div id="noteModal" class="modal-overlay">
+        <div class="modal-content p-6 bg-[#1a1a2e] border border-white/10">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-white">Add Private Note</h3>
+                <button id="closeNoteModal" class="text-gray-400 hover:text-white transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mb-4">
+                <label class="block text-gray-300 text-sm font-medium mb-1">Title</label>
+                <input type="text" id="noteTitle"
+                    class="w-full px-3 py-2 border border-white/10 bg-white/5 text-white rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Note title">
+            </div>
+            <div class="mb-4">
+                <label class="block text-gray-300 text-sm font-medium mb-1">Content</label>
+                <textarea id="noteContent" rows="4"
+                    class="w-full px-3 py-2 border border-white/10 bg-white/5 text-white rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Write your note here..."></textarea>
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button id="cancelNote"
+                    class="px-4 py-2 bg-white/10 text-gray-300 rounded-lg hover:bg-white/20 transition">
+                    Cancel
+                </button>
+                <button id="saveNote" class="px-4 py-2 text-white rounded-lg hover:opacity-90 transition bg-indigo-600">
+                    Save Note
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Template Modal -->
+    <div id="editTemplateModal" class="modal-overlay">
+        <div class="modal-content p-6 bg-[#1a1a2e] border border-white/10">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-white" id="editTemplateTitle">Add New Template</h3>
+                <button id="closeEditTemplateModal" class="text-gray-400 hover:text-white transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mb-4">
+                <label class="block text-gray-300 text-sm font-medium mb-1">Title</label>
+                <input type="text" id="templateTitle"
+                    class="w-full px-3 py-2 border border-white/10 bg-white/5 text-white rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Template title">
+            </div>
+            <div class="mb-4">
+                <label class="block text-gray-300 text-sm font-medium mb-1">Content</label>
+                <textarea id="templateContent" rows="6"
+                    class="w-full px-3 py-2 border border-white/10 bg-white/5 text-white rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Enter your template content here..."></textarea>
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button id="cancelEditTemplate"
+                    class="px-4 py-2 bg-white/10 text-gray-300 rounded-lg hover:bg-white/20 transition">
+                    Cancel
+                </button>
+                <button id="saveTemplate"
+                    class="px-4 py-2 text-white rounded-lg hover:opacity-90 transition bg-indigo-600">
+                    Save Template
+                </button>
+                <button id="deleteTemplate"
+                    class="px-4 py-2 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500/20 transition hidden">
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Document Modal -->
+    <div id="documentModal" class="modal-overlay">
+        <div class="modal-content p-6 bg-[#1a1a2e] border border-white/10">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-white" id="documentModalTitle">Add New Document</h3>
+                <button id="closeDocumentModal" class="text-gray-400 hover:text-white transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mb-4">
+                <label class="block text-gray-300 text-sm font-medium mb-1">Document Name</label>
+                <input type="text" id="documentName"
+                    class="w-full px-3 py-2 border border-white/10 bg-white/5 text-white rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Document name">
+            </div>
+            <div class="mb-4">
+                <label class="block text-gray-300 text-sm font-medium mb-1">Document Type</label>
+                <select id="documentType"
+                    class="w-full px-3 py-2 border border-white/10 bg-white/5 text-white rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    <option value="form" class="bg-[#1a1a2e]">Form</option>
+                    <option value="guide" class="bg-[#1a1a2e]">Guide</option>
+                    <option value="manual" class="bg-[#1a1a2e]">Manual</option>
+                    <option value="template" class="bg-[#1a1a2e]">Template Document</option>
+                    <option value="other" class="bg-[#1a1a2e]">Other</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label class="block text-gray-300 text-sm font-medium mb-1">File</label>
+                <div class="flex items-center">
+                    <div class="file-input-wrapper w-full font-medium">
+                        <div
+                            class="file-input-button w-full flex items-center justify-center py-2 bg-white/5 hover:bg-white/10 border border-white/10 transition rounded-lg text-gray-400">
+                            <i class="fas fa-upload mr-2"></i> Choose File
+                        </div>
+                        <input type="file" id="documentFile" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xlsx,.xls">
+                    </div>
+                </div>
+                <p id="selectedFileName" class="mt-2 text-sm text-gray-500">No file selected</p>
+            </div>
+            <div class="mb-4">
+                <label class="block text-gray-300 text-sm font-medium mb-1">Description</label>
+                <textarea id="documentDescription" rows="3"
+                    class="w-full px-3 py-2 border border-white/10 bg-white/5 text-white rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Enter a short description of this document..."></textarea>
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button id="cancelDocument"
+                    class="px-4 py-2 bg-white/10 text-gray-300 rounded-lg hover:bg-white/20 transition">
+                    Cancel
+                </button>
+                <button id="saveDocument"
+                    class="px-4 py-2 text-white rounded-lg hover:opacity-90 transition bg-indigo-600">
+                    Save Document
+                </button>
+                <button id="deleteDocument"
+                    class="px-4 py-2 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500/20 transition hidden">
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vehicle & Claim Edit Modal -->
+    <div id="vehicleClaimModal" class="modal-overlay">
+        <div class="modal-content">
+            <!-- Header -->
+            <div class="modal-header"
+                style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-bottom: 1px solid rgba(99, 102, 241, 0.2); padding: 20px 24px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                    <div>
+                        <h3
+                            style="color: #f8fafc; font-size: 1.25rem; font-weight: 600; margin: 0; letter-spacing: -0.01em;">
+                            Vehicle & Claim Information</h3>
+                        <p style="color: #94a3b8; font-size: 0.875rem; margin: 4px 0 0 0; font-weight: 400;">Edit
+                            vehicle details and upload claim documents</p>
+                    </div>
+                    <button id="closeVehicleClaimModal"
+                        style="width: 32px; height: 32px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;">
+                        <i class="fas fa-times" style="color: #cbd5e1; font-size: 14px;"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body">
+                <!-- Vehicle Details Section -->
+                <div class="section-card">
+                    <div class="section-title">
+                        <i class="fas fa-car" style="color: #818cf8;"></i>
+                        <span>Vehicle Details</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+                        <div class="form-group">
+                            <label class="form-label">Registration</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-id-card input-icon"></i>
+                                <input type="text" id="editVehicleRegistration" class="form-input"
+                                    placeholder="e.g., ABC 123">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Service Date</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-calendar-check input-icon"></i>
+                                <input type="date" id="editServiceDate" class="form-input">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Claim Date</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-calendar-alt input-icon"></i>
+                                <input type="date" id="editClaimDate" class="form-input">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Claim Details Section -->
+                <div class="section-card">
+                    <div class="section-title">
+                        <i class="fas fa-clipboard-list" style="color: #a78bfa;"></i>
+                        <span>Claim Details</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+                        <div class="form-group">
+                            <label class="form-label">Type of Claim</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-tag input-icon"></i>
+                                <input type="text" id="editTypeOfClaim" class="form-input"
+                                    placeholder="e.g., Warranty, Repair">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">VHC Link</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-link input-icon"></i>
+                                <input type="url" id="editVhcLink" class="form-input" placeholder="https://...">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Days Between</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-clock input-icon"></i>
+                                <input type="number" id="editDaysBetween" class="form-input" placeholder="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Checklist Section -->
+                <div class="section-card">
+                    <div class="section-title">
+                        <i class="fas fa-tasks" style="color: #34d399;"></i>
+                        <span>Claim Checklist</span>
+                    </div>
+                    <div class="checkbox-grid">
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="editAdvisoriesFollowed">
+                            <span>Advisories Followed</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="editWithinWarranty">
+                            <span>Within Warranty</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="editNewFaultCodes">
+                            <span>New Fault Codes</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="editDpfLightOn">
+                            <span>DPF Light On</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="editEmlLightOn">
+                            <span>EML Light On</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Documents Section -->
+                <div class="section-card" style="margin-bottom: 0;">
+                    <div class="section-title">
+                        <i class="fas fa-file-alt" style="color: #60a5fa;"></i>
+                        <span>Claim Documents</span>
+                        <span style="margin-left: auto; font-size: 0.7rem; color: #6b7280; font-weight: 400;">Receipts,
+                            Photos, Reports</span>
+                    </div>
+
+                    <!-- Upload Zone - Clickable -->
+                    <div class="file-input-wrapper" style="margin-bottom: 12px;">
+                        <label for="claimDocumentFile" class="upload-zone file-input-button" style="cursor: pointer;">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <span style="color: #d1d5db; font-size: 0.8rem;">Drop files here or click to upload</span>
+                            <span style="color: #6b7280; font-size: 0.7rem;">PDF, DOC, JPG, PNG, XLS</span>
+                        </label>
+                        <input type="file" id="claimDocumentFile" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xlsx,.xls"
+                            multiple style="display: none;">
+                    </div>
+
+                    <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+                        <input type="text" id="claimDocumentDescription" class="form-input"
+                            style="padding-left: 1rem; flex: 1;" placeholder="Description (optional)">
+                        <button type="button" id="uploadClaimDocBtn" class="btn-upload">
+                            <i class="fas fa-upload" style="margin-right: 6px;"></i>Upload
+                        </button>
+                    </div>
+
+                    <!-- Existing Documents List -->
+                    <div id="claimDocumentsList" style="max-height: 100px; overflow-y: auto;">
+                        <p style="color: #6b7280; font-size: 0.85rem; text-align: center; padding: 8px 0;">No claim
+                            documents uploaded yet.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="modal-footer"
+                style="background: #0f172a; border-top: 1px solid rgba(99, 102, 241, 0.15); padding: 16px 24px; display: flex; justify-content: flex-end; gap: 12px;">
+                <button id="cancelVehicleClaim"
+                    style="padding: 10px 20px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #cbd5e1; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
+                    <i class="fas fa-times" style="font-size: 12px;"></i>Cancel
+                </button>
+                <button id="saveVehicleClaim"
+                    style="padding: 10px 20px; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); border: none; border-radius: 6px; color: #ffffff; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);">
+                    <i class="fas fa-save" style="font-size: 12px;"></i>Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assignment/Forward/Takeover Modal -->
+    <div id="assignModal" class="modal-overlay">
+        <div class="modal-content p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-white" id="assignModalTitle">Assign Ticket</h3>
+                <button id="closeAssignModal" class="text-gray-400 hover:text-white transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mb-4">
+                <label class="block text-gray-300 text-sm font-medium mb-1">Select Member</label>
+                <select id="assignMemberSelect"
+                    class="w-full px-4 py-3 border border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white/5 shadow-sm transition-all duration-200 text-white font-medium">
+                    {% for member in members %}
+                    <option value="{{ member._id }}" class="bg-[#1a1a2e] text-white py-2">{{ member.name }} - {{
+                        member.role }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-4" id="forwardNotesContainer" style="display: none;">
+                <label class="block text-gray-300 text-sm font-medium mb-1">Notes</label>
+                <textarea id="assignNotes"
+                    class="w-full px-3 py-2 border border-white/10 bg-white/5 text-white rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Add any notes for the forwarded ticket"></textarea>
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button id="cancelAssign"
+                    class="px-4 py-2 bg-white/10 text-gray-300 rounded-lg hover:bg-white/20 transition">
+                    Cancel
+                </button>
+                <button id="confirmAssign"
+                    class="px-4 py-2 text-white rounded-lg hover:opacity-90 transition bg-indigo-600">
+                    Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Email Template Modal -->
+    <div id="emailTemplateModal" class="modal-overlay">
+        <div class="modal-content p-6 email-template-modal bg-[#1a1a2e]"
+            style="max-width: 800px; max-height: 90vh; width: 90vw;">
+            <!-- Header Section -->
+            <div class="flex justify-between items-center mb-4 pb-3 border-b border-white/10">
+                <h3 class="text-xl font-semibold text-white">
+                    <i class="fas fa-envelope-open-text text-indigo-400 mr-2"></i>Email Template
+                </h3>
+                <button id="closeEmailTemplateModal"
+                    class="text-gray-400 hover:text-white transition-colors p-2 rounded-full hover:bg-white/10">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Scrollable Content Area -->
+            <div class="email-template-content overflow-y-auto" style="max-height: calc(90vh - 200px);">
+                <!-- Info Tip -->
+                <div class="mb-6 p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-lg">
+                    <p class="text-sm text-indigo-300 leading-relaxed">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        <strong>Tip:</strong> You can edit the subject and body directly, or load a template and then
+                        customize it. The fields are always editable!
+                    </p>
+                </div>
+
+                <!-- Template Type Selection -->
+                <div class="mb-6">
+                    <label class="block text-gray-300 text-sm font-medium mb-2">
+                        <i class="fas fa-file-alt mr-2 text-indigo-400"></i>Template Type
+                    </label>
+                    <select id="templateTypeSelect"
+                        class="w-full px-4 py-3 border border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white/5 text-white shadow-sm transition-all duration-200">
+                        <option value="warranty_claim" class="bg-[#1a1a2e]">Warranty Claim Template</option>
+                    </select>
+                </div>
+
+                <!-- Recipient Email -->
+                <div class="mb-6">
+                    <label class="block text-gray-300 text-sm font-medium mb-2">
+                        <i class="fas fa-envelope mr-2 text-purple-400"></i>Recipient Email
+                    </label>
+                    <input type="email" id="recipientEmail"
+                        class="w-full px-4 py-3 border border-white/10 rounded-lg bg-white/5 text-gray-400 cursor-not-allowed"
+                        readonly value="{{ ticket.email }}">
+                </div>
+
+                <!-- Email Subject -->
+                <div class="mb-6">
+                    <label class="block text-gray-300 text-sm font-medium mb-2">
+                        <i class="fas fa-tag mr-2 text-orange-400"></i>Subject
+                    </label>
+                    <input type="text" id="emailSubject"
+                        class="w-full px-4 py-3 border border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white/5 text-white cursor-text hover:bg-white/10 transition-colors shadow-sm"
+                        placeholder="Enter email subject...">
+                </div>
+
+                <!-- Email Body -->
+                <div class="mb-6">
+                    <label class="block text-gray-300 text-sm font-medium mb-2">
+                        <i class="fas fa-edit mr-2 text-indigo-400"></i>Email Body
+                    </label>
+                    <textarea id="emailBody"
+                        class="w-full px-4 py-3 border border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white/5 text-white cursor-text hover:bg-white/10 transition-colors shadow-sm resize-vertical"
+                        rows="12" placeholder="Enter email body..."></textarea>
+                </div>
+
+                <!-- Attachments Section -->
+                <div class="mb-6">
+                    <label class="block text-gray-300 text-sm font-medium mb-2">
+                        <i class="fas fa-paperclip mr-2 text-indigo-400"></i>Available Attachments
+                    </label>
+                    <div id="availableAttachments"
+                        class="space-y-3 max-h-48 overflow-y-auto bg-white/5 rounded-lg p-4 border border-white/10">
+                        <!-- Attachments will be populated via JavaScript -->
+                        <div class="text-center text-gray-500 py-8">
+                            <i class="fas fa-paperclip text-2xl mb-2 text-gray-600"></i>
+                            <p class="text-sm">No attachments available</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fixed Footer with Action Buttons -->
+            <div class="border-t border-white/10 pt-4 mt-4 bg-transparent">
+                <div class="flex flex-wrap justify-end gap-3">
+                    <button id="cancelEmailTemplate"
+                        class="px-4 py-2 bg-white/10 text-gray-300 rounded-lg hover:bg-white/20 transition-colors font-medium">
+                        <i class="fas fa-times mr-2"></i>Cancel
+                    </button>
+                    <button id="regenerateAttachments"
+                        class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium"
+                        title="Regenerate attachment data for this ticket">
+                        <i class="fas fa-sync-alt mr-2"></i>Regenerate
+                    </button>
+                    <button id="loadTemplate"
+                        class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium">
+                        <i class="fas fa-download mr-2"></i>Load Template
+                    </button>
+                    <button id="editTemplate"
+                        class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors font-medium"
+                        style="display: none;">
+                        <i class="fas fa-edit mr-2"></i>Edit Template
+                    </button>
+                    <button id="clearFields"
+                        class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium">
+                        <i class="fas fa-eraser mr-2"></i>Clear
+                    </button>
+                    <button id="sendEmail"
+                        class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
+                        <i class="fas fa-paper-plane mr-2"></i>Send Email
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>

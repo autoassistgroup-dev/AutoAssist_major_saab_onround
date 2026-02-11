@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="AutoAssistGroup Support Ticket #{{ ticket.ticket_id }} - {{ (ticket.subject or 'No Subject')[:100] }}">
+    <meta name="robots" content="noindex, nofollow">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="theme-color" content="#4f46e5">
+    <title>Ticket #{{ ticket.ticket_id }} - AutoAssistGroup Portal</title>
+
+    <!-- External Resources -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" media="all">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="all">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" media="all">
+    <link href="/static/css/animations.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+    
+    <!-- ===== CSS STYLES ===== -->
+    <style>
+    {% include 'ticket_detail_parts/css/_00_base.html' %}
+    {% include 'ticket_detail_parts/css/_01_theme.html' %}
+    {% include 'ticket_detail_parts/css/_02_scrollbar.html' %}
+    {% include 'ticket_detail_parts/css/_03_global.html' %}
+    {% include 'ticket_detail_parts/css/_04_navbar.html' %}
+    {% include 'ticket_detail_parts/css/_05_avatar.html' %}
+    {% include 'ticket_detail_parts/css/_06_mobile.html' %}
+    {% include 'ticket_detail_parts/css/_07_compact.html' %}
+    {% include 'ticket_detail_parts/css/_08_background.html' %}
+    {% include 'ticket_detail_parts/css/_09_glass.html' %}
+    {% include 'ticket_detail_parts/css/_10_professional.html' %}
+    {% include 'ticket_detail_parts/css/_11_fixes.html' %}
+    {% include 'ticket_detail_parts/css/_12_gradients.html' %}
+    {% include 'ticket_detail_parts/css/_13_priority.html' %}
+    {% include 'ticket_detail_parts/css/_14_messages.html' %}
+    {% include 'ticket_detail_parts/css/_15_email_modal.html' %}
+    {% include 'ticket_detail_parts/css/_16_reply_form.html' %}
+    {% include 'ticket_detail_parts/css/_17_attachments.html' %}
+    {% include 'ticket_detail_parts/css/_19_vehicle.html' %}
+    {% include 'ticket_detail_parts/css/_20_normal_ui.html' %}
+    {% include 'ticket_detail_parts/css/_21_dragdrop.html' %}
+    {% include 'ticket_detail_parts/css/_22_sticky.html' %}
+    </style>
+</head>
+
+<!-- ===== BODY ===== -->
+{% include 'ticket_detail_parts/modals/_body_start.html' %}
+
+<!-- ===== MODALS ===== -->
+{% include 'ticket_detail_parts/modals/_modal_message.html' %}
+{% include 'ticket_detail_parts/modals/_modal_confirm.html' %}
+{% include 'ticket_detail_parts/modals/_modal_forward.html' %}
+{% include 'ticket_detail_parts/modals/_modal_note.html' %}
+{% include 'ticket_detail_parts/modals/_modal_edit_template.html' %}
+{% include 'ticket_detail_parts/modals/_modal_document.html' %}
+{% include 'ticket_detail_parts/modals/_modal_vehicle_claim.html' %}
+{% include 'ticket_detail_parts/modals/_modal_assign.html' %}
+{% include 'ticket_detail_parts/modals/_modal_email_template.html' %}
+
+<!-- ===== MAIN CONTENT ===== -->
+{% include 'ticket_detail_parts/modals/_main_content.html' %}
+
+<!-- ===== JSON DATA ===== -->
+{% include 'ticket_detail_parts/_main_layout.html' %}
+
+<!-- ===== JAVASCRIPT ===== -->
+{% include 'ticket_detail_parts/js/_03_init.html' %}
+{% include 'ticket_detail_parts/js/_04_modal_funcs.html' %}
+{% include 'ticket_detail_parts/js/_05_notes.html' %}
+{% include 'ticket_detail_parts/js/_06_templates.html' %}
+{% include 'ticket_detail_parts/js/_08_attachment_funcs.html' %}
+{% include 'ticket_detail_parts/js/_09_preview_funcs.html' %}
+{% include 'ticket_detail_parts/js/_10_attachment_handlers.html' %}
+{% include 'ticket_detail_parts/js/_11_dragdrop.html' %}
+{% include 'ticket_detail_parts/js/_12_reply_form.html' %}
+
+</body>
+</html>
