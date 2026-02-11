@@ -2110,8 +2110,8 @@
 
         /* Truncate the message content only when very long */
         .reply-message-box.truncated .message-content {
-            max-height: 300px;
-            overflow: hidden;
+            /* max-height: 300px; */
+            /* overflow: hidden; */
             position: relative;
         }
 
@@ -7091,13 +7091,9 @@
                                         <i class="fas fa-clock mr-1"></i>{{ reply.created_at | format_datetime }}
                                     </span>
                                 </div>
-                                <div class="reply-message-box {% if reply.message|length > 800 %}truncated{% endif %}"
-                                    id="message-{{ loop.index }}">
+                                <div class="reply-message-box" id="message-{{ loop.index }}">
                                     <div class="message-content">
                                         {{ reply.message }}
-                                    </div>
-                                    <div class="expand-btn" onclick="expandMessage('message-{{ loop.index }}')">
-                                        <i class="fas fa-chevron-down mr-1"></i> Read More
                                     </div>
                                 </div>
 
