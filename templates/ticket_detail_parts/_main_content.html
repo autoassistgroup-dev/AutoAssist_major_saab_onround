@@ -918,14 +918,36 @@
                                     <i class="fas fa-clock mr-1"></i>{{ reply.created_at | format_datetime }}
                                 </span>
                             </div>
-                            <div class="reply-message-box {% if reply.message|length > 800 %}truncated{% endif %}"
-                                id="message-{{ loop.index }}">
-                                <div class="message-content">
+                            <div class="reply-message-box" id="message-container-{{ loop.index }}">
+                                <!-- Message Content with Line Clamp -->
+                                <div class="message-content line-clamp-3 overflow-hidden text-gray-200 transition-all duration-300"
+                                    id="message-content-{{ loop.index }}"
+                                    style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.6;">
                                     {{ reply.message }}
                                 </div>
-                                <div class="expand-btn" onclick="expandMessage('message-{{ loop.index }}')">
+
+                                <!-- Read More / Show Less Button (Conditional via JS) -->
+                                <button onclick="toggleMessage('{{ loop.index }}')" id="toggle-btn-{{ loop.index }}"
+                                    class="text-blue-400 hover:text-blue-300 text-xs mt-2 font-medium flex items-center focus:outline-none hidden">
                                     <i class="fas fa-chevron-down mr-1"></i> Read More
-                                </div>
+                                </button>
+
+                                <!-- Inline Script to check height and show button if needed -->
+                                <script>
+                                    (function () {
+                                        const content = document.getElementById('message-content-{{ loop.index }}');
+                                        const btn = document.getElementById('toggle-btn-{{ loop.index }}');
+                                        if (content && btn) {
+                                            // Check if content overflows (approximate check based on scrollHeight vs clientHeight)
+                                            // We delay slightly to ensure rendering
+                                            setTimeout(() => {
+                                                if (content.scrollHeight > content.clientHeight) {
+                                                    btn.classList.remove('hidden');
+                                                }
+                                            }, 100);
+                                        }
+                                    })();
+                                </script>
                             </div>
 
                             {% set downloadable_attachments = [] %}
