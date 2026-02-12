@@ -7091,10 +7091,36 @@
                                         <i class="fas fa-clock mr-1"></i>{{ reply.created_at | format_datetime }}
                                     </span>
                                 </div>
-                                <div class="reply-message-box" id="message-{{ loop.index }}">
-                                    <div class="message-content">
+                                <div class="reply-message-box" id="message-container-{{ loop.index }}">
+                                    <!-- Message Content with Line Clamp -->
+                                    <div class="message-content line-clamp-3 overflow-hidden text-gray-200 transition-all duration-300"
+                                        id="message-content-{{ loop.index }}"
+                                        style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.6;">
                                         {{ reply.message }}
                                     </div>
+
+                                    <!-- Read More / Show Less Button (Conditional via JS) -->
+                                    <button onclick="toggleMessage('{{ loop.index }}')" id="toggle-btn-{{ loop.index }}"
+                                        class="text-blue-400 hover:text-blue-300 text-xs mt-2 font-medium flex items-center focus:outline-none hidden">
+                                        <i class="fas fa-chevron-down mr-1"></i> Read More
+                                    </button>
+
+                                    <!-- Inline Script to check height and show button if needed -->
+                                    <script>
+                                        (function () {
+                                            const content = document.getElementById('message-content-{{ loop.index }}');
+                                            const btn = document.getElementById('toggle-btn-{{ loop.index }}');
+                                            if (content && btn) {
+                                                // Check if content overflows (approximate check based on scrollHeight vs clientHeight)
+                                                // We delay slightly to ensure rendering
+                                                setTimeout(() => {
+                                                    if (content.scrollHeight > content.clientHeight) {
+                                                        btn.classList.remove('hidden');
+                                                    }
+                                                }, 100);
+                                            }
+                                        })();
+                                    </script>
                                 </div>
 
                                 {% set downloadable_attachments = [] %}
@@ -13973,6 +13999,30 @@ Email Ticket: ${debugInfo.ticket_source.is_email_ticket}`;
                     if (currentStatusDisplay) currentStatusDisplay.textContent = status;
                 }
             }
+
+            // Expose globally
+            window.toggleMessage = function (index) {
+                const content = document.getElementById(`message-content-${index}`);
+                const btn = document.getElementById(`toggle-btn-${index}`);
+
+                if (!content || !btn) return;
+
+                if (content.classList.contains('line-clamp-3')) {
+                    // Expand
+                    content.classList.remove('line-clamp-3');
+                    content.style.webkitLineClamp = 'unset';
+                    content.style.lineClamp = 'unset';
+                    btn.innerHTML = '<i class="fas fa-chevron-up mr-1"></i> Show Less';
+                } else {
+                    // Collapse
+                    content.classList.add('line-clamp-3');
+                    content.style.webkitLineClamp = '3';
+                    content.style.lineClamp = '3';
+                    btn.innerHTML = '<i class="fas fa-chevron-down mr-1"></i> Read More';
+                }
+            };
+
+
 
             // Add CSS animation
             if (!document.getElementById('socket-styles')) {
