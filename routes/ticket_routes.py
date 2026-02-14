@@ -725,7 +725,7 @@ def send_ticket_reply(ticket_id):
                     'ticket_id': ticket_id,
                     'portal_reply_id': str(reply_id),
                     'response_text': message,
-                    'replyMessage': message,
+                    'replyMessage': html_message,
                     'html_message': html_message,  # HTML version with <br> tags — use when N8N content type is HTML
                     'customer_email': ticket.get('email'),
                     'email': ticket.get('email'),
@@ -744,9 +744,9 @@ def send_ticket_reply(ticket_id):
                     'attachments': resolved_reply_attachments,
                     'attachment_count': len(resolved_reply_attachments),
                     'body': ticket.get('body', ''),  # Original ticket body for context
-                    'draft': message,
-                    'message': message,
-                    'content': message
+                    'draft': html_message,
+                    'message': html_message,
+                    'content': html_message
                 }
                 
                 logger.info(f"Sending reply to N8N webhook for ticket {ticket_id}")
@@ -1016,7 +1016,7 @@ def send_ticket_email(ticket_id):
                 webhook_payload = {
                     'ticket_id': ticket_id,
                     'response_text': body,
-                    'replyMessage': body,
+                    'replyMessage': html_body,
                     'html_message': html_body,  # HTML version with <br> tags — use when N8N content type is HTML
                     'customer_email': ticket.get('email'),
                     'email': ticket.get('email'),
@@ -1032,8 +1032,8 @@ def send_ticket_email(ticket_id):
                     'attachments': resolved_attachments,
                     'attachment_count': len(resolved_attachments),
                     'body': ticket.get('body', ''), 
-                    'message': body,
-                    'content': body
+                    'message': html_body,
+                    'content': html_body
                 }
                 
                 logger.info(f"Sending email template to N8N webhook for ticket {ticket_id}")
