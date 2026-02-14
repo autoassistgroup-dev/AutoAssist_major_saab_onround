@@ -246,7 +246,13 @@ def webhook_reply():
             return jsonify({'success': False, 'error': 'message required (send body, message, reply, or content)'}), 400
         # Log all candidates for debugging truncation
         candidate_debug = {}
-        for k in ['message', 'reply', 'content', 'body', 'text', 'email_body', 'plainText', 'html']:
+        # extended list of keys to check
+        debug_keys = [
+            'body', 'text', 'plainText', 'textBody', 'email_body', 
+            'reply_message', 'replyMessage', 'reply_text', 'content', 
+            'message', 'reply', 'snippet', 'html'
+        ]
+        for k in debug_keys:
             val = data.get(k)
             if val and isinstance(val, str):
                 candidate_debug[k] = len(val)
