@@ -199,6 +199,35 @@ def webhook_cleanup():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@webhook_bp.route('/capture-debug', methods=['POST'])
+def capture_debug():
+    """
+    Temporary debug endpoint to capture FULL JSON payload from N8N.
+    Save it to a file so we can inspect the structure.
+    """
+    try:
+        data = request.get_json(force=True, silent=True) or {}
+        import json
+        
+        # Save to file
+        dump_path = os.path.join(os.getcwd(), 'captured_payload_latest.json')
+        with open(dump_path, 'w') as f:
+            json.dump(data, f, indent=2)
+            
+        logger.info(f"CAPTURED PAYLOAD SAVED TO: {dump_path}")
+        logger.info(f"Payload keys: {list(data.keys())}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Payload captured',
+            'path': dump_path,
+            'keys': list(data.keys())
+        })
+    except Exception as e:
+        logger.error(f"Capture failed: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @webhook_bp.route('/reply', methods=['POST'])
 def webhook_reply():
     """
