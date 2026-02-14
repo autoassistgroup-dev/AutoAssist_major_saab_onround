@@ -25,6 +25,29 @@ from config.settings import WEBHOOK_URL
 logger = logging.getLogger(__name__)
 
 
+def html_to_text(html_content):
+    """
+    Convert HTML email body to plain text.
+    Strips tags, converts block elements to newlines, decodes entities.
+    """
+    if not html_content or not isinstance(html_content, str):
+        return ''
+    import html as html_module
+    text = html_content
+    # Remove style and script tags with content
+    text = re.sub(r'<(style|script)[^>]*>.*?</\1>', '', text, flags=re.DOTALL | re.IGNORECASE)
+    # Replace <br>, <p>, <div>, <tr>, <li> with newlines
+    text = re.sub(r'<br\s*/?>', '\n', text, flags=re.IGNORECASE)
+    text = re.sub(r'</?(p|div|tr|li|h[1-6])[^>]*>', '\n', text, flags=re.IGNORECASE)
+    # Remove all remaining HTML tags
+    text = re.sub(r'<[^>]+>', '', text)
+    # Decode HTML entities
+    text = html_module.unescape(text)
+    # Collapse multiple blank lines
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    return text.strip()
+
+
 def strip_email_quotes(text):
     """
     Strip quoted reply chains from incoming email text.
@@ -215,14 +238,23 @@ def webhook_reply():
         if not data:
             return jsonify({'success': False, 'error': 'No data received'}), 400
         
+        # ===== FULL PAYLOAD DUMP for debugging truncation =====
+        import json as json_module
+        try:
+            raw_dump = json_module.dumps(data, default=str)
+            logger.info(f"WEBHOOK RAW PAYLOAD (first 3000 chars): {raw_dump[:3000]}")
+        except Exception:
+            logger.info(f"WEBHOOK PAYLOAD KEYS: {list(data.keys())}")
+        # ======================================================
+        
         ticket_id = data.get('ticket_id', data.get('ticketId'))
         if not ticket_id:
             return jsonify({'success': False, 'error': 'ticket_id required'}), 400
         
-        # Accept full customer reply from any common payload key (n8n may send short "message" + full "body")
-        # Include as many candidate keys as possible — N8N may truncate some fields when attachments are present
+        # Accept full customer reply from any common payload key
+        # N8N may send short "message" (bodyPreview) + full "body" or "html"
         message_candidates = [
-            data.get('body'),          # Usually the fullest text
+            data.get('body'),
             data.get('text'),
             data.get('plainText'),
             data.get('textBody'),
@@ -231,44 +263,45 @@ def webhook_reply():
             data.get('replyMessage'),
             data.get('reply_text'),
             data.get('content'),
-            data.get('message'),       # Often a short snippet from N8N
+            data.get('message'),
             data.get('reply'),
             data.get('snippet'),
-            data.get('html') if isinstance(data.get('html'), str) else None,
         ]
+        
+        # Pick longest plain-text candidate
         message = ''
         for c in message_candidates:
             if c is not None and isinstance(c, str):
                 c = c.strip()
                 if len(c) > len(message):
                     message = c
-        if not message:
-            return jsonify({'success': False, 'error': 'message required (send body, message, reply, or content)'}), 400
-        # Log all candidates for debugging truncation
+        
+        # CRITICAL FALLBACK: If message is short, check if HTML field has the full body
+        # When emails have attachments, N8N often sends only bodyPreview (truncated)
+        # in plain-text fields but the FULL content in the html field
+        html_raw = data.get('html', '')
+        if isinstance(html_raw, str) and html_raw.strip():
+            html_as_text = html_to_text(html_raw)
+            if len(html_as_text) > len(message):
+                logger.info(f"HTML fallback: plain text was {len(message)} chars, HTML extracted {len(html_as_text)} chars")
+                message = html_as_text
+        
+        # Log debug info
         candidate_debug = {}
-        # extended list of keys to check
         debug_keys = [
-            'body', 'text', 'plainText', 'textBody', 'email_body', 
-            'reply_message', 'replyMessage', 'reply_text', 'content', 
+            'body', 'text', 'plainText', 'textBody', 'email_body',
+            'reply_message', 'replyMessage', 'reply_text', 'content',
             'message', 'reply', 'snippet', 'html'
         ]
         for k in debug_keys:
             val = data.get(k)
             if val and isinstance(val, str):
                 candidate_debug[k] = len(val)
+        logger.info(f"Webhook payload debug - Ticket {ticket_id}: candidates_lengths={candidate_debug}, selected_length={len(message)}")
         
-        logger.info(f"Webhook payload debug - Ticket {ticket_id}: keys_received={list(data.keys())}, candidates_lengths={candidate_debug}")
-
-        message = ''
-        for c in message_candidates:
-            if c is not None and isinstance(c, str):
-                c = c.strip()
-                if len(c) > len(message):
-                    message = c
         if not message:
+            logger.error(f"Webhook error: No message content found. Keys: {list(data.keys())}")
             return jsonify({'success': False, 'error': 'message required (send body, message, reply, or content)'}), 400
-            
-        logger.info(f"Webhook reply: selected longest message (length={len(message)}) for ticket {ticket_id}")
         
         from database import get_db
         from bson.objectid import ObjectId
