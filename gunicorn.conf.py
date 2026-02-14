@@ -8,13 +8,11 @@ import os
 bind = "0.0.0.0:" + os.environ.get("PORT", "8000")
 backlog = 2048
 
-# Worker processes
-# Worker processes
-workers = multiprocessing.cpu_count() * 2 + 1
-worker_class = "gthread"
-threads = 2
+# Worker processes — use eventlet for socket.io WebSocket support
+workers = 1  # eventlet uses cooperative multitasking, 1 worker handles many connections
+worker_class = "eventlet"
 worker_connections = 1000
-timeout = 30
+timeout = 120
 keepalive = 2
 
 # Restart workers after this many requests, to help prevent memory leaks
@@ -76,7 +74,8 @@ raw_env = [
 preload_app = True
 
 # Worker timeout for long-running requests
-timeout = 120
+# (already set above)
+# timeout = 120
 
 # Graceful timeout
 graceful_timeout = 30
