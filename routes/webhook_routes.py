@@ -199,35 +199,6 @@ def webhook_cleanup():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
-@webhook_bp.route('/capture-debug', methods=['POST'])
-def capture_debug():
-    """
-    Temporary debug endpoint to capture FULL JSON payload from N8N.
-    Save it to a file so we can inspect the structure.
-    """
-    try:
-        data = request.get_json(force=True, silent=True) or {}
-        import json
-        
-        # Save to file
-        dump_path = os.path.join(os.getcwd(), 'captured_payload_latest.json')
-        with open(dump_path, 'w') as f:
-            json.dump(data, f, indent=2)
-            
-        logger.info(f"CAPTURED PAYLOAD SAVED TO: {dump_path}")
-        logger.info(f"Payload keys: {list(data.keys())}")
-        
-        return jsonify({
-            'success': True,
-            'message': 'Payload captured',
-            'path': dump_path,
-            'keys': list(data.keys())
-        })
-    except Exception as e:
-        logger.error(f"Capture failed: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-
 @webhook_bp.route('/reply', methods=['POST'])
 def webhook_reply():
     """
@@ -294,38 +265,6 @@ def webhook_reply():
                 c = c.strip()
                 if len(c) > len(message):
                     message = c
-        
-        # FAILSAFE: If message is still short (< 100 chars) and we have attachments,
-        # N8N might be burying the full text in a nested object. Deep search the whole payload.
-        if (len(message) < 100 or not message) and (data.get('attachments') or data.get('binary')):
-            logger.info("Message short/missing with attachments - attempting deep payload search for longest string")
-            
-            def find_longest_string(obj, current_best=''):
-                if isinstance(obj, str):
-                    s = obj.strip()
-                    # Skip base64-like strings (too long, no spaces) or internal IDs
-                    if len(s) > len(current_best) and ' ' in s and len(s) < 50000: 
-                        return s
-                    return current_best
-                
-                if isinstance(obj, list):
-                    for item in obj:
-                        current_best = find_longest_string(item, current_best)
-                
-                elif isinstance(obj, dict):
-                    for k, v in obj.items():
-                        # Skip attachments/binary data fields
-                        if k.lower() in ['attachments', 'binary', 'data', 'buffer', 'base64']:
-                            continue
-                        current_best = find_longest_string(v, current_best)
-                
-                return current_best
-
-            deep_best = find_longest_string(data)
-            if len(deep_best) > len(message):
-                logger.info(f"Deep search found better message: {len(message)} -> {len(deep_best)} chars")
-                message = deep_best
-
         if not message:
             return jsonify({'success': False, 'error': 'message required (send body, message, reply, or content)'}), 400
             
