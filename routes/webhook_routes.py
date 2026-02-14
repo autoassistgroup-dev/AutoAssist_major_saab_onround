@@ -31,6 +31,7 @@ def strip_email_quotes(text):
     
     Removes:
     - "On <date> <name> <email> wrote:" blocks and everything after
+      (handles Gmail multi-line wrapping where "On ..." and "wrote:" are on different lines)
     - Gmail-style ">" quoted lines at the end
     - Outlook-style "-----Original Message-----" separators
     - "From: ... Sent: ... To: ... Subject: ..." Outlook headers
@@ -38,13 +39,24 @@ def strip_email_quotes(text):
     if not text or not isinstance(text, str):
         return text or ''
     
+    # --- Pass 1: Multi-line "On ... wrote:" (Gmail wraps across lines) ---
+    # Use regex on the FULL text to find "On <date>...wrote:" spanning multiple lines
+    multiline_match = re.search(
+        r'\n\s*On\s+.+?wrote\s*:\s*$',
+        text,
+        re.IGNORECASE | re.DOTALL | re.MULTILINE
+    )
+    if multiline_match:
+        text = text[:multiline_match.start()].rstrip()
+    
+    # --- Pass 2: Per-line checks for other patterns ---
     lines = text.split('\n')
     cut_index = len(lines)
     
     for i, line in enumerate(lines):
         stripped = line.strip()
         
-        # Gmail/standard: "On <date> ... wrote:" or "On <date> ... wrote :"
+        # Gmail/standard single-line: "On <date> ... wrote:"
         if re.match(r'^On\s+.+wrote\s*:\s*$', stripped, re.IGNORECASE):
             cut_index = i
             break
@@ -79,7 +91,7 @@ def strip_email_quotes(text):
     
     result = '\n'.join(result_lines).strip()
     
-    if result != text.strip():
+    if result != (text or '').strip():
         logger.info(f"Stripped email quotes: {len(text)} chars → {len(result)} chars")
     
     return result
@@ -208,15 +220,20 @@ def webhook_reply():
             return jsonify({'success': False, 'error': 'ticket_id required'}), 400
         
         # Accept full customer reply from any common payload key (n8n may send short "message" + full "body")
+        # Include as many candidate keys as possible — N8N may truncate some fields when attachments are present
         message_candidates = [
-            data.get('message'),
-            data.get('reply'),
-            data.get('content'),
-            data.get('body'),
+            data.get('body'),          # Usually the fullest text
             data.get('text'),
+            data.get('plainText'),
+            data.get('textBody'),
             data.get('email_body'),
             data.get('reply_message'),
-            data.get('plainText'),
+            data.get('replyMessage'),
+            data.get('reply_text'),
+            data.get('content'),
+            data.get('message'),       # Often a short snippet from N8N
+            data.get('reply'),
+            data.get('snippet'),
             data.get('html') if isinstance(data.get('html'), str) else None,
         ]
         message = ''
