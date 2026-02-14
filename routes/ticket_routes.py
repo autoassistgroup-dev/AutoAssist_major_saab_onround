@@ -744,9 +744,9 @@ def send_ticket_reply(ticket_id):
                     'attachments': resolved_reply_attachments,
                     'attachment_count': len(resolved_reply_attachments),
                     'body': ticket.get('body', ''),  # Original ticket body for context
-                    'draft': html_message,
-                    'message': html_message,
-                    'content': html_message
+                    'draft': message,
+                    'message': message,
+                    'content': message
                 }
                 
                 logger.info(f"Sending reply to N8N webhook for ticket {ticket_id}")
@@ -1032,8 +1032,8 @@ def send_ticket_email(ticket_id):
                     'attachments': resolved_attachments,
                     'attachment_count': len(resolved_attachments),
                     'body': ticket.get('body', ''), 
-                    'message': html_body,
-                    'content': html_body
+                    'message': body,
+                    'content': body
                 }
                 
                 logger.info(f"Sending email template to N8N webhook for ticket {ticket_id}")
