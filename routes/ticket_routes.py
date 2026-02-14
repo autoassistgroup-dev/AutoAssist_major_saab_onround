@@ -1020,8 +1020,8 @@ def send_ticket_email(ticket_id):
                 webhook_payload = {
                     'ticket_id': ticket_id,
                     'response_text': body,
-                    'replyMessage': html_body,
-                    'html_message': html_body,  # HTML version with <br> tags — use when N8N content type is HTML
+                    'replyMessage': body,  # Plain text — email templates send NEW emails, not thread replies
+                    'html_message': html_body,  # HTML version kept for reference
                     'customer_email': ticket.get('email'),
                     'email': ticket.get('email'),
                     'ticket_subject': subject, # USE CUSTOM SUBJECT
