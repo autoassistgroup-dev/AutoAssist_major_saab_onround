@@ -115,7 +115,7 @@ def strip_email_quotes(text):
     result = '\n'.join(result_lines).strip()
     
     if result != (text or '').strip():
-        logger.info(f"Stripped email quotes: {len(text)} chars → {len(result)} chars")
+        logger.info(f"✂️  QUOTE STRIP │ {len(text)} chars → {len(result)} chars")
     
     return result
 
@@ -159,7 +159,7 @@ def refer_to_tech_director(ticket_id):
             session.get('member_name')
         )
         
-        logger.info(f"Ticket {ticket_id} referred to Tech Director by {session.get('member_name')}")
+        logger.info(f"📤 REFERRAL │ Ticket {ticket_id} → Tech Director │ By: {session.get('member_name')}")
         
         return jsonify({
             'success': True,
@@ -168,7 +168,7 @@ def refer_to_tech_director(ticket_id):
         })
         
     except Exception as e:
-        logger.error(f"Error referring ticket to tech director: {e}")
+        logger.error(f"❌ REFERRAL ERROR │ {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
@@ -211,7 +211,7 @@ def webhook_cleanup():
             count = len(_webhook_status)
             _webhook_status.clear()
         
-        logger.info(f"Webhook cleanup: cleared {count} entries")
+        logger.info(f"🧹 CLEANUP │ Cleared {count} webhook entries")
         
         return jsonify({
             'success': True,
@@ -238,14 +238,14 @@ def webhook_reply():
         if not data:
             return jsonify({'success': False, 'error': 'No data received'}), 400
         
-        # ===== FULL PAYLOAD DUMP for debugging truncation =====
+        # ── Full payload dump for debugging ──
         import json as json_module
         try:
             raw_dump = json_module.dumps(data, default=str)
-            logger.info(f"WEBHOOK RAW PAYLOAD (first 3000 chars): {raw_dump[:3000]}")
+            logger.info(f"📨 WEBHOOK RECEIVED │ Payload ({len(raw_dump)} bytes):")
+            logger.info(f"📋 RAW DATA │ {raw_dump[:3000]}")
         except Exception:
-            logger.info(f"WEBHOOK PAYLOAD KEYS: {list(data.keys())}")
-        # ======================================================
+            logger.info(f"📨 WEBHOOK RECEIVED │ Keys: {list(data.keys())}")
         
         ticket_id = data.get('ticket_id', data.get('ticketId'))
         if not ticket_id:
@@ -283,7 +283,7 @@ def webhook_reply():
         if isinstance(html_raw, str) and html_raw.strip():
             html_as_text = html_to_text(html_raw)
             if len(html_as_text) > len(message):
-                logger.info(f"HTML fallback: plain text was {len(message)} chars, HTML extracted {len(html_as_text)} chars")
+                logger.info(f"🔄 HTML FALLBACK │ Plain text: {len(message)} chars → HTML extracted: {len(html_as_text)} chars")
                 message = html_as_text
         
         # Log debug info
@@ -297,10 +297,10 @@ def webhook_reply():
             val = data.get(k)
             if val and isinstance(val, str):
                 candidate_debug[k] = len(val)
-        logger.info(f"Webhook payload debug - Ticket {ticket_id}: candidates_lengths={candidate_debug}, selected_length={len(message)}")
+        logger.info(f"🔍 MESSAGE SCAN │ Ticket {ticket_id} │ Fields: {candidate_debug} │ Selected: {len(message)} chars")
         
         if not message:
-            logger.error(f"Webhook error: No message content found. Keys: {list(data.keys())}")
+            logger.error(f"❌ NO MESSAGE │ Ticket {ticket_id} │ Keys received: {list(data.keys())}")
             return jsonify({'success': False, 'error': 'message required (send body, message, reply, or content)'}), 400
         
         from database import get_db
@@ -322,7 +322,7 @@ def webhook_reply():
                         'ticket_id': ticket_id
                     })
                     if existing:
-                        logger.info(f"Webhook reply idempotent: reply {portal_reply_id} already exists for ticket {ticket_id}, skipping create")
+                        logger.info(f"🔁 IDEMPOTENT │ Reply {portal_reply_id} already exists for ticket {ticket_id} │ Skipping")
                         return jsonify({
                             'success': True,
                             'message': 'Reply already exists (idempotent)',
@@ -331,7 +331,7 @@ def webhook_reply():
                             'idempotent': True
                         })
             except Exception as e:
-                logger.warning(f"Idempotency check failed for portal_reply_id {portal_reply_id}: {e}")
+                logger.warning(f"⚠️  IDEMPOTENCY CHECK FAILED │ Reply ID: {portal_reply_id} │ {e}")
         
         # Idempotency by content + time: same message on this ticket in the last 2 minutes = likely echo from n8n (avoid duplicate + wrong "External System" username)
         message_stripped = (message or "").strip()
@@ -343,7 +343,7 @@ def webhook_reply():
                 'sender_type': 'agent'
             }).sort('created_at', -1).limit(5):
                 if (recent.get('message') or "").strip() == message_stripped:
-                    logger.info(f"Webhook reply idempotent: same message already saved as agent reply for ticket {ticket_id}, skipping create (prevents duplicate + wrong username)")
+                    logger.info(f"🔁 IDEMPOTENT │ Same message already saved for ticket {ticket_id} │ Skipping duplicate")
                     return jsonify({
                         'success': True,
                         'message': 'Reply already exists (idempotent)',
@@ -379,9 +379,9 @@ def webhook_reply():
                         'type': 'file'
                     })
                 except Exception as e:
-                    logger.warning(f"Failed to normalize string attachment: {e}")
+                    logger.warning(f"⚠️  ATTACHMENT │ Failed to normalize string attachment: {e}")
             else:
-                logger.warning(f"Skipping invalid attachment type: {type(att)}")
+                logger.warning(f"⚠️  ATTACHMENT │ Skipping invalid type: {type(att)}")
 
         reply_data = {
             'ticket_id': ticket_id,
@@ -407,7 +407,7 @@ def webhook_reply():
                 'created_at': datetime.now().isoformat()
             })
         except Exception as e:
-            logger.warning(f"Failed to emit customer reply event: {e}")
+            logger.warning(f"⚠️  SOCKET │ Failed to emit reply event: {e}")
         
         # Update ticket with unread reply flag
         db.update_ticket(ticket_id, {
@@ -415,7 +415,7 @@ def webhook_reply():
             'last_reply_at': datetime.now()
         })
         
-        logger.info(f"Webhook reply added to ticket {ticket_id}")
+        logger.info(f"✅ REPLY SAVED │ Ticket {ticket_id} │ Message: {len(message)} chars │ Attachments: {len(normalized_attachments)}")
         
         return jsonify({
             'success': True,
@@ -425,7 +425,7 @@ def webhook_reply():
         })
         
     except Exception as e:
-        logger.error(f"Webhook reply error: {e}")
+        logger.error(f"❌ WEBHOOK ERROR │ {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
@@ -500,11 +500,11 @@ def _trigger_tech_director_webhook_async(ticket_id, ticket_data, method, referre
                             'status': 'success',
                             'completed_at': datetime.now().isoformat()
                         }
-                    logger.info(f"Webhook success for ticket {ticket_id}")
+                    logger.info(f"✅ TECH DIRECTOR WEBHOOK │ Ticket {ticket_id} │ Success")
                     return
                     
             except Exception as e:
-                logger.error(f"Webhook attempt {attempt + 1} failed: {e}")
+                logger.error(f"❌ TECH DIRECTOR WEBHOOK │ Attempt {attempt + 1}/{max_retries} failed │ {e}")
                 if attempt < max_retries - 1:
                     time.sleep(retry_delay)
         
