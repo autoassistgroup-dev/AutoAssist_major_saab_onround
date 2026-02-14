@@ -238,14 +238,21 @@ def webhook_reply():
         if not data:
             return jsonify({'success': False, 'error': 'No data received'}), 400
         
-        # ── Full payload dump for debugging ──
+        # ── Structured field map for debugging (avoids base64 swamping the log) ──
         import json as json_module
-        try:
-            raw_dump = json_module.dumps(data, default=str)
-            logger.info(f"📨 WEBHOOK RECEIVED │ Payload ({len(raw_dump)} bytes):")
-            logger.info(f"📋 RAW DATA │ {raw_dump[:3000]}")
-        except Exception:
-            logger.info(f"📨 WEBHOOK RECEIVED │ Keys: {list(data.keys())}")
+        field_map = {}
+        for k, v in data.items():
+            if isinstance(v, str):
+                field_map[k] = f"str({len(v)})" if len(v) > 200 else repr(v[:200])
+            elif isinstance(v, dict):
+                field_map[k] = f"dict({list(v.keys())})"
+            elif isinstance(v, list):
+                field_map[k] = f"list({len(v)})"
+            elif isinstance(v, bool):
+                field_map[k] = str(v)
+            else:
+                field_map[k] = str(type(v).__name__)
+        logger.info(f"📨 WEBHOOK RECEIVED │ Field map: {field_map}")
         
         ticket_id = data.get('ticket_id', data.get('ticketId'))
         if not ticket_id:
@@ -266,7 +273,23 @@ def webhook_reply():
             data.get('message'),
             data.get('reply'),
             data.get('snippet'),
+            data.get('bodyPreview'),        # Microsoft Graph API field
+            data.get('conversationBody'),   # Some N8N workflows use this
         ]
+        
+        # Also check nested objects — N8N sometimes puts body text inside dicts
+        # e.g. body: { content: "..." } or conversation: { body: "..." }
+        for key in ['body', 'conversation', 'email']:
+            val = data.get(key)
+            if isinstance(val, dict):
+                # Check common nested text fields
+                for subkey in ['content', 'text', 'body', 'plainText', 'html', 'value']:
+                    nested = val.get(subkey)
+                    if nested and isinstance(nested, str):
+                        if subkey == 'html':
+                            message_candidates.append(html_to_text(nested))
+                        else:
+                            message_candidates.append(nested)
         
         # Pick longest plain-text candidate
         message = ''
@@ -286,12 +309,12 @@ def webhook_reply():
                 logger.info(f"🔄 HTML FALLBACK │ Plain text: {len(message)} chars → HTML extracted: {len(html_as_text)} chars")
                 message = html_as_text
         
-        # Log debug info
+        # Log message selection details
         candidate_debug = {}
         debug_keys = [
             'body', 'text', 'plainText', 'textBody', 'email_body',
             'reply_message', 'replyMessage', 'reply_text', 'content',
-            'message', 'reply', 'snippet', 'html'
+            'message', 'reply', 'snippet', 'html', 'bodyPreview', 'conversationBody'
         ]
         for k in debug_keys:
             val = data.get(k)
@@ -352,25 +375,24 @@ def webhook_reply():
                         'idempotent': True
                     })
         
-        # Normalize attachments (handle strings/malformed data from n8n)
+        # Normalize attachments — N8N sends as dict {"attachment1": {...}} or list [{...}]
         raw_attachments = data.get('attachments', [])
         normalized_attachments = []
         import base64
         
+        # Convert dict-style attachments to list: {"attachment1": {...}} → [{...}]
+        if isinstance(raw_attachments, dict):
+            logger.info(f"📎 ATTACHMENTS │ Converting dict ({list(raw_attachments.keys())}) to list")
+            raw_attachments = list(raw_attachments.values())
+        
         for att in raw_attachments:
             if isinstance(att, dict):
-                # Ensure filename exists
-                if not att.get('filename') and not att.get('fileName'):
-                    att['filename'] = 'attachment'
+                # Ensure filename exists (N8N uses fileName, we use filename)
+                if not att.get('filename'):
+                    att['filename'] = att.get('fileName', 'attachment')
                 normalized_attachments.append(att)
             elif isinstance(att, str):
-                # Handle string attachments (base64 or keys)
                 try:
-                    # Try to treat as base64 data first? Or just text content?
-                    # If it's short, it's probably a filename or key. If long, base64.
-                    # For safety, let's treat it as text content for now unless we know better.
-                    # But "attachment1" suggests it might be a key.
-                    # We'll validly encode it so it can be downloaded as a text file.
                     encoded = base64.b64encode(att.encode('utf-8')).decode('utf-8')
                     normalized_attachments.append({
                         'filename': 'attachment.txt',
