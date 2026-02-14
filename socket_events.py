@@ -23,6 +23,10 @@ from middleware.session_manager import is_authenticated
 
 logger = logging.getLogger(__name__)
 
+# Suppress noisy engineio "Invalid session" errors
+logging.getLogger('engineio.server').setLevel(logging.WARNING)
+logging.getLogger('engineio').setLevel(logging.WARNING)
+
 # Initialize SocketIO (will be configured with app in init_socketio)
 socketio = SocketIO()
 
@@ -47,14 +51,14 @@ def init_socketio(app):
 @socketio.on('connect')
 def handle_connect():
     """Handle client connection"""
-    logger.info("[SOCKETIO] Client connected")
+    logger.debug("🔌 Client connected")
     emit('connected', {'status': 'connected'})
 
 
 @socketio.on('disconnect')
 def handle_disconnect():
     """Handle client disconnection"""
-    logger.info("[SOCKETIO] Client disconnected")
+    logger.debug("🔌 Client disconnected")
 
 
 # ============== Room Management ==============
