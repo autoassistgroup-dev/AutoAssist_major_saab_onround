@@ -107,10 +107,7 @@ def display_response():
             if not ticket:
                 logger.warning(f"Ticket {ticket_id} not found, creating update anyway")
             
-            # NOTE: Customer replies are handled by /api/webhook/reply endpoint
-            # This endpoint ONLY saves the AI draft to prevent duplicate messages
-            
-            # Update the ticket with the AI draft ONLY
+            # Update the ticket with the AI draft
             result = db.update_ticket(ticket_id, {
                 'draft': ai_response,
                 'draft_body': ai_response,
@@ -130,7 +127,55 @@ def display_response():
                     'customer_reply_saved': False
                 }), 404
             
-            logger.info(f"AI draft saved for ticket {ticket_id}: {len(ai_response)} chars")
+            logger.info(f"✅ AI draft saved for ticket {ticket_id}: {len(ai_response)} chars")
+            
+            # ── FIX: Update truncated customer reply with full body ──
+            # N8N sends full body here, but /webhook/reply may receive truncated text.
+            # Find any recent reply with a shorter message and update it.
+            if email_body and ticket:
+                try:
+                    from routes.webhook_routes import strip_email_quotes
+                    from datetime import timedelta
+                    
+                    full_message = strip_email_quotes(email_body)
+                    
+                    if full_message and len(full_message) > 10:
+                        # Find the most recent webhook reply for this ticket (within 5 min)
+                        cutoff = datetime.now() - timedelta(minutes=5)
+                        recent_reply = db.replies.find_one(
+                            {
+                                'ticket_id': ticket_id,
+                                'created_at': {'$gte': cutoff},
+                                'sender_type': 'webhook'
+                            },
+                            sort=[('created_at', -1)]
+                        )
+                        
+                        if recent_reply:
+                            existing_msg = recent_reply.get('message', '')
+                            if len(full_message) > len(existing_msg):
+                                db.replies.update_one(
+                                    {'_id': recent_reply['_id']},
+                                    {'$set': {'message': full_message}}
+                                )
+                                logger.info(f"📝 REPLY PATCHED │ Ticket {ticket_id} │ {len(existing_msg)} → {len(full_message)} chars")
+                            else:
+                                logger.info(f"📝 REPLY OK │ Ticket {ticket_id} │ Already has {len(existing_msg)} chars (body: {len(full_message)})")
+                        else:
+                            # No recent reply found — create one from the full body
+                            sender_name = data.get('name', data.get('from', 'External System'))
+                            reply_data = {
+                                'ticket_id': ticket_id,
+                                'message': full_message,
+                                'sender_name': sender_name,
+                                'sender_type': 'webhook',
+                                'attachments': [],
+                                'created_at': datetime.now()
+                            }
+                            reply_id = db.create_reply(reply_data)
+                            logger.info(f"📝 REPLY CREATED │ Ticket {ticket_id} │ {len(full_message)} chars │ ID: {reply_id}")
+                except Exception as e:
+                    logger.warning(f"⚠️ REPLY PATCH FAILED │ Ticket {ticket_id} │ {e}")
             
             return jsonify({
                 'success': True,
