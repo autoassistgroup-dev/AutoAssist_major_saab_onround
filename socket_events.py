@@ -23,9 +23,9 @@ from middleware.session_manager import is_authenticated
 
 logger = logging.getLogger(__name__)
 
-# Suppress noisy engineio "Invalid session" errors
-logging.getLogger('engineio.server').setLevel(logging.WARNING)
-logging.getLogger('engineio').setLevel(logging.WARNING)
+# Suppress noisy engineio "Invalid session" errors (logged at ERROR level, so CRITICAL hides them)
+logging.getLogger('engineio.server').setLevel(logging.CRITICAL)
+logging.getLogger('engineio').setLevel(logging.CRITICAL)
 
 # Initialize SocketIO (will be configured with app in init_socketio)
 socketio = SocketIO()
