@@ -721,12 +721,16 @@ def send_ticket_reply(ticket_id):
                 # Convert plain text newlines to HTML for email rendering
                 html_message = message.replace('\n', '<br>\n')
                 
+                # N8N renders replyMessage as HTML for email thread replies (has threadId)
+                # but as plain text for manual/new ticket emails. Use HTML only for email threads.
+                is_email_thread = bool(ticket.get('threadId') or ticket.get('is_email_ticket'))
+                
                 webhook_payload = {
                     'ticket_id': ticket_id,
                     'portal_reply_id': str(reply_id),
                     'response_text': message,
-                    'replyMessage': html_message,
-                    'html_message': html_message,  # HTML version with <br> tags — use when N8N content type is HTML
+                    'replyMessage': html_message if is_email_thread else message,
+                    'html_message': html_message,  # Always include HTML version for reference
                     'customer_email': ticket.get('email'),
                     'email': ticket.get('email'),
                     'ticket_subject': ticket.get('subject', 'Your Support Request'),
