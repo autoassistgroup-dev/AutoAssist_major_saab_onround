@@ -214,9 +214,9 @@ class MongoDB:
             self.ticket_metadata.create_index([("ticket_id", 1), ("key", 1)], background=False)
             
             # CRITICAL PERFORMANCE INDEX: Support dashboard default sort
-            # This matches: {"$sort": {"is_important": -1, "has_unread_reply": -1, "updated_at": -1, "created_at": -1}}
+            # Pure chronological: newest activity on top
             self.tickets.create_index(
-                [("is_important", -1), ("has_unread_reply", -1), ("updated_at", -1), ("created_at", -1)],
+                [("updated_at", -1)],
                 background=False
             )
             
@@ -375,8 +375,8 @@ class MongoDB:
             pipeline.append({"$addFields": {"updated_at": {"$ifNull": ["$updated_at", "$created_at"]}}})
             
             # Sort -> Skip -> Limit BEFORE lookups (optimization: reduce lookup volume)
-            # Sort by updated_at first so tickets with new replies rise to the top
-            pipeline.append({"$sort": {"is_important": -1, "has_unread_reply": -1, "updated_at": -1, "created_at": -1}})
+            # Pure chronological sort: newest activity (reply, status change, creation) on top
+            pipeline.append({"$sort": {"updated_at": -1}})
             
             skip = (page - 1) * per_page
             pipeline.extend([

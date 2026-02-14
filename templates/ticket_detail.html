@@ -10931,23 +10931,12 @@
                     });
                 }
 
-                function startAutoRefresh() {
-                    // Check for new replies every 3 seconds
-                    autoRefreshInterval = setInterval(checkForNewReplies, 3000);
-                }
-
-                function stopAutoRefresh() {
-                    if (autoRefreshInterval) {
-                        clearInterval(autoRefreshInterval);
-                    }
-                }
-
                 function checkForNewReplies() {
                     fetch(`/api/tickets/{{ ticket.ticket_id }}/reply-count`)
                         .then(response => response.json())
                         .then(data => {
                             if (data.success && typeof data.count === 'number' && data.count > lastReplyCount) {
-                                console.log(`🔄 New replies detected! Updating conversation... (${lastReplyCount} → ${data.count})`);
+                                console.log(`🔄 New replies detected! (${lastReplyCount} → ${data.count})`);
                                 lastReplyCount = data.count;
                                 fetch(`/api/tickets/{{ ticket.ticket_id }}/replies`)
                                     .then(r => r.json())
@@ -10956,30 +10945,16 @@
                                             renderRepliesFromApi(replyData.replies || []);
                                         }
                                     })
-                                    .catch(error => {
-                                        console.error('Error loading replies:', error);
-                                    });
+                                    .catch(error => console.error('Error loading replies:', error));
                             }
                         })
-                        .catch(error => {
-                            console.error('Error checking for new replies:', error);
-                        });
+                        .catch(error => console.error('Error checking for new replies:', error));
                 }
 
-                // Stop auto-refresh when user is typing or interacting
-                let userActivityTimeout;
-                function resetUserActivity() {
-                    clearTimeout(userActivityTimeout);
-                    stopAutoRefresh();
-                    userActivityTimeout = setTimeout(startAutoRefresh, 10000); // Resume after 10 seconds of inactivity
-                }
+                // Auto-refresh: always-on, every 5 seconds
+                setInterval(checkForNewReplies, 5000);
 
-                // Monitor user activity
-                document.addEventListener('keydown', resetUserActivity);
-                document.addEventListener('click', resetUserActivity);
-                document.addEventListener('scroll', resetUserActivity);
-
-                // Clear processed documents when page is unloaded
+                // Clear processed documents on page unload
                 window.addEventListener('beforeunload', function () {
                     processedDocuments.clear();
                     lastProcessedDocument = null;
@@ -10988,12 +10963,6 @@
 
                 document.addEventListener('DOMContentLoaded', function () {
                     console.log('🚀 Ticket Detail page loaded');
-
-                    // Start auto-refresh for new replies
-                    startAutoRefresh();
-
-                    // Auto-refresh every 15 seconds for new replies
-                    setInterval(checkForNewReplies, 15000);
 
                     // Check for AI response on page load
                     checkForAIResponse();
@@ -12623,29 +12592,6 @@ Email Ticket: ${debugInfo.ticket_source.is_email_ticket}`;
                             }
                         });
                 }
-
-                // Check for new replies function
-                function checkForNewReplies() {
-                    const currentTicketId = '{{ ticket.ticket_id|e }}';
-                    const currentReplyCount = document.querySelectorAll('.message').length;
-
-                    fetch('/api/tickets/' + currentTicketId + '/reply-count')
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.reply_count > currentReplyCount) {
-                                console.log('🆕 New replies detected, refreshing page...');
-                                showNotification('New reply received! Refreshing...', 'info');
-                                setTimeout(() => {
-                                    window.location.reload();
-                                }, 1000);
-                            }
-                        })
-                        .catch(error => {
-                            console.log('Auto-refresh check failed:', error);
-                        });
-                }
-
-
 
                 // Function to update technician tag on home page if it's open in another tab
                 function updateHomePageTechnicianTag(ticketId, technicianName) {
