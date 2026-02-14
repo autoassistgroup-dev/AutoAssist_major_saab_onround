@@ -265,8 +265,39 @@ def webhook_reply():
                 c = c.strip()
                 if len(c) > len(message):
                     message = c
+        
+        # FAILSAFE: If message is still short (< 100 chars) and we have attachments,
+        # N8N might be burying the full text in a nested object. Deep search the whole payload.
+        if (len(message) < 100 or not message) and (data.get('attachments') or data.get('binary')):
+            logger.info("Message short/missing with attachments - attempting deep payload search for longest string")
+            
+            def find_longest_string(obj, current_best=''):
+                if isinstance(obj, str):
+                    s = obj.strip()
+                    # Skip base64-like strings (too long, no spaces) or internal IDs
+                    if len(s) > len(current_best) and ' ' in s and len(s) < 50000: 
+                        return s
+                    return current_best
+                
+                if isinstance(obj, list):
+                    for item in obj:
+                        current_best = find_longest_string(item, current_best)
+                
+                elif isinstance(obj, dict):
+                    for k, v in obj.items():
+                        # Skip attachments/binary data fields
+                        if k.lower() in ['attachments', 'binary', 'data', 'buffer', 'base64']:
+                            continue
+                        current_best = find_longest_string(v, current_best)
+                
+                return current_best
+
+            deep_best = find_longest_string(data)
+            if len(deep_best) > len(message):
+                logger.info(f"Deep search found better message: {len(message)} -> {len(deep_best)} chars")
+                message = deep_best
+
         if not message:
-            logger.error(f"Webhook error: No message content found in payload. Keys: {list(data.keys())}")
             return jsonify({'success': False, 'error': 'message required (send body, message, reply, or content)'}), 400
             
         logger.info(f"Webhook reply: selected longest message (length={len(message)}) for ticket {ticket_id}")
