@@ -11,6 +11,7 @@ Author: AutoAssistGroup Development Team
 """
 
 import os
+import re
 import logging
 import threading
 import time
@@ -22,6 +23,66 @@ from middleware.session_manager import is_authenticated, is_admin, safe_member_l
 from config.settings import WEBHOOK_URL
 
 logger = logging.getLogger(__name__)
+
+
+def strip_email_quotes(text):
+    """
+    Strip quoted reply chains from incoming email text.
+    
+    Removes:
+    - "On <date> <name> <email> wrote:" blocks and everything after
+    - Gmail-style ">" quoted lines at the end
+    - Outlook-style "-----Original Message-----" separators
+    - "From: ... Sent: ... To: ... Subject: ..." Outlook headers
+    """
+    if not text or not isinstance(text, str):
+        return text or ''
+    
+    lines = text.split('\n')
+    cut_index = len(lines)
+    
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        
+        # Gmail/standard: "On <date> ... wrote:" or "On <date> ... wrote :"
+        if re.match(r'^On\s+.+wrote\s*:\s*$', stripped, re.IGNORECASE):
+            cut_index = i
+            break
+        
+        # Outlook: "-----Original Message-----"
+        if re.match(r'^-{3,}\s*Original Message\s*-{3,}$', stripped, re.IGNORECASE):
+            cut_index = i
+            break
+        
+        # Outlook: "From: ... " header block
+        if re.match(r'^From:\s+.+', stripped) and i + 1 < len(lines):
+            next_line = lines[i + 1].strip() if i + 1 < len(lines) else ''
+            if re.match(r'^(Sent|Date|To|Subject):', next_line, re.IGNORECASE):
+                cut_index = i
+                break
+        
+        # Generic separator line
+        if re.match(r'^_{5,}$|^-{5,}$|^={5,}$', stripped):
+            cut_index = i
+            break
+    
+    # Take only lines before the quote marker
+    result_lines = lines[:cut_index]
+    
+    # Also strip trailing ">" quoted lines (sometimes mixed into the body)
+    while result_lines and result_lines[-1].strip().startswith('>'):
+        result_lines.pop()
+    
+    # Strip trailing blank lines
+    while result_lines and not result_lines[-1].strip():
+        result_lines.pop()
+    
+    result = '\n'.join(result_lines).strip()
+    
+    if result != text.strip():
+        logger.info(f"Stripped email quotes: {len(text)} chars → {len(result)} chars")
+    
+    return result
 
 # Create blueprint
 webhook_bp = Blueprint('webhook', __name__, url_prefix='/api/webhook')
@@ -166,7 +227,26 @@ def webhook_reply():
                     message = c
         if not message:
             return jsonify({'success': False, 'error': 'message required (send body, message, reply, or content)'}), 400
-        logger.info(f"Webhook reply: using message length={len(message)} for ticket {ticket_id}")
+        # Log all candidates for debugging truncation
+        candidate_debug = {}
+        for k in ['message', 'reply', 'content', 'body', 'text', 'email_body', 'plainText', 'html']:
+            val = data.get(k)
+            if val and isinstance(val, str):
+                candidate_debug[k] = len(val)
+        
+        logger.info(f"Webhook payload debug - Ticket {ticket_id}: keys_received={list(data.keys())}, candidates_lengths={candidate_debug}")
+
+        message = ''
+        for c in message_candidates:
+            if c is not None and isinstance(c, str):
+                c = c.strip()
+                if len(c) > len(message):
+                    message = c
+        if not message:
+            logger.error(f"Webhook error: No message content found in payload. Keys: {list(data.keys())}")
+            return jsonify({'success': False, 'error': 'message required (send body, message, reply, or content)'}), 400
+            
+        logger.info(f"Webhook reply: selected longest message (length={len(message)}) for ticket {ticket_id}")
         
         from database import get_db
         from bson.objectid import ObjectId
@@ -250,7 +330,7 @@ def webhook_reply():
 
         reply_data = {
             'ticket_id': ticket_id,
-            'message': message,
+            'message': strip_email_quotes(message),
             'sender_name': data.get('sender_name', data.get('from', 'External System')),
             'sender_type': 'webhook',
             'attachments': normalized_attachments,
