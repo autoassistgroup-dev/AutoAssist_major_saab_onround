@@ -21,11 +21,36 @@ keepalive = 2
 max_requests = 1000
 max_requests_jitter = 50
 
-# Logging
+# Logging — filter out noisy socket.io polling from access log
 accesslog = "-"
 errorlog = "-"
 loglevel = "info"
-access_log_format = '%(h)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s" %(D)s'
+access_log_format = '%(t)s │ %(s)s │ %(m)s %(U)s │ %(D)sμs'
+
+import logging
+
+# Custom filter: suppress socket.io + static asset noise
+class SocketIOFilter(logging.Filter):
+    """Filter out socket.io polling and static file requests from access logs."""
+    def filter(self, record):
+        msg = record.getMessage()
+        # Hide socket.io polling (the biggest source of noise)
+        if '/socket.io/' in msg:
+            return False
+        # Hide static files
+        if '/static/' in msg:
+            return False
+        return True
+
+
+def on_starting(server):
+    """Hook: runs when gunicorn master starts — install log filters."""
+    pass
+
+def post_fork(server, worker):
+    """Hook: runs after each worker forks — install access log filter."""
+    for handler in logging.getLogger('gunicorn.access').handlers:
+        handler.addFilter(SocketIOFilter())
 
 # Process naming
 proc_name = "autoassist_support"
