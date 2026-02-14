@@ -797,6 +797,11 @@ def admin_panel():
     
     total_tickets = ticket_stats.get('total_tickets', 0)
     
+    # Format dates for display (same as dashboard)
+    from utils.date_utils import safe_date_format
+    for ticket in tickets:
+        ticket['formatted_date'] = safe_date_format(ticket.get('created_at')) or 'Unknown'
+    
     # Use current_member for display (no session reference here to avoid UnboundLocalError)
     current_user = current_member.get('name') or 'User'
     current_user_role = current_member.get('role') or 'User'
