@@ -7111,10 +7111,17 @@
                                             const content = document.getElementById('message-content-{{ loop.index }}');
                                             const btn = document.getElementById('toggle-btn-{{ loop.index }}');
                                             if (content && btn) {
-                                                // Check if content overflows (approximate check based on scrollHeight vs clientHeight)
-                                                // We delay slightly to ensure rendering
+                                                // Reliable clamp detection: temporarily remove clamp, measure, restore
                                                 setTimeout(() => {
-                                                    if (content.scrollHeight > content.clientHeight) {
+                                                    const clampedHeight = content.clientHeight;
+                                                    // Temporarily remove line-clamp to measure natural height
+                                                    content.style.webkitLineClamp = 'unset';
+                                                    content.style.display = 'block';
+                                                    const fullHeight = content.scrollHeight;
+                                                    // Restore clamp
+                                                    content.style.webkitLineClamp = '3';
+                                                    content.style.display = '-webkit-box';
+                                                    if (fullHeight > clampedHeight + 5) {
                                                         btn.classList.remove('hidden');
                                                     }
                                                 }, 100);
@@ -11014,6 +11021,9 @@
                             attachmentHtml = `<div class="flex flex-wrap gap-2 mt-3">${attItems}</div>`;
                         }
 
+                        const contentId = `message-content-${idx + 1}`;
+                        const btnId = `toggle-btn-${idx + 1}`;
+
                         wrapper.innerHTML = `
                                 <div class="message-header">
                                     <span class="font-medium flex items-center">
@@ -11027,18 +11037,40 @@
                                     </span>
                                 </div>
                                 <div class="reply-message-box" id="${messageId}">
-                                    <div class="message-content">
+                                    <div class="message-content line-clamp-3 overflow-hidden text-gray-200 transition-all duration-300"
+                                         id="${contentId}"
+                                         style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.6;">
                                         ${escapeHtml(reply.message || '')}
                                     </div>
-                                    <div class="expand-btn" onclick="expandMessage('${messageId}')">
+                                    <button onclick="toggleMessage('${idx + 1}')" id="${btnId}"
+                                        class="text-blue-400 hover:text-blue-300 text-xs mt-2 font-medium flex items-center focus:outline-none hidden">
                                         <i class="fas fa-chevron-down mr-1"></i> Read More
-                                    </div>
+                                    </button>
                                     ${attachmentHtml}
                                 </div>
                             `;
 
                         container.appendChild(wrapper);
                     });
+
+                    // After rendering all replies, detect truncation and show toggle buttons
+                    setTimeout(() => {
+                        (replies || []).forEach((reply, idx) => {
+                            const content = document.getElementById(`message-content-${idx + 1}`);
+                            const btn = document.getElementById(`toggle-btn-${idx + 1}`);
+                            if (content && btn) {
+                                const clampedHeight = content.clientHeight;
+                                content.style.webkitLineClamp = 'unset';
+                                content.style.display = 'block';
+                                const fullHeight = content.scrollHeight;
+                                content.style.webkitLineClamp = '3';
+                                content.style.display = '-webkit-box';
+                                if (fullHeight > clampedHeight + 5) {
+                                    btn.classList.remove('hidden');
+                                }
+                            }
+                        });
+                    }, 150);
                 }
 
                 function checkForNewReplies() {
@@ -14064,16 +14096,20 @@ Email Ticket: ${debugInfo.ticket_source.is_email_ticket}`;
                 if (!content || !btn) return;
 
                 if (content.classList.contains('line-clamp-3')) {
-                    // Expand
+                    // Expand – remove clamp and show all text
                     content.classList.remove('line-clamp-3');
                     content.style.webkitLineClamp = 'unset';
                     content.style.lineClamp = 'unset';
+                    content.style.display = 'block';
+                    content.style.overflow = 'visible';
                     btn.innerHTML = '<i class="fas fa-chevron-up mr-1"></i> Show Less';
                 } else {
-                    // Collapse
+                    // Collapse – re-apply clamp
                     content.classList.add('line-clamp-3');
                     content.style.webkitLineClamp = '3';
                     content.style.lineClamp = '3';
+                    content.style.display = '-webkit-box';
+                    content.style.overflow = 'hidden';
                     btn.innerHTML = '<i class="fas fa-chevron-down mr-1"></i> Read More';
                 }
             };
