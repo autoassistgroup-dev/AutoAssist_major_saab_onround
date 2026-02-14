@@ -163,7 +163,7 @@ def display_response():
                                 logger.info(f"📝 REPLY OK │ Ticket {ticket_id} │ Already has {len(existing_msg)} chars (body: {len(full_message)})")
                         else:
                             # No recent reply found — create one from the full body
-                            sender_name = data.get('name', data.get('from', 'External System'))
+                            sender_name = data.get('name', data.get('from', 'Customer'))
                             reply_data = {
                                 'ticket_id': ticket_id,
                                 'message': full_message,

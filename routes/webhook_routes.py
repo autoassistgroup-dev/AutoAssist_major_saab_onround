@@ -408,7 +408,7 @@ def webhook_reply():
         reply_data = {
             'ticket_id': ticket_id,
             'message': strip_email_quotes(message),
-            'sender_name': data.get('sender_name', data.get('from', 'External System')),
+            'sender_name': data.get('sender_name', data.get('from', 'Customer')),
             'sender_type': 'webhook',
             'attachments': normalized_attachments,
             'created_at': datetime.now()
