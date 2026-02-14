@@ -669,11 +669,12 @@ def send_ticket_reply(ticket_id):
         except Exception as e:
             logger.warning(f"Failed to emit new reply event: {e}")
         
-        # Update ticket with last reply info
+        # Update ticket with last reply info and clear draft
         db.update_ticket(ticket_id, {
             'last_reply_at': datetime.now(),
             'last_reply_by': sender_name,
-            'updated_at': datetime.now()
+            'updated_at': datetime.now(),
+            'draft_body': ''  # Clear draft after sending reply
         })
         
         logger.info(f"Reply sent for ticket {ticket_id} by {sender_name}")

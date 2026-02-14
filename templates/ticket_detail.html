@@ -10979,6 +10979,41 @@
                             ? new Date(reply.created_at).toLocaleString()
                             : '';
 
+                        // Build attachment HTML
+                        let attachmentHtml = '';
+                        const atts = reply.attachments || [];
+                        if (atts.length > 0) {
+                            const replyId = reply._id || '';
+                            const attItems = atts.map((att, attIdx) => {
+                                const filename = att.filename || att.fileName || att.name || 'file';
+                                const ext = filename.toLowerCase().split('.').pop();
+                                const previewExts = ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'txt', 'md', 'webp', 'svg', 'bmp'];
+                                const canPreview = previewExts.includes(ext);
+                                // Determine icon
+                                let iconClass = 'fas fa-file text-gray-500';
+                                if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(ext)) iconClass = 'fas fa-image text-blue-400';
+                                else if (ext === 'pdf') iconClass = 'fas fa-file-pdf text-red-400';
+                                else if (['doc', 'docx'].includes(ext)) iconClass = 'fas fa-file-word text-blue-400';
+
+                                return `
+                                    <div class="flex items-center bg-white/5 border border-white/10 rounded-lg p-2 gap-2">
+                                        <i class="${iconClass} mr-1 flex-shrink-0"></i>
+                                        <div class="min-w-0 flex-1">
+                                            <div class="font-medium truncate max-w-[120px]" title="${escapeHtml(filename)}">${escapeHtml(filename)}</div>
+                                        </div>
+                                        <div class="flex gap-1 ml-2 flex-shrink-0">
+                                            ${canPreview ? `<button onclick="previewAttachment('${escapeHtml(replyId)}', '${attIdx}', '${escapeHtml(filename)}', 'reply')"
+                                                class="bg-blue-100 hover:bg-blue-200 text-blue-600 px-1.5 py-1 rounded text-[10px] transition"
+                                                title="Preview ${escapeHtml(filename)}"><i class="fas fa-eye"></i></button>` : ''}
+                                            <button onclick="downloadAttachment('${escapeHtml(replyId)}', '${attIdx}', '${escapeHtml(filename)}', 'reply')"
+                                                class="bg-green-100 hover:bg-green-200 text-green-600 px-1.5 py-1 rounded text-[10px] transition"
+                                                title="Download ${escapeHtml(filename)}"><i class="fas fa-download"></i></button>
+                                        </div>
+                                    </div>`;
+                            }).join('');
+                            attachmentHtml = `<div class="flex flex-wrap gap-2 mt-3">${attItems}</div>`;
+                        }
+
                         wrapper.innerHTML = `
                                 <div class="message-header">
                                     <span class="font-medium flex items-center">
@@ -10998,6 +11033,7 @@
                                     <div class="expand-btn" onclick="expandMessage('${messageId}')">
                                         <i class="fas fa-chevron-down mr-1"></i> Read More
                                     </div>
+                                    ${attachmentHtml}
                                 </div>
                             `;
 
