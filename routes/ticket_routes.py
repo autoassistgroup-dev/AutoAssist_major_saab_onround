@@ -717,11 +717,15 @@ def send_ticket_reply(ticket_id):
                         'size': att.get('size', 0)
                     })
                 
+                # Convert plain text newlines to HTML for email rendering
+                html_message = message.replace('\n', '<br>\n')
+                
                 webhook_payload = {
                     'ticket_id': ticket_id,
                     'portal_reply_id': str(reply_id),
                     'response_text': message,
                     'replyMessage': message,  # Also include as replyMessage for compatibility
+                    'html_message': html_message,  # HTML-formatted version for email body
                     'customer_email': ticket.get('email'),
                     'email': ticket.get('email'),
                     'ticket_subject': ticket.get('subject', 'Your Support Request'),
@@ -1004,11 +1008,15 @@ def send_ticket_email(ticket_id):
                     })
                     logger.info(f"[EMAIL-ATT] Final: {filename}, data_length={data_len}")
                 
+                # Convert plain text newlines to HTML for email rendering
+                html_body = body.replace('\n', '<br>\n')
+                
                 # Payload with OVERRIDDEN subject and body
                 webhook_payload = {
                     'ticket_id': ticket_id,
                     'response_text': body,
                     'replyMessage': body,
+                    'html_message': html_body,  # HTML-formatted version for email body
                     'customer_email': ticket.get('email'),
                     'email': ticket.get('email'),
                     'ticket_subject': subject, # USE CUSTOM SUBJECT
