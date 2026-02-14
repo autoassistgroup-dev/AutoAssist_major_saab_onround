@@ -552,6 +552,48 @@ def delete_ticket(ticket_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@ticket_bp.route('/bulk-delete', methods=['POST'])
+def bulk_delete_tickets():
+    """
+    Delete multiple tickets at once.
+    Expects JSON body: {"ticket_ids": ["ID1", "ID2", ...]}
+    Requires admin role.
+    """
+    try:
+        if not is_authenticated():
+            return jsonify({'success': False, 'error': 'Authentication required'}), 401
+        
+        from middleware.session_manager import is_admin
+        if not is_admin():
+            return jsonify({'success': False, 'error': 'Admin access required'}), 403
+        
+        data = request.get_json()
+        ticket_ids = data.get('ticket_ids', [])
+        
+        if not ticket_ids or not isinstance(ticket_ids, list):
+            return jsonify({'success': False, 'error': 'No ticket IDs provided'}), 400
+        
+        from database import get_db
+        db = get_db()
+        
+        # Delete all matching tickets and their replies
+        result = db.tickets.delete_many({'ticket_id': {'$in': ticket_ids}})
+        db.replies.delete_many({'ticket_id': {'$in': ticket_ids}})
+        
+        deleted_count = result.deleted_count
+        logger.info(f"Bulk deleted {deleted_count} tickets by {session.get('member_name')}: {ticket_ids}")
+        
+        return jsonify({
+            'success': True,
+            'message': f'{deleted_count} tickets deleted successfully',
+            'deleted_count': deleted_count
+        })
+        
+    except Exception as e:
+        logger.error(f"Error bulk deleting tickets: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @ticket_bp.route('/<ticket_id>/reply', methods=['POST'])
 def send_ticket_reply(ticket_id):
     """

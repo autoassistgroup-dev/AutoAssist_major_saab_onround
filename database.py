@@ -375,8 +375,9 @@ class MongoDB:
             pipeline.append({"$addFields": {"updated_at": {"$ifNull": ["$updated_at", "$created_at"]}}})
             
             # Sort -> Skip -> Limit BEFORE lookups (optimization: reduce lookup volume)
-            # Pure chronological sort: newest activity (reply, status change, creation) on top
-            pipeline.append({"$sort": {"updated_at": -1}})
+            # Chronological sort by CREATION date: newest tickets always on top
+            # Tickets with new replies get a red dot (has_unread_reply) but stay in creation order
+            pipeline.append({"$sort": {"created_at": -1}})
             
             skip = (page - 1) * per_page
             pipeline.extend([

@@ -1243,41 +1243,64 @@
     <!-- Recent Tickets -->
     <div class="glass-card">
         <div class="card-header">
-            <h2 class="card-title">
-                <i class="fas fa-list-ul"></i>Recent Tickets
-            </h2>
-            <span class="card-badge">Total: {{ total_tickets }}</span>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <label style="display: flex; align-items: center; cursor: pointer; margin: 0;"
+                    onclick="event.stopPropagation();">
+                    <input type="checkbox" id="selectAllTickets" onchange="toggleSelectAll(this.checked)"
+                        style="width: 18px; height: 18px; accent-color: #f43f5e; cursor: pointer;">
+                </label>
+                <h2 class="card-title" style="margin: 0;">
+                    <i class="fas fa-list-ul"></i>Recent Tickets
+                </h2>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <button id="bulkDeleteBtn" onclick="bulkDeleteSelected()"
+                    style="display: none; padding: 8px 16px; background: linear-gradient(135deg, #f43f5e, #e11d48); border: none; border-radius: 8px; color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.3s; gap: 6px; align-items: center;">
+                    <i class="fas fa-trash"></i> <span id="bulkDeleteCount">Delete Selected (0)</span>
+                </button>
+                <span class="card-badge">Total: {{ total_tickets }}</span>
+            </div>
         </div>
         <div class="card-body">
             <div class="ticket-list" id="ticketsContainer">
                 {% for ticket in tickets %}
-                <a href="/ticket/{{ ticket.ticket_id }}"
-                    class="ticket-item {% if ticket.is_important %}important{% endif %} {% if loop.index > 5 %}hidden{% endif %}"
-                    data-ticket-index="{{ loop.index }}">
-                    <div class="ticket-content">
-                        <div class="ticket-meta">
-                            <span class="ticket-id">#{{ ticket.ticket_id }}</span>
-                            <span
-                                class="ticket-badge {% if ticket.priority == 'Urgent' %}badge-urgent{% elif ticket.priority == 'Fast' %}badge-high{% elif ticket.priority == 'Medium' %}badge-medium{% else %}badge-low{% endif %}">
-                                {{ ticket.priority }}
-                            </span>
-                            <span
-                                class="ticket-badge {% if ticket.status == 'Open' %}badge-technical{% else %}badge-low{% endif %}">
-                                {{ ticket.status }}
-                            </span>
-                            {% if ticket.classification %}
-                            <span class="ticket-badge badge-general">{{ ticket.classification }}</span>
-                            {% endif %}
-                        </div>
-                        <div class="ticket-title">{{ ticket.subject }}</div>
-                        <div class="ticket-body">{{ ticket.body }}</div>
-                        <div class="ticket-info">
-                            <span><i class="fas fa-user"></i>{{ ticket.name }}</span>
-                            <span><i class="fas fa-envelope"></i>{{ ticket.email }}</span>
-                            <span><i class="fas fa-clock"></i>{{ ticket.formatted_date }}</span>
-                        </div>
+                <div class="ticket-item {% if ticket.is_important %}important{% endif %} {% if loop.index > 5 %}hidden{% endif %}"
+                    data-ticket-index="{{ loop.index }}" data-ticket-id="{{ ticket.ticket_id }}">
+                    <div style="display: flex; align-items: flex-start; gap: 12px; flex: 1; min-width: 0;">
+                        <label style="display: flex; align-items: center; padding-top: 4px; cursor: pointer;"
+                            onclick="event.stopPropagation();">
+                            <input type="checkbox" class="ticket-checkbox" value="{{ ticket.ticket_id }}"
+                                onchange="updateBulkDeleteCount()"
+                                style="width: 18px; height: 18px; accent-color: #f43f5e; cursor: pointer;">
+                        </label>
+                        <a href="/ticket/{{ ticket.ticket_id }}"
+                            style="flex: 1; min-width: 0; text-decoration: none; color: inherit;">
+                            <div class="ticket-content">
+                                <div class="ticket-meta">
+                                    <span class="ticket-id">#{{ ticket.ticket_id }}</span>
+                                    <span
+                                        class="ticket-badge {% if ticket.priority == 'Urgent' %}badge-urgent{% elif ticket.priority == 'Fast' %}badge-high{% elif ticket.priority == 'Medium' %}badge-medium{% else %}badge-low{% endif %}">
+                                        {{ ticket.priority }}
+                                    </span>
+                                    <span
+                                        class="ticket-badge {% if ticket.status == 'Open' %}badge-technical{% else %}badge-low{% endif %}">
+                                        {{ ticket.status }}
+                                    </span>
+                                    {% if ticket.classification %}
+                                    <span class="ticket-badge badge-general">{{ ticket.classification }}</span>
+                                    {% endif %}
+                                </div>
+                                <div class="ticket-title">{{ ticket.subject }}</div>
+                                <div class="ticket-body">{{ ticket.body }}</div>
+                                <div class="ticket-info">
+                                    <span><i class="fas fa-user"></i>{{ ticket.name }}</span>
+                                    <span><i class="fas fa-envelope"></i>{{ ticket.email }}</span>
+                                    <span><i class="fas fa-clock"></i>{{ ticket.formatted_date }}</span>
+                                </div>
+                            </div>
+                        </a>
                     </div>
-                    <div class="ticket-actions" onclick="event.preventDefault(); event.stopPropagation();">
+                    <div class="ticket-actions" onclick="event.stopPropagation();">
                         <button class="ticket-action-btn star" onclick="event.preventDefault();" title="Mark Important">
                             <i class="fas fa-star{% if not ticket.is_important %}-o{% endif %}"></i>
                         </button>
@@ -1286,7 +1309,7 @@
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
-                </a>
+                </div>
                 {% endfor %}
             </div>
         </div>
@@ -1498,12 +1521,86 @@
 
                 if (data.success) {
                     showToast(`Ticket ${ticketId} deleted successfully`);
-                    setTimeout(() => window.location.reload(), 1000);
+                    // Remove from DOM instead of reloading
+                    const item = document.querySelector(`[data-ticket-id="${ticketId}"]`);
+                    if (item) {
+                        item.style.transition = 'opacity 0.3s, transform 0.3s';
+                        item.style.opacity = '0';
+                        item.style.transform = 'translateX(50px)';
+                        setTimeout(() => item.remove(), 300);
+                    }
                 } else {
                     showToast(data.error || 'Failed to delete ticket', 'error');
                 }
             } catch (error) {
                 showToast('An error occurred while deleting the ticket', 'error');
+            }
+        }
+
+        // ============ BULK SELECT & DELETE ============
+        function toggleSelectAll(checked) {
+            const checkboxes = document.querySelectorAll('.ticket-checkbox');
+            checkboxes.forEach(cb => cb.checked = checked);
+            updateBulkDeleteCount();
+        }
+
+        function updateBulkDeleteCount() {
+            const checked = document.querySelectorAll('.ticket-checkbox:checked');
+            const btn = document.getElementById('bulkDeleteBtn');
+            const countSpan = document.getElementById('bulkDeleteCount');
+            const selectAll = document.getElementById('selectAllTickets');
+            const allCheckboxes = document.querySelectorAll('.ticket-checkbox');
+
+            if (checked.length > 0) {
+                btn.style.display = 'inline-flex';
+                countSpan.textContent = `Delete Selected (${checked.length})`;
+            } else {
+                btn.style.display = 'none';
+            }
+
+            // Update select-all state
+            if (selectAll) {
+                selectAll.checked = allCheckboxes.length > 0 && checked.length === allCheckboxes.length;
+                selectAll.indeterminate = checked.length > 0 && checked.length < allCheckboxes.length;
+            }
+        }
+
+        async function bulkDeleteSelected() {
+            const checked = document.querySelectorAll('.ticket-checkbox:checked');
+            const ticketIds = Array.from(checked).map(cb => cb.value);
+
+            if (ticketIds.length === 0) return;
+
+            if (!confirm(`Are you sure you want to permanently delete ${ticketIds.length} ticket(s)? This cannot be undone.`)) return;
+
+            try {
+                const response = await fetch('/api/tickets/bulk-delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ticket_ids: ticketIds })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast(`${data.deleted_count} ticket(s) deleted successfully`);
+                    // Animate removal
+                    ticketIds.forEach(id => {
+                        const item = document.querySelector(`[data-ticket-id="${id}"]`);
+                        if (item) {
+                            item.style.transition = 'opacity 0.3s, transform 0.3s';
+                            item.style.opacity = '0';
+                            item.style.transform = 'translateX(50px)';
+                            setTimeout(() => item.remove(), 300);
+                        }
+                    });
+                    // Reset select all
+                    document.getElementById('selectAllTickets').checked = false;
+                    document.getElementById('bulkDeleteBtn').style.display = 'none';
+                } else {
+                    showToast(data.error || 'Failed to delete tickets', 'error');
+                }
+            } catch (error) {
+                showToast('An error occurred while deleting tickets', 'error');
             }
         }
 
@@ -1540,7 +1637,7 @@
             // ============ MEMBER MANAGEMENT ============
             setupMemberManagement();
         });
-        
+
         // Technician Management Functions
         function setupTechnicianManagement() {
             console.log('🔧 Setting up Technician Management...');
@@ -1603,7 +1700,7 @@
                     setTechnicianActive(techId, true, techName);
                 });
             });
-            
+
             console.log('✅ Technician Management setup complete');
         }
 
@@ -1643,7 +1740,7 @@
             const modal = document.getElementById('technicianCrudModal');
             if (modal) modal.classList.remove('show');
         }
-        
+
         // Make functions globally accessible for onclick handlers
         window.closeTechnicianModal = closeTechnicianModal;
         window.openTechnicianModal = openTechnicianModal;
@@ -1791,35 +1888,35 @@
             console.log('👥 Setting up Member Management...');
             const addMemberBtn = document.getElementById('addMemberBtnMain');
             const membersList = document.getElementById('membersMainList');
-            
+
             if (!addMemberBtn || !membersList) {
                 console.error('❌ Missing elements: addMemberBtn=', !!addMemberBtn, 'membersList=', !!membersList);
                 return;
             }
-            
+
             console.log('✅ Binding Add Member button');
             // Add Member button
             addMemberBtn.addEventListener('click', () => {
                 console.log('➕ Add Member clicked');
                 openMemberModal();
             });
-            
+
             // Edit buttons
             const memberEditButtons = membersList.querySelectorAll('.management-action-btn.edit');
             console.log(`✅ Found ${memberEditButtons.length} Member Edit buttons`);
             memberEditButtons.forEach(btn => {
-                btn.addEventListener('click', async function() {
+                btn.addEventListener('click', async function () {
                     console.log('✏️ Edit Member clicked:', this.dataset.memberId);
                     const memberId = this.dataset.memberId;
                     await loadMemberForEdit(memberId);
                 });
             });
-            
+
             // Delete/Deactivate buttons
             const memberDeleteButtons = membersList.querySelectorAll('.management-action-btn.deactivate');
             console.log(`✅ Found ${memberDeleteButtons.length} Member Delete buttons`);
             memberDeleteButtons.forEach(btn => {
-                btn.addEventListener('click', function() {
+                btn.addEventListener('click', function () {
                     console.log('🗑️ Delete Member clicked:', this.dataset.memberId);
                     const memberId = this.dataset.memberId;
                     const memberItem = this.closest('.member-item');
@@ -1827,10 +1924,10 @@
                     deleteMember(memberId, memberName);
                 });
             });
-            
+
             console.log('✅ Member Management setup complete');
         }
-        
+
         function openMemberModal(memberData = null) {
             // Create or get modal
             let modal = document.getElementById('memberModal');
@@ -1838,18 +1935,18 @@
                 modal = createMemberModal();
                 document.body.appendChild(modal);
             }
-            
+
             const form = document.getElementById('memberForm');
             const title = document.getElementById('memberModalTitle');
             const submitBtn = document.getElementById('memberSubmitBtn');
-            
+
             if (memberData) {
                 // Edit mode
                 title.textContent = 'Edit Member';
                 submitBtn.textContent = 'Update Member';
                 form.dataset.mode = 'edit';
                 form.dataset.memberId = memberData._id;
-                
+
                 document.getElementById('memberName').value = memberData.name || '';
                 document.getElementById('memberEmail').value = memberData.email || '';
                 document.getElementById('memberUserId').value = memberData.user_id || '';
@@ -1866,10 +1963,10 @@
                 document.getElementById('memberPassword').required = true;
                 document.getElementById('memberPassword').placeholder = 'Enter password';
             }
-            
+
             modal.classList.add('show');
         }
-        
+
         function createMemberModal() {
             const modal = document.createElement('div');
             modal.id = 'memberModal';
@@ -1924,37 +2021,37 @@
                     </form>
                 </div>
             `;
-            
+
             // Form submission
-            modal.querySelector('#memberForm').addEventListener('submit', async function(e) {
+            modal.querySelector('#memberForm').addEventListener('submit', async function (e) {
                 e.preventDefault();
                 await saveMember();
             });
-            
+
             // Close on overlay click
-            modal.addEventListener('click', function(e) {
+            modal.addEventListener('click', function (e) {
                 if (e.target === modal) closeMemberModal();
             });
-            
+
             return modal;
         }
-        
+
         function closeMemberModal() {
             const modal = document.getElementById('memberModal');
             if (modal) modal.classList.remove('show');
         }
-        
+
         // Make member functions globally accessible for onclick handlers
         window.closeMemberModal = closeMemberModal;
         window.openMemberModal = openMemberModal;
-        
+
         async function loadMemberForEdit(memberId) {
             try {
                 const response = await fetch(`/api/members/${memberId}`, {
                     credentials: 'include'
                 });
                 const result = await response.json();
-                
+
                 if (result.success && result.member) {
                     openMemberModal(result.member);
                 } else {
@@ -1965,16 +2062,16 @@
                 showToast('Error loading member data', 'error');
             }
         }
-        
+
         async function saveMember() {
             const form = document.getElementById('memberForm');
             const mode = form.dataset.mode;
             const submitBtn = document.getElementById('memberSubmitBtn');
             const originalText = submitBtn.textContent;
-            
+
             submitBtn.disabled = true;
             submitBtn.textContent = 'Saving...';
-            
+
             try {
                 const data = {
                     name: document.getElementById('memberName').value.trim(),
@@ -1983,12 +2080,12 @@
                     role: document.getElementById('memberRole').value,
                     gender: document.getElementById('memberGender').value
                 };
-                
+
                 const password = document.getElementById('memberPassword').value.trim();
                 if (password || mode === 'create') {
                     data.password = password;
                 }
-                
+
                 let url, method;
                 if (mode === 'edit') {
                     url = `/api/members/${form.dataset.memberId}`;
@@ -1997,16 +2094,16 @@
                     url = '/api/members';
                     method = 'POST';
                 }
-                
+
                 const response = await fetch(url, {
                     method: method,
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data),
                     credentials: 'include'
                 });
-                
+
                 const result = await response.json();
-                
+
                 if (result.success) {
                     showToast(result.message || 'Member saved successfully');
                     closeMemberModal();
@@ -2022,21 +2119,21 @@
                 submitBtn.textContent = originalText;
             }
         }
-        
+
         async function deleteMember(memberId, memberName) {
             if (!confirm(`Are you sure you want to deactivate ${memberName}? This will disable their access.`)) {
                 return;
             }
-            
+
             try {
                 const response = await fetch(`/api/members/${memberId}`, {
                     method: 'DELETE',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include'
                 });
-                
+
                 const result = await response.json();
-                
+
                 if (result.success) {
                     showToast(result.message || 'Member deactivated successfully');
                     setTimeout(() => window.location.reload(), 1000);
