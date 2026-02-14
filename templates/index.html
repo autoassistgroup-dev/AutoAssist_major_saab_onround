@@ -11,6 +11,19 @@
     <!-- Socket.IO for real-time updates -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
     <style>
+        /* ===== ANIMATIONS FOR BACKGROUND REFRESH ===== */
+        @keyframes fadeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         /* ===== DARK PROFESSIONAL THEME ===== */
         * {
             margin: 0;
@@ -1572,97 +1585,161 @@
             setInterval(setBackgroundImage, 60 * 60 * 1000);
         });
 
-        // ===== AJAX index refresh (polling) =====
+        // ===== AJAX BACKGROUND REFRESH (Full DOM-diff, every 5s) =====
+        let _refreshInProgress = false;
+
         async function fetchIndexTicketsForHome() {
             try {
-                const res = await fetch('/api/index/tickets');
+                // Pass current filters so the API returns matching results
+                const params = new URLSearchParams(window.location.search);
+                const res = await fetch('/api/index/tickets?' + params.toString());
                 if (!res.ok) return null;
                 const data = await res.json();
                 if (!data.success) return null;
                 return data.tickets || [];
             } catch (e) {
-                console.warn('Failed to fetch index tickets', e);
+                console.warn('[REFRESH] Failed to fetch tickets', e);
                 return null;
             }
         }
 
-        async function refreshIndexTickets() {
-            const tickets = await fetchIndexTicketsForHome();
-            if (!tickets) return;
-            tickets.forEach(syncTicketCardFromApi);
-        }
+        /**
+         * Build a complete ticket-card HTML string from API data.
+         * Mirrors the Jinja template so dynamically-added cards look identical.
+         */
+        function buildTicketCardHtml(t) {
+            const priority = t.priority || 'Medium';
+            const status = t.status || 'New';
+            const subject = escapeHtml(t.subject || 'No Subject');
+            const body = escapeHtml(t.body || 'No Body');
+            const name = escapeHtml(t.name || 'Anonymous');
+            const email = escapeHtml(t.email || 'No Email');
+            const ticketId = t.ticket_id || 'Unknown';
+            const isManual = ticketId.startsWith('M');
+            const methodClass = isManual ? 'method-manual' : 'method-email';
+            const methodIcon = isManual ? 'fa-user-edit' : 'fa-envelope';
+            const methodText = isManual ? 'Manual' : 'Email';
 
-        function syncTicketCardFromApi(ticket) {
-            if (!ticket || !ticket.ticket_id) return;
-            const link = document.querySelector(`a[href="/ticket/${ticket.ticket_id}"]`);
+            const priorityClass = priority === 'Urgent' ? 'badge-urgent'
+                : priority === 'Fast' ? 'badge-fast'
+                    : priority === 'Medium' ? 'badge-medium' : 'badge-low';
 
-            // If card does not exist yet, let existing socket-based renderer handle new tickets
-            if (!link) {
-                return;
+            const statusClass = status === 'Open' ? 'status-open'
+                : status === 'Waiting for Response' ? 'status-waiting'
+                    : status === 'Closed' ? 'status-closed'
+                        : status === 'Resolved' ? 'status-resolved' : 'status-new';
+
+            const hasNew = !!(t.has_new_reply || t.has_unread_reply);
+            const unreadHtml = hasNew ? '<div class="unread-indicator"></div>' : '';
+
+            // Forwarded badge
+            let forwardedBadge = '';
+            if (t.is_forwarded && t.forwarded_to_name) {
+                forwardedBadge = `<span class="status-badge badge-forwarded"><i class="fas fa-share" style="font-size: 9px; margin-right: 4px; transform: scaleX(-1);"></i>${escapeHtml(t.forwarded_to_name)}</span>`;
             }
 
-            const card = link.closest('.ticket-card');
-            if (!card) return;
+            // Technician badge
+            let techBadge = '';
+            if (t.assigned_technician_name) {
+                techBadge = `<span class="status-badge badge-technician"><i class="fas fa-wrench" style="font-size: 9px; margin-right: 4px;"></i>${escapeHtml(t.assigned_technician_name)}</span>`;
+            }
 
+            // Star badge
+            let starBadge = '';
+            if (t.is_bookmarked) {
+                starBadge = `<span class="status-badge badge-star"><i class="fas fa-star" style="font-size: 9px;"></i></span>`;
+            }
+
+            // Format time
+            let timeStr = 'N/A';
+            if (t.created_at) {
+                try {
+                    const d = new Date(t.created_at);
+                    timeStr = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) + ', ' +
+                        d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+                } catch (e) { timeStr = t.created_at; }
+            }
+
+            return `<a href="/ticket/${ticketId}">
+                ${unreadHtml}
+                <div class="ticket-content">
+                    <div class="ticket-badges">
+                        <span class="ticket-id">#${ticketId}</span>
+                        <span class="priority-badge ${priorityClass}">${priority}</span>
+                        ${forwardedBadge}
+                        ${techBadge}
+                        <span class="status-badge badge-status ${statusClass}">${status}</span>
+                    </div>
+                    <h3 class="ticket-subject">${subject}</h3>
+                    <p class="ticket-body">${body}</p>
+                    <div class="ticket-meta">
+                        <span><i class="fas fa-user"></i>${name}</span>
+                        <span><i class="fas fa-envelope"></i>${email}</span>
+                        <span><i class="fas fa-clock"></i>${timeStr}</span>
+                    </div>
+                </div>
+                <div class="ticket-sidebar">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        ${starBadge}
+                        <span class="method-badge ${methodClass}">
+                            <i class="fas ${methodIcon}"></i> ${methodText}
+                        </span>
+                    </div>
+                </div>
+            </a>`;
+        }
+
+        /**
+         * Patch an existing card's badges/status in-place (no DOM rebuild).
+         */
+        function patchTicketCard(card, ticket) {
+            const link = card.querySelector('a');
+            if (!link) return;
             const badgesContainer = link.querySelector('.ticket-badges');
             if (!badgesContainer) return;
 
-            // Update priority badge
+            // Priority
             const priorityBadge = badgesContainer.querySelector('.priority-badge');
             if (priorityBadge && ticket.priority) {
                 const p = ticket.priority;
-                const cls = p === 'Urgent' ? 'badge-urgent'
-                    : p === 'Fast' ? 'badge-fast'
-                        : p === 'Medium' ? 'badge-medium'
-                            : 'badge-low';
+                const cls = p === 'Urgent' ? 'badge-urgent' : p === 'Fast' ? 'badge-fast' : p === 'Medium' ? 'badge-medium' : 'badge-low';
                 priorityBadge.className = `priority-badge ${cls}`;
                 priorityBadge.textContent = p;
             }
 
-            // Update status badge
+            // Status
             const statusBadge = badgesContainer.querySelector('.badge-status');
             if (statusBadge && ticket.status) {
                 const s = ticket.status;
-                const statusClass = s === 'Open' ? 'status-open'
-                    : s === 'Waiting for Response' ? 'status-waiting'
-                        : s === 'Closed' ? 'status-closed'
-                            : s === 'Resolved' ? 'status-resolved'
-                                : 'status-new';
-                statusBadge.className = `status-badge badge-status ${statusClass}`;
+                const sc = s === 'Open' ? 'status-open' : s === 'Waiting for Response' ? 'status-waiting' : s === 'Closed' ? 'status-closed' : s === 'Resolved' ? 'status-resolved' : 'status-new';
+                statusBadge.className = `status-badge badge-status ${sc}`;
                 statusBadge.textContent = s;
             }
 
-            // Unread indicator based on has_new_reply
+            // Unread indicator
             const existingUnread = card.querySelector('.unread-indicator');
             const hasNew = !!(ticket.has_new_reply || ticket.has_unread_reply);
             if (hasNew && !existingUnread) {
                 const indicator = document.createElement('div');
                 indicator.className = 'unread-indicator';
-                const content = card.querySelector('.ticket-content');
-                if (content) {
-                    card.insertBefore(indicator, content);
-                }
+                const aEl = card.querySelector('a');
+                if (aEl) aEl.prepend(indicator);
             } else if (!hasNew && existingUnread) {
                 existingUnread.remove();
             }
 
-            // Star / bookmark badge in sidebar
+            // Star badge
             const sidebar = link.querySelector('.ticket-sidebar');
             if (sidebar) {
                 let starBadge = sidebar.querySelector('.badge-star');
-                if (ticket.is_bookmarked) {
-                    if (!starBadge) {
-                        starBadge = document.createElement('span');
-                        starBadge.className = 'status-badge badge-star';
-                        starBadge.innerHTML = '<i class="fas fa-star" style="font-size: 9px;"></i>';
-                        const methodBadge = sidebar.querySelector('.method-badge');
-                        if (methodBadge) {
-                            sidebar.insertBefore(starBadge, methodBadge);
-                        } else {
-                            sidebar.appendChild(starBadge);
-                        }
-                    }
-                } else if (starBadge) {
+                if (ticket.is_bookmarked && !starBadge) {
+                    starBadge = document.createElement('span');
+                    starBadge.className = 'status-badge badge-star';
+                    starBadge.innerHTML = '<i class="fas fa-star" style="font-size: 9px;"></i>';
+                    const methodBadge = sidebar.querySelector('.method-badge');
+                    if (methodBadge) sidebar.insertBefore(starBadge, methodBadge);
+                    else sidebar.appendChild(starBadge);
+                } else if (!ticket.is_bookmarked && starBadge) {
                     starBadge.remove();
                 }
             }
@@ -1673,13 +1750,102 @@
                 if (!techBadge) {
                     techBadge = document.createElement('span');
                     techBadge.className = 'status-badge badge-technician';
-                    badgesContainer.appendChild(techBadge);
+                    const sBadge = badgesContainer.querySelector('.badge-status');
+                    if (sBadge) badgesContainer.insertBefore(techBadge, sBadge);
+                    else badgesContainer.appendChild(techBadge);
                 }
                 techBadge.innerHTML = `<i class="fas fa-wrench" style="font-size: 9px; margin-right: 4px;"></i>${escapeHtml(ticket.assigned_technician_name)}`;
             }
         }
 
-        // Periodic polling as a fallback to keep index in sync
+        /**
+         * Full DOM-diff refresh: add new, remove stale, reorder, patch badges.
+         * No page reload, no flash, preserves scroll position.
+         */
+        async function refreshIndexTickets() {
+            if (_refreshInProgress) return;
+            _refreshInProgress = true;
+            try {
+                const tickets = await fetchIndexTicketsForHome();
+                if (!tickets) return;
+
+                const grid = document.getElementById('mainTicketsGrid') || document.querySelector('.tickets-grid');
+                if (!grid) return;
+
+                // Build map of existing DOM cards by ticket_id
+                const existingCards = new Map();
+                grid.querySelectorAll('.ticket-card').forEach(card => {
+                    const link = card.querySelector('a[href^="/ticket/"]');
+                    if (link) {
+                        const href = link.getAttribute('href');
+                        const id = href.replace('/ticket/', '');
+                        existingCards.set(id, card);
+                    }
+                });
+
+                const apiTicketIds = new Set(tickets.map(t => t.ticket_id));
+
+                // 1. Remove cards that are no longer in the API response
+                existingCards.forEach((card, id) => {
+                    if (!apiTicketIds.has(id)) {
+                        card.style.transition = 'opacity 0.3s, max-height 0.3s';
+                        card.style.opacity = '0';
+                        card.style.maxHeight = '0';
+                        card.style.overflow = 'hidden';
+                        setTimeout(() => card.remove(), 300);
+                    }
+                });
+
+                // 2. Insert new cards and reorder existing ones
+                let prevSibling = null; // tracks the last correctly-positioned element
+                for (let i = 0; i < tickets.length; i++) {
+                    const ticket = tickets[i];
+                    const id = ticket.ticket_id;
+                    let card = existingCards.get(id);
+
+                    if (card) {
+                        // Existing card → patch its badges in-place
+                        patchTicketCard(card, ticket);
+                    } else {
+                        // New card → build and insert with animation
+                        card = document.createElement('div');
+                        card.className = 'ticket-card';
+                        card.innerHTML = buildTicketCardHtml(ticket);
+                        card.style.animation = 'fadeSlideIn 0.4s ease-out';
+                    }
+
+                    // Move/insert card into the correct position
+                    const expectedNext = prevSibling ? prevSibling.nextElementSibling : grid.firstElementChild;
+                    if (card !== expectedNext) {
+                        if (prevSibling) {
+                            prevSibling.after(card);
+                        } else {
+                            grid.prepend(card);
+                        }
+                    }
+                    prevSibling = card;
+                }
+
+                // 3. Update total count
+                const totalBadge = document.querySelector('.total-badge');
+                if (totalBadge) {
+                    totalBadge.textContent = `Total: ${tickets.length}`;
+                }
+
+                // Remove empty state if tickets exist
+                if (tickets.length > 0) {
+                    const emptyState = grid.querySelector('.empty-state');
+                    if (emptyState) emptyState.remove();
+                }
+
+            } catch (e) {
+                console.warn('[REFRESH] Error during DOM diff:', e);
+            } finally {
+                _refreshInProgress = false;
+            }
+        }
+
+        // Periodic background refresh every 5 seconds
         setInterval(refreshIndexTickets, 5000);
 
         // ===== SOCKET.IO REAL-TIME UPDATES =====

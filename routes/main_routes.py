@@ -243,6 +243,12 @@ def api_index_tickets():
     def serialize_ticket(ticket):
         created_at = ticket.get('created_at')
         updated_at = ticket.get('updated_at')
+        # Extract forwarded_to_name from lookup results or direct field
+        forwarded_to_name = ''
+        if ticket.get('forwarded_to_member') and len(ticket['forwarded_to_member']) > 0:
+            forwarded_to_name = ticket['forwarded_to_member'][0].get('name', '')
+        elif ticket.get('forwarded_to_name'):
+            forwarded_to_name = ticket['forwarded_to_name']
         return {
             'ticket_id': ticket.get('ticket_id'),
             'ticket_number': ticket.get('ticket_id'),
@@ -255,6 +261,7 @@ def api_index_tickets():
             'classification': ticket.get('classification'),
             'is_forwarded': bool(ticket.get('is_forwarded')),
             'is_forwarded_viewed': bool(ticket.get('is_forwarded_viewed')),
+            'forwarded_to_name': forwarded_to_name,
             'assigned_technician_name': ticket.get('assigned_technician') or ticket.get('technician_name') or '',
             'is_bookmarked': bool(ticket.get('is_important')),
             'has_new_reply': bool(ticket.get('has_unread_reply')),
