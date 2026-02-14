@@ -139,6 +139,17 @@ def display_response():
                     
                     full_message = strip_email_quotes(email_body)
                     
+                    # Extract attachments from payload (if N8N sends them)
+                    raw_attachments = data.get('attachments', [])
+                    if isinstance(raw_attachments, dict):
+                        raw_attachments = list(raw_attachments.values())
+                    payload_attachments = []
+                    for att in (raw_attachments if isinstance(raw_attachments, list) else []):
+                        if isinstance(att, dict):
+                            if not att.get('filename'):
+                                att['filename'] = att.get('fileName', 'attachment')
+                            payload_attachments.append(att)
+                    
                     if full_message and len(full_message) > 10:
                         # Find the most recent webhook reply for this ticket (within 5 min)
                         cutoff = datetime.now() - timedelta(minutes=5)
@@ -152,13 +163,23 @@ def display_response():
                         )
                         
                         if recent_reply:
+                            update_fields = {}
                             existing_msg = recent_reply.get('message', '')
                             if len(full_message) > len(existing_msg):
+                                update_fields['message'] = full_message
+                            
+                            # Also merge attachments if existing reply has none and we have some
+                            existing_atts = recent_reply.get('attachments', [])
+                            if not existing_atts and payload_attachments:
+                                update_fields['attachments'] = payload_attachments
+                                logger.info(f"📎 ATTACHMENTS RECEIVED │ Ticket {ticket_id} │ {len(payload_attachments)} attachments from AI draft payload")
+                            
+                            if update_fields:
                                 db.replies.update_one(
                                     {'_id': recent_reply['_id']},
-                                    {'$set': {'message': full_message}}
+                                    {'$set': update_fields}
                                 )
-                                logger.info(f"📝 REPLY PATCHED │ Ticket {ticket_id} │ {len(existing_msg)} → {len(full_message)} chars")
+                                logger.info(f"📝 REPLY PATCHED │ Ticket {ticket_id} │ {len(existing_msg)} → {len(full_message)} chars │ Attachments: {len(recent_reply.get('attachments', []))} → {len(update_fields.get('attachments', recent_reply.get('attachments', [])))}")
                             else:
                                 logger.info(f"📝 REPLY OK │ Ticket {ticket_id} │ Already has {len(existing_msg)} chars (body: {len(full_message)})")
                         else:
@@ -169,11 +190,11 @@ def display_response():
                                 'message': full_message,
                                 'sender_name': sender_name,
                                 'sender_type': 'webhook',
-                                'attachments': [],
+                                'attachments': payload_attachments,  # Include any attachments from payload
                                 'created_at': datetime.now()
                             }
                             reply_id = db.create_reply(reply_data)
-                            logger.info(f"📝 REPLY CREATED │ Ticket {ticket_id} │ {len(full_message)} chars │ ID: {reply_id}")
+                            logger.info(f"📝 REPLY CREATED │ Ticket {ticket_id} │ {len(full_message)} chars │ Attachments: {len(payload_attachments)} │ ID: {reply_id}")
                 except Exception as e:
                     logger.warning(f"⚠️ REPLY PATCH FAILED │ Ticket {ticket_id} │ {e}")
             

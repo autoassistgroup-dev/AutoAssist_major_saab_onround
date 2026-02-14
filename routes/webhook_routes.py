@@ -405,6 +405,64 @@ def webhook_reply():
             else:
                 logger.warning(f"⚠️  ATTACHMENT │ Skipping invalid type: {type(att)}")
 
+        # ── MERGE CHECK: If display_response already created a reply (empty attachments), ──
+        # ── merge our attachments into it instead of creating a duplicate.              ──
+        if normalized_attachments:
+            cutoff = datetime.now() - timedelta(minutes=5)
+            existing_reply = db.replies.find_one(
+                {
+                    'ticket_id': ticket_id,
+                    'created_at': {'$gte': cutoff},
+                    'sender_type': 'webhook',
+                    '$or': [
+                        {'attachments': {'$exists': False}},
+                        {'attachments': {'$size': 0}},
+                    ]
+                },
+                sort=[('created_at', -1)]
+            )
+            if existing_reply:
+                # Merge: add attachments, update message only if existing is shorter
+                update_fields = {'attachments': normalized_attachments}
+                existing_msg = (existing_reply.get('message') or '').strip()
+                new_msg = strip_email_quotes(message).strip()
+                if len(new_msg) > len(existing_msg):
+                    update_fields['message'] = new_msg
+                
+                db.replies.update_one(
+                    {'_id': existing_reply['_id']},
+                    {'$set': update_fields}
+                )
+                logger.info(f"📎 ATTACHMENTS MERGED │ Ticket {ticket_id} │ {len(normalized_attachments)} attachments added to existing reply {existing_reply['_id']}")
+                
+                # Still emit socket event and update ticket
+                try:
+                    from socket_events import emit_new_reply
+                    emit_new_reply(ticket_id, {
+                        'reply_id': str(existing_reply['_id']),
+                        'ticket_id': ticket_id,
+                        'message': existing_reply.get('message', message),
+                        'sender_name': existing_reply.get('sender_name', 'Customer'),
+                        'sender_type': 'customer',
+                        'attachments': len(normalized_attachments),
+                        'created_at': existing_reply.get('created_at', datetime.now()).isoformat()
+                    })
+                except Exception as e:
+                    logger.warning(f"⚠️  SOCKET │ Failed to emit merged reply event: {e}")
+                
+                db.update_ticket(ticket_id, {
+                    'has_unread_reply': True,
+                    'last_reply_at': datetime.now()
+                })
+                
+                return jsonify({
+                    'success': True,
+                    'message': 'Attachments merged into existing reply',
+                    'reply_id': str(existing_reply['_id']),
+                    'ticket_id': ticket_id,
+                    'attachments_merged': len(normalized_attachments)
+                })
+
         reply_data = {
             'ticket_id': ticket_id,
             'message': strip_email_quotes(message),
