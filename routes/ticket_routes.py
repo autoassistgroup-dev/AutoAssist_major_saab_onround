@@ -724,8 +724,8 @@ def send_ticket_reply(ticket_id):
                     'ticket_id': ticket_id,
                     'portal_reply_id': str(reply_id),
                     'response_text': message,
-                    'replyMessage': message,  # Also include as replyMessage for compatibility
-                    'html_message': html_message,  # HTML-formatted version for email body
+                    'replyMessage': html_message,  # HTML-formatted for proper email rendering
+                    'html_message': html_message,  # Also available as html_message
                     'customer_email': ticket.get('email'),
                     'email': ticket.get('email'),
                     'ticket_subject': ticket.get('subject', 'Your Support Request'),
@@ -1015,8 +1015,8 @@ def send_ticket_email(ticket_id):
                 webhook_payload = {
                     'ticket_id': ticket_id,
                     'response_text': body,
-                    'replyMessage': body,
-                    'html_message': html_body,  # HTML-formatted version for email body
+                    'replyMessage': html_body,  # HTML-formatted for proper email rendering
+                    'html_message': html_body,  # Also available as html_message
                     'customer_email': ticket.get('email'),
                     'email': ticket.get('email'),
                     'ticket_subject': subject, # USE CUSTOM SUBJECT
