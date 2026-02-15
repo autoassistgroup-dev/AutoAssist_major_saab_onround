@@ -63,6 +63,19 @@ def display_response():
     try:
         data = request.get_json() or {}
         
+        # Debug: log all fields N8N sends (avoid base64 data spam)
+        field_snapshot = {}
+        for k, v in data.items():
+            if isinstance(v, str):
+                field_snapshot[k] = f"str({len(v)})" if len(v) > 200 else repr(v[:200])
+            elif isinstance(v, dict):
+                field_snapshot[k] = f"dict({list(v.keys())[:5]})"
+            elif isinstance(v, list):
+                field_snapshot[k] = f"list({len(v)})"
+            else:
+                field_snapshot[k] = str(type(v).__name__)
+        logger.info(f"📨 DISPLAY-RESPONSE │ Fields: {field_snapshot}")
+        
         original_ticket_id = data.get('ticket_id', '')
         ai_response = data.get('ai_response', data.get('draft', ''))
         email_body = data.get('body', data.get('message', ''))
@@ -106,6 +119,24 @@ def display_response():
             
             if not ticket:
                 logger.warning(f"Ticket {ticket_id} not found, creating update anyway")
+            
+            # ── Save message_id/threadId for reply threading ──
+            # When N8N processes an incoming customer email reply, it may include
+            # the email's message_id. Saving it enables future admin replies to
+            # thread in the same email conversation (instead of creating new emails).
+            incoming_msg_id = data.get('message_id', data.get('messageId', data.get('internetMessageId', '')))
+            incoming_thread_id = data.get('conversationId', data.get('threadId', data.get('conversation_id', '')))
+            
+            extra_update = {}
+            if incoming_msg_id and isinstance(incoming_msg_id, str) and incoming_msg_id.strip():
+                extra_update['message_id'] = incoming_msg_id.strip()
+                logger.info(f"🔗 MESSAGE ID (display-response) │ Ticket {ticket_id} │ {incoming_msg_id.strip()[:60]}")
+            if incoming_thread_id and isinstance(incoming_thread_id, str) and incoming_thread_id.strip():
+                extra_update['threadId'] = incoming_thread_id.strip()
+                logger.info(f"🔗 THREAD ID (display-response) │ Ticket {ticket_id} │ {incoming_thread_id.strip()[:60]}")
+            
+            if extra_update:
+                db.update_ticket(ticket_id, extra_update)
             
             # Update the ticket with the AI draft
             result = db.update_ticket(ticket_id, {

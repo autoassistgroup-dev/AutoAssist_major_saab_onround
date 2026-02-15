@@ -375,6 +375,22 @@ def webhook_reply():
                         'idempotent': True
                     })
         
+        # ── Extract message_id from incoming reply to enable threading ──
+        # When a customer replies to our email, N8N sends the email's message_id.
+        # We save it to the ticket so future admin replies can thread properly.
+        incoming_message_id = data.get('message_id', data.get('messageId', data.get('internetMessageId', '')))
+        if incoming_message_id and isinstance(incoming_message_id, str) and incoming_message_id.strip():
+            incoming_message_id = incoming_message_id.strip()
+            # Save to ticket so subsequent admin replies use "Reply to thread" path
+            db.update_ticket(ticket_id, {'message_id': incoming_message_id})
+            logger.info(f"🔗 MESSAGE ID SAVED │ Ticket {ticket_id} │ message_id: {incoming_message_id[:60]}")
+        
+        # Also extract and save conversationId/threadId if present
+        incoming_thread_id = data.get('conversationId', data.get('threadId', data.get('conversation_id', '')))
+        if incoming_thread_id and isinstance(incoming_thread_id, str) and incoming_thread_id.strip():
+            db.update_ticket(ticket_id, {'threadId': incoming_thread_id.strip()})
+            logger.info(f"🔗 THREAD ID SAVED │ Ticket {ticket_id} │ threadId: {incoming_thread_id.strip()[:60]}")
+        
         # Normalize attachments — N8N sends as dict {"attachment1": {...}} or list [{...}]
         raw_attachments = data.get('attachments', [])
         normalized_attachments = []

@@ -253,7 +253,7 @@ def api_index_tickets():
             'ticket_id': ticket.get('ticket_id'),
             'ticket_number': ticket.get('ticket_id'),
             'subject': ticket.get('subject') or 'No Subject',
-            'body': ticket.get('body') or ticket.get('message') or '',
+            'body': ticket.get('body') or ticket.get('message') or ticket.get('description') or '',
             'name': ticket.get('name') or ticket.get('customer_first_name') or '',
             'email': ticket.get('email') or '',
             'priority': ticket.get('priority') or 'Medium',
