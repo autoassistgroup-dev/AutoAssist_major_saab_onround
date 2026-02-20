@@ -472,12 +472,12 @@ def create_ticket():
         
         ticket_data = {
             'ticket_id': ticket_id,
-            'thread_id': f'manual_{ticket_id}',  # Ensure unique thread_id for database constraint
             'subject': request.form.get('subject', ''),
-            'body': request.form.get('body', ''),
+            'body': request.form.get('body', '') or request.form.get('description', ''),
             'name': request.form.get('name', current_member.get('name', '')),
             'email': request.form.get('email', ''),
             'phone': request.form.get('phone', ''),
+            'vhc_link': request.form.get('vhc_link', '').strip(),
             'status': 'New',
             'priority': request.form.get('priority', 'Medium'),
             'created_at': datetime.now(),

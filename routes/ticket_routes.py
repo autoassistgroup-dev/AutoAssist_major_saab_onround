@@ -274,9 +274,8 @@ def create_ticket():
             'ticket_id': ticket_id,
             'thread_id': f'manual_{ticket_id}',  # Ensure unique thread_id for database constraint
             'subject': request.form.get('subject', ''),
-            'body': request.form.get('body', ''), # Mapped from description? Check form field names
+            'body': request.form.get('body', '') or request.form.get('description', ''),
             'description': request.form.get('description', ''), # Fallback or main?
-            'name': customer_full_name,  # Combined name for dashboard display
             'customer_first_name': customer_first_name,
             'customer_surname': customer_surname,
             'customer_title': customer_title,
@@ -284,6 +283,7 @@ def create_ticket():
             'email': request.form.get('email', ''),
             'phone': request.form.get('phone', ''),
             'type_of_claim': request.form.get('type_of_claim', ''),
+            'vhc_link': request.form.get('vhc_link', '').strip(),
             'status': 'New',
             'priority': request.form.get('priority', 'Medium'),
             'assigned_technician': request.form.get('technician', ''),
@@ -760,8 +760,22 @@ def send_ticket_reply(ticket_id):
                         'size': att.get('size', 0)
                     })
                 
-                # Convert plain text newlines to HTML for email rendering
+                # Handle custom @VHC_Link tag replacement for emails
+                import re
+                
                 html_message = message.replace('\n', '<br>\n')
+                
+                # If there's a VHC link, substitute the visual tag with an actual HTML link.
+                ticket_vhc_link = ticket.get('vhc_link', '').strip()
+                if ticket_vhc_link:
+                    # Pattern matches @VHC_Link or [VHC_LINK]
+                    html_link = f'<a href="{ticket_vhc_link}" target="_blank" style="color: #4f46e5; font-weight: 500; text-decoration: underline;">Vehicle Health Check — click here</a>'
+                    # Replace in HTML body (for N8N emails)
+                    html_message = re.sub(r'(@VHC_Link|\[VHC_LINK\])', html_link, html_message, flags=re.IGNORECASE)
+                    # Replace in plain text body (for N8N fallback)
+                    message_plain = re.sub(r'(@VHC_Link|\[VHC_LINK\])', f'Vehicle Health Check: {ticket_vhc_link}', message, flags=re.IGNORECASE)
+                else:
+                    message_plain = message
                 
                 # N8N renders replyMessage as HTML for email thread replies (has threadId)
                 # but as plain text for manual/new ticket emails. Use HTML only for email threads.
@@ -770,9 +784,10 @@ def send_ticket_reply(ticket_id):
                 webhook_payload = {
                     'ticket_id': ticket_id,
                     'portal_reply_id': str(reply_id),
-                    'response_text': message,
-                    'replyMessage': html_message if is_email_thread else message,
-                    'html_message': html_message,  # Always include HTML version for reference
+                    'response_text': message_plain,
+                    'replyMessage': html_message if is_email_thread else message_plain,
+                    'html_message': html_message,           # Helper attribute for webhook parsing
+
                     'customer_email': ticket.get('email'),
                     'email': ticket.get('email'),
                     'ticket_subject': ticket.get('subject', 'Your Support Request'),

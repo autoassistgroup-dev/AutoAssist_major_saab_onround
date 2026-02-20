@@ -7247,17 +7247,36 @@
                         'cancelled'] %}
                         <form id="replyForm" class="mt-8 reply-form">
                             <div class="mb-4 relative">
+                                <!-- @-Mention Autocomplete Menu (Hidden by default) -->
+                                <div id="mentionMenu"
+                                    class="absolute z-50 bg-gray-800 border border-gray-700 shadow-lg rounded-md hidden max-w-xs overflow-hidden"
+                                    style="bottom: 100%; left: 1rem; margin-bottom: 0.5rem;">
+                                    <ul class="text-sm text-gray-200">
+                                        <li class="px-4 py-2 hover:bg-indigo-600 cursor-pointer mention-item flex items-center gap-2"
+                                            data-value="@VHC_Link" data-id="VHC_LINK">
+                                            <i class="fas fa-link text-indigo-400"></i>
+                                            <span>Insert VHC Link</span>
+                                        </li>
+                                    </ul>
+                                </div>
                                 <div class="flex items-start">
-                                    <div class="flex-grow">
+                                    <div class="flex-grow relative">
                                         <!-- Enhanced Modern chat-style input area with drag & drop -->
                                         <div id="replyDropzone"
                                             class="bg-white/5 border border-white/10 rounded-lg shadow-sm overflow-hidden transition-all duration-200"
                                             data-dropzone="true">
                                             <!-- Text input area -->
+                                            <!-- Hidden textarea for form submission -->
                                             <textarea id="response" name="response" rows="3"
-                                                class="w-full px-4 py-3 outline-none border-0 resize-none auto-expand-textarea bg-transparent text-white"
-                                                placeholder="Type your response here... (Drag & drop files or documents here!)"
-                                                style="min-height: 60px; max-height: 300px; overflow-y: auto;">{{ ticket.draft_body }}</textarea>
+                                                class="hidden">{{ ticket.draft_body }}</textarea>
+
+                                            <!-- Contenteditable div for rich UI interactions (like @-mentions) -->
+                                            <div id="response_editor"
+                                                class="w-full px-4 py-3 outline-none border-0 bg-transparent text-white"
+                                                contenteditable="true"
+                                                data-placeholder="Type your response here... Type @ to insert a link (e.g., VHC Link). Drag & drop files or documents here!"
+                                                style="min-height: 60px; max-height: 300px; overflow-y: auto; cursor: text; position: relative;">
+                                                {{ ticket.draft_body }}</div>
 
                                             <!-- Hidden file input -->
                                             <input id="response_attachments" name="response_attachments" type="file"
@@ -9587,13 +9606,33 @@
                         }
 
                         // Save message as user types
-                        responseTextarea.addEventListener('input', function () {
-                            if (this.value.trim()) {
-                                localStorage.setItem(messageKey, this.value);
-                            } else {
-                                localStorage.removeItem(messageKey);
+                        const responseEditor = document.getElementById('response_editor');
+
+                        if (responseEditor) {
+                            // Initialize from textarea if exists
+                            if (savedMessage && !responseEditor.innerText.trim()) {
+                                responseEditor.innerText = savedMessage;
                             }
-                        });
+
+                            responseEditor.addEventListener('input', function () {
+                                // Sync to hidden textarea
+                                responseTextarea.value = this.innerText;
+
+                                if (this.innerText.trim()) {
+                                    localStorage.setItem(messageKey, this.innerText);
+                                } else {
+                                    localStorage.removeItem(messageKey);
+                                }
+                            });
+                        } else {
+                            responseTextarea.addEventListener('input', function () {
+                                if (this.value.trim()) {
+                                    localStorage.setItem(messageKey, this.value);
+                                } else {
+                                    localStorage.removeItem(messageKey);
+                                }
+                            });
+                        }
 
                         // SINGLE event listener with aggressive anti-spam protection
                         freshForm.addEventListener('submit', async function (e) {
@@ -9623,6 +9662,12 @@
 
 
                             try {
+                                // Sync contenteditable to textarea just before submitting
+                                const responseEditor = document.getElementById('response_editor');
+                                if (responseEditor) {
+                                    responseTextarea.value = responseEditor.innerText;
+                                }
+
                                 // Create FormData object to handle both text and file attachments
                                 const formData = new FormData();
                                 formData.append('response', responseTextarea.value);
@@ -9937,10 +9982,23 @@
                                         console.log('📄 Common documents prepared for webhook:', commonDocData);
                                     }
 
+                                    // Handle custom @VHC_Link tag replacement for emails
+                                    let html_message = responseTextarea.value.replace(/\n/g, '<br>\n');
+                                    let message_plain = responseTextarea.value;
+                                    const ticket_vhc_link = '{{ ticket.vhc_link|default("", true) }}';
+
+                                    if (ticket_vhc_link) {
+                                        const html_link = `<a href="${ticket_vhc_link}" target="_blank" style="color: #4f46e5; font-weight: 500; text-decoration: underline;">Vehicle Health Check — click here</a>`;
+                                        const regex = /(@VHC_Link|\[VHC_LINK\])/gi;
+                                        html_message = html_message.replace(regex, html_link);
+                                        message_plain = message_plain.replace(regex, `Vehicle Health Check: ${ticket_vhc_link}`);
+                                    }
+
                                     const webhookData = {
                                         ticket_id: '{{ ticket.ticket_id }}',
-                                        response_text: responseTextarea.value,
-                                        replyMessage: responseTextarea.value, // 🚀 ADDED: replyMessage field for n8n compatibility
+                                        response_text: message_plain,
+                                        replyMessage: isEmailTicket ? html_message : message_plain, // N8N assumes plaintext for manual DB tickets
+                                        html_message: html_message, // Reference HTML
                                         timestamp: new Date().toISOString(),
                                         user_id: '{{ session.member_id if session.member_id else "unknown" }}',
                                         ticket_subject: '{{ ticket.subject|default("", true) }}',
@@ -10004,6 +10062,8 @@
 
                                     // Clear form immediately
                                     responseTextarea.value = '';
+                                    const responseEditor = document.getElementById('response_editor');
+                                    if (responseEditor) responseEditor.innerHTML = '';
 
                                     // Reset textarea height after clearing
                                     if (typeof window.autoExpandTextarea === 'function') {
@@ -14131,6 +14191,142 @@ Email Ticket: ${debugInfo.ticket_source.is_email_ticket}`;
         })();
     </script>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const editor = document.getElementById('response_editor');
+            const menu = document.getElementById('mentionMenu');
+
+            if (!editor || !menu) return;
+
+            let isMentioning = false;
+            let mentionStartIndex = 0;
+
+            // We can show the menu based on the cursor position
+            function updateMenuPosition() {
+                // Position relative to the editor
+                const editorRect = editor.getBoundingClientRect();
+
+                // Simplified positioning logic that works reliably
+                menu.style.left = '16px';
+                menu.style.bottom = '100%';
+                menu.style.top = 'auto'; // override default top
+                menu.style.marginBottom = '8px';
+
+                menu.classList.remove('hidden');
+                console.log("Showing mention menu!");
+            }
+
+            // Capture input for @
+            editor.addEventListener('input', (e) => {
+                const selection = window.getSelection();
+                if (!selection.rangeCount) return;
+
+                const range = selection.getRangeAt(0);
+
+                // Get text before cursor
+                let textBeforeCursor = '';
+                if (range.startContainer.nodeType === Node.TEXT_NODE) {
+                    textBeforeCursor = range.startContainer.textContent.substring(0, range.startOffset);
+                } else if (range.startContainer === editor) {
+                    textBeforeCursor = editor.textContent;
+                }
+
+                console.log("Text before cursor: '" + textBeforeCursor + "'");
+
+                // Check if we just typed `@` or are currently typing a mention
+                const match = textBeforeCursor.match(/(?:^|\s)(@\w*)$/);
+
+                if (match) {
+                    isMentioning = true;
+                    mentionStartIndex = range.startOffset - match[1].length;
+                    updateMenuPosition();
+                } else {
+                    isMentioning = false;
+                    menu.classList.add('hidden');
+                }
+            });
+
+            // Handle arrow keys and Enter when menu is open
+            editor.addEventListener('keydown', (e) => {
+                if (!isMentioning) return;
+
+                if (e.key === 'Escape') {
+                    isMentioning = false;
+                    menu.classList.add('hidden');
+                }
+            });
+
+            // Handle clicking a mention item
+            document.querySelectorAll('.mention-item').forEach(item => {
+                item.addEventListener('mousedown', (e) => {
+                    e.preventDefault(); // Prevents the editor from losing focus
+                    e.stopPropagation();
+                    insertMention(item.getAttribute('data-value'), item.getAttribute('data-id'));
+                });
+            });
+
+            function insertMention(value, id) {
+                const selection = window.getSelection();
+                if (!selection.rangeCount) return;
+
+                const range = selection.getRangeAt(0);
+
+                // Ensure we are working with text node
+                if (range.startContainer.nodeType === Node.TEXT_NODE) {
+                    let text = range.startContainer.textContent;
+
+                    // Find the @ typed
+                    const beforeCursor = text.substring(0, range.startOffset);
+                    const afterCursor = text.substring(range.startOffset);
+                    const textParts = beforeCursor.split(/(?:^|\s)(@\w*)$/);
+
+                    if (textParts.length >= 2) {
+                        const preMentionText = textParts.slice(0, -2).join('') + (beforeCursor.match(/(?:^|\s)(@\w*)$/)[0].startsWith(' ') ? ' ' : '');
+
+                        // Construct new nodes
+                        const preNode = document.createTextNode(preMentionText);
+                        const mentionBadge = document.createElement('span');
+                        mentionBadge.className = 'mention-badge';
+                        mentionBadge.contentEditable = 'false';
+                        mentionBadge.dataset.ref = id;
+                        mentionBadge.innerHTML = `<i class="fas fa-link mr-1"></i>${value}`;
+
+                        // Add a trailing space so user can keep typing
+                        const postNode = document.createTextNode('\u00A0' + afterCursor); // NBSP
+
+                        // Replace the text node with the new elements
+                        const parent = range.startContainer.parentNode;
+                        parent.insertBefore(preNode, range.startContainer);
+                        parent.insertBefore(mentionBadge, range.startContainer);
+                        parent.insertBefore(postNode, range.startContainer);
+                        parent.removeChild(range.startContainer);
+
+                        // Move cursor right after the badge and the space
+                        const newRange = document.createRange();
+                        newRange.setStart(postNode, 1);
+                        newRange.collapse(true);
+                        selection.removeAllRanges();
+                        selection.addRange(newRange);
+                    }
+                }
+
+                // Hide menu
+                isMentioning = false;
+                menu.classList.add('hidden');
+
+                // Trigger manual input so localstorage updates
+                editor.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+
+            // Close menu when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!menu.contains(e.target) && e.target !== editor) {
+                    isMentioning = false;
+                    menu.classList.add('hidden');
+                }
+            });
+        });
+    </script>
 </body>
 
 </html>

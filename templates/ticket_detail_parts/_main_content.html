@@ -400,6 +400,23 @@
                             </div>
                             {% endif %}
 
+                            {% if vhc_link %}
+                            <div class="detail-card flex items-center">
+                                <div class="p-3 rounded-full bg-teal-100 mr-4">
+                                    <i class="fas fa-link text-teal-600"></i>
+                                </div>
+                                <div class="w-full">
+                                    <h4 class="text-xs font-medium text-gray-500">VHC Link</h4>
+                                    <a href="{{ vhc_link }}" target="_blank"
+                                        class="text-indigo-600 hover:text-indigo-800 font-semibold break-words truncate block hover:underline"
+                                        title="{{ vhc_link }}">
+                                        View Vehicle Health Check <i
+                                            class="fas fa-external-link-alt text-[10px] ml-1"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            {% endif %}
+
                             <!-- Technician Field -->
                             {% if technician %}
                             <div class="detail-card flex items-center">
@@ -922,7 +939,7 @@
                                 <!-- Message Content with Line Clamp -->
                                 <div class="message-content line-clamp-3 overflow-hidden text-gray-200 transition-all duration-300"
                                     id="message-content-{{ loop.index }}"
-                                    style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.6;">
+                                    style="display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.6;">
                                     {{ reply.message }}
                                 </div>
 
@@ -1066,17 +1083,38 @@
                     'cancelled'] %}
                     <form id="replyForm" class="mt-8 reply-form">
                         <div class="mb-4 relative">
+                            <!-- @-Mention Autocomplete Menu (Hidden by default) -->
+                            <div id="mentionMenu"
+                                class="absolute z-50 bg-gray-800 border border-gray-700 shadow-lg rounded-md hidden max-w-xs overflow-hidden"
+                                style="bottom: 100%; left: 1rem; margin-bottom: 0.5rem;">
+                                <ul class="text-sm text-gray-200">
+                                    <li class="px-4 py-2 hover:bg-indigo-600 cursor-pointer mention-item flex items-center gap-2"
+                                        data-value="@VHC_Link" data-id="VHC_LINK">
+                                        <i class="fas fa-link text-indigo-400"></i>
+                                        <span>Insert VHC Link</span>
+                                    </li>
+                                </ul>
+                            </div>
                             <div class="flex items-start">
-                                <div class="flex-grow">
+                                <div class="flex-grow relative">
                                     <!-- Enhanced Modern chat-style input area with drag & drop -->
                                     <div id="replyDropzone"
                                         class="bg-white/5 border border-white/10 rounded-lg shadow-sm overflow-hidden transition-all duration-200"
                                         data-dropzone="true">
                                         <!-- Text input area -->
+                                        <!-- Hidden textarea for form submission -->
                                         <textarea id="response" name="response" rows="3"
-                                            class="w-full px-4 py-3 outline-none border-0 resize-none auto-expand-textarea bg-transparent text-white"
-                                            placeholder="Type your response here... (Drag & drop files or documents here!)"
-                                            style="min-height: 60px; max-height: 300px; overflow-y: auto;">{{ ticket.draft_body }}</textarea>
+                                            class="hidden">{{ ticket.draft_body }}</textarea>
+
+                                        <!-- Contenteditable div for rich UI interactions (like @-mentions) -->
+                                        <div id="response_editor"
+                                            class="w-full px-4 py-3 outline-none border-0 bg-transparent text-white"
+                                            contenteditable="true"
+                                            data-placeholder="Type your response here... Type @ to insert a link (e.g., VHC Link). Drag & drop files or documents here!"
+                                            style="min-height: 60px; max-height: 300px; overflow-y: auto; cursor: text; position: relative;">
+                                            {{ ticket.draft_body }}</div>
+
+
 
                                         <!-- Hidden file input -->
                                         <input id="response_attachments" name="response_attachments" type="file"
