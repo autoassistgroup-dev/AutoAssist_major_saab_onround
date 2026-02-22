@@ -827,6 +827,9 @@ def send_ticket_reply(ticket_id):
                 }
                 
                 logger.info(f"Sending reply to N8N webhook for ticket {ticket_id}")
+                logger.info(f"[DEBUG-REPLY] replyMessage first 200 chars: {repr(webhook_payload.get('replyMessage', '')[:200])}")
+                logger.info(f"[DEBUG-REPLY] Contains <br>: {'<br>' in str(webhook_payload.get('replyMessage', ''))}")
+                logger.info(f"[DEBUG-REPLY] Contains <a : {'<a ' in str(webhook_payload.get('replyMessage', ''))}")
                 
                 webhook_response = requests.post(
                     WEBHOOK_URL,
@@ -1137,6 +1140,9 @@ def send_ticket_email(ticket_id):
                 }
                 
                 logger.info(f"Sending email template to N8N webhook for ticket {ticket_id}")
+                logger.info(f"[DEBUG-EMAIL-TPL] replyMessage first 200 chars: {repr(webhook_payload.get('replyMessage', '')[:200])}")
+                logger.info(f"[DEBUG-EMAIL-TPL] Contains <br>: {'<br>' in str(webhook_payload.get('replyMessage', ''))}")
+                logger.info(f"[DEBUG-EMAIL-TPL] Contains <a : {'<a ' in str(webhook_payload.get('replyMessage', ''))}")
                 
                 webhook_response = requests.post(
                     WEBHOOK_URL,
