@@ -1394,10 +1394,10 @@
         <div class="glass-card forwarded-section-container">
             <div class="section-header">
                 <h2 class="section-title">
-                    <i class="fas fa-share" style="transform: scaleX(-1);"></i>Tickets Forwarded to You
+                    <i class="fas fa-share"></i>Your Forwarded Tickets
                 </h2>
                 <span class="status-badge badge-forwarded" style="font-size: 12px; padding: 6px 14px;">
-                    {{ forwarded_tickets|length }} forwarded
+                    {{ forwarded_tickets|length }} pending
                 </span>
             </div>
             <div class="tickets-grid" id="forwardedTicketsGrid">
@@ -1433,10 +1433,8 @@
 
                                 <!-- Forwarding Info Badge (Green) -->
                                 <span class="status-badge badge-assigned">
-                                    <i class="fas fa-user" style="font-size: 9px; margin-right: 4px;"></i>
-                                    From {{ ticket.forwarded_from_name|default('Unknown') }} ({{
-                                    ticket.forwarded_from_role|default('Member') }}) to {{
-                                    ticket.forwarded_to_name|default('You') }}
+                                    <i class="fas fa-share" style="font-size: 9px; margin-right: 4px;"></i>
+                                    Forwarded to {{ ticket.forwarded_to_name|default('Unknown') }}
                                 </span>
 
                                 <span class="status-badge badge-status

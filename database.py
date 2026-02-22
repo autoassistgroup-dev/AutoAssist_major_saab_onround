@@ -734,6 +734,112 @@ class MongoDB:
             logging.error(f"[DATABASE] Error getting forwarded tickets: {e}")
             return []
 
+    def get_forwarded_tickets_by_user(self, member_id):
+        """
+        Get tickets that were forwarded BY a specific user that are still pending/unactioned.
+        
+        A forwarded ticket is considered "actioned" (and hidden) when:
+        - Its status is Resolved or Closed
+        - Or is_forwarded has been cleared (ticket was un-forwarded)
+        
+        Args:
+            member_id: The member who performed the forward
+            
+        Returns:
+            List of pending forwarded ticket documents
+        """
+        try:
+            from bson.objectid import ObjectId
+            
+            member_id_str = str(member_id) if member_id is not None else ''
+            member_id_obj = None
+            if member_id is not None:
+                try:
+                    member_id_obj = ObjectId(member_id) if isinstance(member_id, str) else member_id
+                except Exception:
+                    member_id_obj = member_id
+            
+            # Match both ObjectId and string formats for forwarded_by
+            match_conditions = []
+            if member_id_obj:
+                match_conditions.append({"forwarded_by": member_id_obj})
+            if member_id_str:
+                match_conditions.append({"forwarded_by": member_id_str})
+            
+            if not match_conditions:
+                return []
+            
+            pipeline = [
+                {
+                    "$match": {
+                        "is_forwarded": True,
+                        "$or": match_conditions,
+                        # Only show unactioned: exclude Resolved/Closed
+                        "status": {"$nin": ["Resolved", "Closed"]}
+                    }
+                },
+                {"$sort": {"forwarded_at": -1}},
+                # Lookup the person it was forwarded TO
+                {
+                    "$lookup": {
+                        "from": "members",
+                        "localField": "forwarded_to",
+                        "foreignField": "_id",
+                        "as": "forwarded_to_member"
+                    }
+                },
+                # Lookup the forwarder (current user)
+                {
+                    "$lookup": {
+                        "from": "members",
+                        "localField": "forwarded_by",
+                        "foreignField": "_id",
+                        "as": "forwarded_from_member"
+                    }
+                },
+                {
+                    "$addFields": {
+                        "formatted_forwarded_at": {
+                            "$dateToString": {
+                                "format": "%b %d, %H:%M",
+                                "date": "$forwarded_at",
+                                "timezone": "Europe/London"
+                            }
+                        },
+                        "formatted_date": {
+                            "$dateToString": {
+                                "format": "%b %d, %H:%M",
+                                "date": "$created_at",
+                                "timezone": "Europe/London"
+                            }
+                        }
+                    }
+                }
+            ]
+            
+            result = list(self.tickets.aggregate(pipeline, allowDiskUse=True))
+            
+            for ticket in result:
+                if ticket.get('forwarded_to_member') and len(ticket['forwarded_to_member']) > 0:
+                    to_member = ticket['forwarded_to_member'][0]
+                    ticket['forwarded_to_name'] = to_member.get('name', 'Unknown')
+                else:
+                    ticket['forwarded_to_name'] = 'Unknown'
+                
+                if ticket.get('forwarded_from_member') and len(ticket['forwarded_from_member']) > 0:
+                    from_member = ticket['forwarded_from_member'][0]
+                    ticket['forwarded_from_name'] = from_member.get('name', 'You')
+                    ticket['forwarded_from_role'] = from_member.get('role', 'Member')
+                else:
+                    ticket['forwarded_from_name'] = 'You'
+                    ticket['forwarded_from_role'] = 'Member'
+            
+            return result
+            
+        except Exception as e:
+            logging.error(f"[DATABASE] Error getting forwarded-by tickets: {e}")
+            return []
+
     def mark_forwarded_ticket_viewed(self, ticket_id, member_id):
         """
         Mark a forwarded ticket as viewed by the forwarded-to member.
