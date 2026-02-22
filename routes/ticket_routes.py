@@ -763,29 +763,45 @@ def send_ticket_reply(ticket_id):
                 # Handle custom @VHC_Link tag replacement for emails
                 import re
                 
-                # Build PLAIN TEXT version: newlines stay as \n, VHC replaced with plain URL
+                def _strip_html_to_plain_text(html_str):
+                    """Convert HTML string to clean plain text.
+                    <br> → newline, <a href="URL">text</a> → text (URL), strip remaining tags."""
+                    text = html_str
+                    # Convert <br>, <br/>, <br /> to newlines
+                    text = re.sub(r'<br\s*/?>', '\n', text, flags=re.IGNORECASE)
+                    # Convert <a href="URL">text</a> to: text (URL)
+                    text = re.sub(r'<a\s+[^>]*href=["\']([^"\']*)["\'][^>]*>(.*?)</a>', r'\2 (\1)', text, flags=re.IGNORECASE)
+                    # Strip any remaining HTML tags
+                    text = re.sub(r'<[^>]+>', '', text)
+                    # Clean up excessive blank lines
+                    text = re.sub(r'\n{3,}', '\n\n', text)
+                    return text.strip()
+                
+                # Step 1: Replace @VHC_Link with actual link in the raw message
                 ticket_vhc_link = ticket.get('vhc_link', '').strip()
                 if ticket_vhc_link:
-                    message_plain = re.sub(r'(@VHC_Link|\[VHC_LINK\])', f'Vehicle Health Check: {ticket_vhc_link}', message, flags=re.IGNORECASE)
-                else:
-                    message_plain = message
-                
-                # Build HTML version: newlines become <br>, VHC replaced with clickable link
-                html_message = message_plain.replace('\n', '<br>\n')
-                if ticket_vhc_link:
+                    # For HTML: replace with clickable anchor
                     html_link = f'<a href="{ticket_vhc_link}" target="_blank" style="color: #4f46e5; font-weight: 500; text-decoration: underline;">Vehicle Health Check — click here</a>'
                     html_message = re.sub(r'(@VHC_Link|\[VHC_LINK\])', html_link, message, flags=re.IGNORECASE)
+                else:
+                    html_message = message
+                
+                # Step 2: Ensure HTML version has <br> for any plain newlines
+                if '<br' not in html_message.lower():
                     html_message = html_message.replace('\n', '<br>\n')
+                
+                # Step 3: Build plain text by stripping ALL HTML from the message
+                message_plain = _strip_html_to_plain_text(html_message)
                 
                 # N8N Gmail node treats replyMessage as plain text.
                 # Send clean plain text (no HTML tags) in replyMessage.
-                # html_message is available for N8N to use if configured for HTML.
+                # html_message is the full HTML version for reference.
                 
                 webhook_payload = {
                     'ticket_id': ticket_id,
                     'portal_reply_id': str(reply_id),
                     'response_text': message_plain,
-                    'replyMessage': message_plain,              # PLAIN TEXT only — no <br> or <a> tags
+                    'replyMessage': message_plain,              # CLEAN PLAIN TEXT — all HTML stripped
                     'html_message': html_message,               # Full HTML version with <br> and <a> tags
                     
                     'customer_email': ticket.get('email'),
@@ -1070,27 +1086,37 @@ def send_ticket_email(ticket_id):
                     })
                     logger.info(f"[EMAIL-ATT] Final: {filename}, data_length={data_len}")
                 
-                # Convert plain text newlines to HTML for email rendering
+                # Convert and handle HTML/VHC for email
                 import re as _re
                 
-                # Handle VHC link replacement
-                ticket_vhc_link = ticket.get('vhc_link', '').strip()
-                if ticket_vhc_link:
-                    body_plain = _re.sub(r'(@VHC_Link|\[VHC_LINK\])', f'Vehicle Health Check: {ticket_vhc_link}', body, flags=_re.IGNORECASE)
-                else:
-                    body_plain = body
+                def _strip_html(html_str):
+                    """Strip HTML to plain text."""
+                    text = _re.sub(r'<br\s*/?>', '\n', html_str, flags=_re.IGNORECASE)
+                    text = _re.sub(r'<a\s+[^>]*href=["\']([^"\']*)["\'][^>]*>(.*?)</a>', r'\2 (\1)', text, flags=_re.IGNORECASE)
+                    text = _re.sub(r'<[^>]+>', '', text)
+                    text = _re.sub(r'\n{3,}', '\n\n', text)
+                    return text.strip()
                 
-                html_body = body_plain.replace('\n', '<br>\n')
+                # Step 1: Replace @VHC_Link in HTML version
+                ticket_vhc_link = ticket.get('vhc_link', '').strip()
                 if ticket_vhc_link:
                     html_link = f'<a href="{ticket_vhc_link}" target="_blank" style="color: #4f46e5; font-weight: 500; text-decoration: underline;">Vehicle Health Check — click here</a>'
                     html_body = _re.sub(r'(@VHC_Link|\[VHC_LINK\])', html_link, body, flags=_re.IGNORECASE)
+                else:
+                    html_body = body
+                
+                # Ensure HTML has <br> for newlines
+                if '<br' not in html_body.lower():
                     html_body = html_body.replace('\n', '<br>\n')
+                
+                # Step 2: Strip ALL HTML for plain text
+                body_plain = _strip_html(html_body)
                 
                 # Payload with OVERRIDDEN subject and body
                 webhook_payload = {
                     'ticket_id': ticket_id,
                     'response_text': body_plain,
-                    'replyMessage': body_plain,    # PLAIN TEXT — no HTML tags
+                    'replyMessage': body_plain,    # CLEAN PLAIN TEXT — all HTML stripped
                     'html_message': html_body,     # HTML version with <br> and <a> tags
                     'customer_email': ticket.get('email'),
                     'email': ticket.get('email'),
