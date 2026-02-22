@@ -777,15 +777,14 @@ def send_ticket_reply(ticket_id):
                 else:
                     message_plain = message
                 
-                # N8N renders replyMessage as HTML for email thread replies (has threadId)
-                # but as plain text for manual/new ticket emails. Use HTML only for email threads.
-                is_email_thread = bool(ticket.get('threadId') or ticket.get('is_email_ticket'))
+                # N8N renders replyMessage as HTML for all email threads.
+                # Use HTML for the main body content, plain text for fallback.
                 
                 webhook_payload = {
                     'ticket_id': ticket_id,
                     'portal_reply_id': str(reply_id),
                     'response_text': message_plain,
-                    'replyMessage': html_message if is_email_thread else message_plain,
+                    'replyMessage': html_message,           # Always include HTML version for the reply body
                     'html_message': html_message,           # Helper attribute for webhook parsing
 
                     'customer_email': ticket.get('email'),
@@ -1672,6 +1671,10 @@ def update_ticket_outcome(ticket_id):
         clean_under_warranty = '1' if data.get('clean_under_warranty') else '0'
         outcome_notes = (data.get('outcome_notes') or '').strip()
 
+        revisit_date = (data.get('revisit_date') or '').strip()
+        revisit_technician_id = (data.get('revisit_technician_id') or '').strip()
+        revisit_reason = (data.get('revisit_reason') or '').strip()
+
         from database import get_db
         db = get_db()
 
@@ -1686,6 +1689,17 @@ def update_ticket_outcome(ticket_id):
             'clean_under_warranty': clean_under_warranty,
             'updated_at': datetime.now()
         }
+
+        # Handle "Revisit" specific fields
+        if outcome_category == 'Revisit':
+            update_data['revisit_date'] = revisit_date
+            update_data['revisit_technician_id'] = revisit_technician_id
+            update_data['revisit_reason'] = revisit_reason
+        else:
+            # Clear them if the category was changed to something else
+            update_data['revisit_date'] = ''
+            update_data['revisit_technician_id'] = ''
+            update_data['revisit_reason'] = ''
         db.tickets.update_one(
             {'ticket_id': ticket_id},
             {'$set': update_data}
