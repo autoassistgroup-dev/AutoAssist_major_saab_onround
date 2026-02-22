@@ -12177,12 +12177,26 @@ Email Ticket: ${debugInfo.ticket_source.is_email_ticket}`;
                                 console.log('🚀 EMAIL TEMPLATE SUBMISSION - Starting');
 
                                 try {
+                                    // Strip HTML from template body before sending
+                                    // Templates may contain <br>, <a href> etc that Gmail renders literally
+                                    const ticket_vhc = '{{ ticket.vhc_link|default("", true) }}';
+                                    let cleanBody = emailBody.value
+                                        .replace(/<br\s*\/?>/gi, '\n')
+                                        .replace(/<a\s+[^>]*href=["']([^"']*)["'][^>]*>(.*?)<\/a>/gi, '$2 ($1)')
+                                        .replace(/<[^>]+>/g, '')
+                                        .replace(/\n{3,}/g, '\n\n')
+                                        .trim();
+                                    // Replace @VHC_Link with plain URL
+                                    if (ticket_vhc) {
+                                        cleanBody = cleanBody.replace(/(@VHC_Link|\[VHC_LINK\])/gi, `Vehicle Health Check: ${ticket_vhc}`);
+                                    }
+
                                     // Prepare email data
                                     const emailData = {
                                         ticket_id: '{{ ticket.ticket_id }}',
                                         template_type: 'warranty',
                                         custom_subject: emailSubject.value,
-                                        custom_body: emailBody.value,
+                                        custom_body: cleanBody,
                                         attachments: selectedAttachments
                                     };
 
