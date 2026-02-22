@@ -10067,8 +10067,14 @@
                                         }
 
                                         // Handle custom @VHC_Link tag replacement for emails
+                                        // Keep HTML version for html_message reference only
                                         let html_message = responseTextarea.value.replace(/\n/g, '<br>\n');
-                                        let message_plain = responseTextarea.value;
+                                        // Build CLEAN plain text: strip <br>, <a> tags, keep only text
+                                        let message_plain = responseTextarea.value
+                                            .replace(/<br\s*\/?>/gi, '\n')          // <br> → newline
+                                            .replace(/<a\s+[^>]*href=["']([^"']*)["'][^>]*>(.*?)<\/a>/gi, '$2 ($1)')  // <a href="URL">text</a> → text (URL)
+                                            .replace(/<[^>]+>/g, '')               // strip remaining HTML tags
+                                            .replace(/\n{3,}/g, '\n\n');           // clean excessive newlines
                                         const ticket_vhc_link = '{{ ticket.vhc_link|default("", true) }}';
 
                                         if (ticket_vhc_link) {
@@ -10081,8 +10087,8 @@
                                         const webhookData = {
                                             ticket_id: '{{ ticket.ticket_id }}',
                                             response_text: message_plain,
-                                            replyMessage: html_message, // 🚀 ADDED: sent as HTML to support VHC Links
-                                            html_message: html_message, // Reference HTML
+                                            replyMessage: message_plain, // PLAIN TEXT — no HTML tags, N8N Gmail renders as-is
+                                            html_message: html_message, // HTML version for reference only
                                             timestamp: new Date().toISOString(),
                                             user_id: '{{ session.member_id if session.member_id else "unknown" }}',
                                             ticket_subject: '{{ ticket.subject|default("", true) }}',
