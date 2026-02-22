@@ -763,30 +763,31 @@ def send_ticket_reply(ticket_id):
                 # Handle custom @VHC_Link tag replacement for emails
                 import re
                 
-                html_message = message.replace('\n', '<br>\n')
-                
-                # If there's a VHC link, substitute the visual tag with an actual HTML link.
+                # Build PLAIN TEXT version: newlines stay as \n, VHC replaced with plain URL
                 ticket_vhc_link = ticket.get('vhc_link', '').strip()
                 if ticket_vhc_link:
-                    # Pattern matches @VHC_Link or [VHC_LINK]
-                    html_link = f'<a href="{ticket_vhc_link}" target="_blank" style="color: #4f46e5; font-weight: 500; text-decoration: underline;">Vehicle Health Check — click here</a>'
-                    # Replace in HTML body (for N8N emails)
-                    html_message = re.sub(r'(@VHC_Link|\[VHC_LINK\])', html_link, html_message, flags=re.IGNORECASE)
-                    # Replace in plain text body (for N8N fallback)
                     message_plain = re.sub(r'(@VHC_Link|\[VHC_LINK\])', f'Vehicle Health Check: {ticket_vhc_link}', message, flags=re.IGNORECASE)
                 else:
                     message_plain = message
                 
-                # N8N renders replyMessage as HTML for all email threads.
-                # Use HTML for the main body content, plain text for fallback.
+                # Build HTML version: newlines become <br>, VHC replaced with clickable link
+                html_message = message_plain.replace('\n', '<br>\n')
+                if ticket_vhc_link:
+                    html_link = f'<a href="{ticket_vhc_link}" target="_blank" style="color: #4f46e5; font-weight: 500; text-decoration: underline;">Vehicle Health Check — click here</a>'
+                    html_message = re.sub(r'(@VHC_Link|\[VHC_LINK\])', html_link, message, flags=re.IGNORECASE)
+                    html_message = html_message.replace('\n', '<br>\n')
+                
+                # N8N Gmail node treats replyMessage as plain text.
+                # Send clean plain text (no HTML tags) in replyMessage.
+                # html_message is available for N8N to use if configured for HTML.
                 
                 webhook_payload = {
                     'ticket_id': ticket_id,
                     'portal_reply_id': str(reply_id),
                     'response_text': message_plain,
-                    'replyMessage': html_message,           # Always include HTML version for the reply body
-                    'html_message': html_message,           # Helper attribute for webhook parsing
-
+                    'replyMessage': message_plain,              # PLAIN TEXT only — no <br> or <a> tags
+                    'html_message': html_message,               # Full HTML version with <br> and <a> tags
+                    
                     'customer_email': ticket.get('email'),
                     'email': ticket.get('email'),
                     'ticket_subject': ticket.get('subject', 'Your Support Request'),
@@ -805,8 +806,8 @@ def send_ticket_reply(ticket_id):
                     'attachment_count': len(resolved_reply_attachments),
                     'body': ticket.get('body', ''),  # Original ticket body for context
                     'draft': message,
-                    'message': message,
-                    'content': message
+                    'message': message_plain,
+                    'content': message_plain
                 }
                 
                 logger.info(f"Sending reply to N8N webhook for ticket {ticket_id}")
@@ -1070,14 +1071,27 @@ def send_ticket_email(ticket_id):
                     logger.info(f"[EMAIL-ATT] Final: {filename}, data_length={data_len}")
                 
                 # Convert plain text newlines to HTML for email rendering
-                html_body = body.replace('\n', '<br>\n')
+                import re as _re
+                
+                # Handle VHC link replacement
+                ticket_vhc_link = ticket.get('vhc_link', '').strip()
+                if ticket_vhc_link:
+                    body_plain = _re.sub(r'(@VHC_Link|\[VHC_LINK\])', f'Vehicle Health Check: {ticket_vhc_link}', body, flags=_re.IGNORECASE)
+                else:
+                    body_plain = body
+                
+                html_body = body_plain.replace('\n', '<br>\n')
+                if ticket_vhc_link:
+                    html_link = f'<a href="{ticket_vhc_link}" target="_blank" style="color: #4f46e5; font-weight: 500; text-decoration: underline;">Vehicle Health Check — click here</a>'
+                    html_body = _re.sub(r'(@VHC_Link|\[VHC_LINK\])', html_link, body, flags=_re.IGNORECASE)
+                    html_body = html_body.replace('\n', '<br>\n')
                 
                 # Payload with OVERRIDDEN subject and body
                 webhook_payload = {
                     'ticket_id': ticket_id,
-                    'response_text': body,
-                    'replyMessage': body,  # Plain text — email templates send NEW emails, not thread replies
-                    'html_message': html_body,  # HTML version kept for reference
+                    'response_text': body_plain,
+                    'replyMessage': body_plain,    # PLAIN TEXT — no HTML tags
+                    'html_message': html_body,     # HTML version with <br> and <a> tags
                     'customer_email': ticket.get('email'),
                     'email': ticket.get('email'),
                     'ticket_subject': subject, # USE CUSTOM SUBJECT
@@ -1092,8 +1106,8 @@ def send_ticket_email(ticket_id):
                     'attachments': resolved_attachments,
                     'attachment_count': len(resolved_attachments),
                     'body': ticket.get('body', ''), 
-                    'message': body,
-                    'content': body
+                    'message': body_plain,
+                    'content': body_plain
                 }
                 
                 logger.info(f"Sending email template to N8N webhook for ticket {ticket_id}")
