@@ -1458,6 +1458,10 @@ def refer_to_tech_director(ticket_id):
         except:
             current_member_id_obj = current_member_id
         
+        # Get referral note from request body
+        data = request.get_json(silent=True) or {}
+        referral_note = data.get('referral_note', '').strip()
+        
         update_data = {
             # Legacy fields (for backward compatibility)
             'referred_to_director': True,
@@ -1471,7 +1475,9 @@ def refer_to_tech_director(ticket_id):
             'forwarded_to': tech_director_id,  # Tech Director's ObjectId
             'forwarded_by': current_member_id_obj,  # Person referring the ticket
             'forwarded_at': datetime.now(),
-            'is_forwarded_viewed': False  # Mark as unviewed initially
+            'is_forwarded_viewed': False,  # Mark as unviewed initially
+            'forwarding_note': referral_note,  # Note for Tech Director dashboard
+            'referral_note': referral_note   # Also keep as referral_note for clarity
         }
         
         db.update_ticket(ticket_id, update_data)
