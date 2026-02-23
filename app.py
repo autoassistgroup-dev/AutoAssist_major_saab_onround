@@ -1,6 +1,8 @@
-# Eventlet for async SocketIO (Linux/macOS). On Windows, use threading instead to avoid compatibility issues.
+# Eventlet for async SocketIO (Linux/macOS). Skip on Vercel serverless & Windows.
 import sys
-if sys.platform != 'win32':
+import os
+_is_serverless = os.environ.get('VERCEL') or os.environ.get('AWS_LAMBDA_FUNCTION_NAME')
+if sys.platform != 'win32' and not _is_serverless:
     import eventlet
     eventlet.monkey_patch()
 

@@ -32,9 +32,14 @@ socketio = SocketIO()
 
 
 def init_socketio(app):
-    """Initialize SocketIO with Flask app. Use threading on Windows (eventlet has compatibility issues)."""
+    """Initialize SocketIO with Flask app. Use threading on Windows and Vercel serverless."""
     import sys
-    async_mode = 'threading' if sys.platform == 'win32' else 'eventlet'
+    import os
+    _is_serverless = os.environ.get('VERCEL') or os.environ.get('AWS_LAMBDA_FUNCTION_NAME')
+    if sys.platform == 'win32' or _is_serverless:
+        async_mode = 'threading'
+    else:
+        async_mode = 'eventlet'
     socketio.init_app(
         app,
         cors_allowed_origins="*",
