@@ -126,19 +126,15 @@ def index():
         tickets = forwarded_tickets[start_idx:end_idx]
         
     else:
-        # Tickets forwarded TO this user (exclude from main list to avoid dupes)
+        # Tickets forwarded TO this user (shown in "Forwarded to You" section)
+        # Filter out Closed tickets so actioned ones auto-disappear
         if current_member_id:
-            forwarded_to_me = db.get_forwarded_tickets_to_user(current_member_id)
-        else:
-            forwarded_to_me = []
-        forwarded_ids = [t['ticket_id'] for t in forwarded_to_me] if forwarded_to_me else []
-        
-        # Tickets forwarded BY this user (shown in "Your Forwarded" section)
-        # Only shows unactioned (not Resolved/Closed) tickets
-        if current_member_id:
-            forwarded_tickets = db.get_forwarded_tickets_by_user(current_member_id)
+            forwarded_tickets = db.get_forwarded_tickets_to_user(current_member_id)
+            # Remove actioned (Closed) tickets from forwarded section
+            forwarded_tickets = [t for t in forwarded_tickets if t.get('status') != 'Closed']
         else:
             forwarded_tickets = []
+        forwarded_ids = [t['ticket_id'] for t in forwarded_tickets] if forwarded_tickets else []
         tickets = db.get_tickets_with_assignments(
             page=page, 
             per_page=per_page,
@@ -292,18 +288,13 @@ def api_index_tickets():
         tickets = forwarded_tickets
         regular_tickets = []
     else:
-        # Tickets forwarded TO this user → exclude from main list
+        # Tickets forwarded TO this user, excluding Closed (actioned) ones
         if current_member_id:
-            forwarded_to_me = db.get_forwarded_tickets_to_user(current_member_id)
-        else:
-            forwarded_to_me = []
-        forwarded_ids = [t['ticket_id'] for t in forwarded_to_me] if forwarded_to_me else []
-        
-        # Tickets forwarded BY this user → shown in forwarded section (unactioned only)
-        if current_member_id:
-            forwarded_tickets = db.get_forwarded_tickets_by_user(current_member_id)
+            forwarded_tickets = db.get_forwarded_tickets_to_user(current_member_id)
+            forwarded_tickets = [t for t in forwarded_tickets if t.get('status') != 'Closed']
         else:
             forwarded_tickets = []
+        forwarded_ids = [t['ticket_id'] for t in forwarded_tickets] if forwarded_tickets else []
         
         regular_tickets = db.get_tickets_with_assignments(
             page=page,

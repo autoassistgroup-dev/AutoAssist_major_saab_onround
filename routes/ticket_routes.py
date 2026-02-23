@@ -69,41 +69,8 @@ def get_tickets():
             search_query=search_query
         )
         
-        # CRITICAL FIX: Admin must see tickets forwarded to them
-        # Check if current user is Admin and include forwarded tickets
-        current_member = safe_member_lookup()
-        filtered_forwarded_tickets = []
-        forwarded_count_for_total = 0
-        
-        if current_member and current_member.get('role') == 'Administrator':
-            current_member_id = str(current_member.get('_id'))
-            forwarded_tickets = db.get_forwarded_tickets_to_user(current_member_id)
-            
-            # Apply filters to forwarded tickets if provided
-            if status_filter and status_filter != 'All':
-                forwarded_tickets = [t for t in forwarded_tickets if t.get('status') == status_filter]
-            if priority_filter and priority_filter != 'All':
-                forwarded_tickets = [t for t in forwarded_tickets if t.get('priority') == priority_filter]
-            if search_query:
-                search_lower = search_query.lower()
-                forwarded_tickets = [t for t in forwarded_tickets if 
-                    search_lower in (t.get('ticket_id', '') or '').lower() or
-                    search_lower in (t.get('subject', '') or '').lower() or
-                    search_lower in (t.get('name', '') or '').lower() or
-                    search_lower in (t.get('email', '') or '').lower()
-                ]
-            
-            filtered_forwarded_tickets = forwarded_tickets
-            
-            # Merge forwarded tickets with regular tickets, avoiding duplicates
-            existing_ticket_ids = {t.get('ticket_id') for t in tickets if t.get('ticket_id')}
-            for forwarded_ticket in filtered_forwarded_tickets:
-                ticket_id = forwarded_ticket.get('ticket_id')
-                if ticket_id and ticket_id not in existing_ticket_ids:
-                    tickets.append(forwarded_ticket)
-                    existing_ticket_ids.add(ticket_id)
-            
-            logger.info(f"[API_TICKETS] Admin user: Included {len(filtered_forwarded_tickets)} forwarded tickets")
+        # Forwarded tickets are handled by the index page's personalized
+        # "Forwarded to You" section — no need to merge them here.
         
         # Get total count for pagination
         total = db.get_tickets_count(
@@ -111,25 +78,6 @@ def get_tickets():
             priority_filter=priority_filter,
             search_query=search_query
         )
-        
-        # For Admin, add forwarded tickets count to total (only those not already in regular tickets)
-        if current_member and current_member.get('role') == 'Administrator' and filtered_forwarded_tickets:
-            # Get all regular ticket IDs (for deduplication)
-            try:
-                regular_tickets_all = db.get_tickets_with_assignments(
-                    page=1,
-                    per_page=10000,  # Get all for ID checking
-                    status_filter=status_filter,
-                    priority_filter=priority_filter,
-                    search_query=search_query
-                )
-                regular_ticket_ids = {t.get('ticket_id') for t in regular_tickets_all if t.get('ticket_id')}
-                forwarded_count_for_total = sum(1 for t in filtered_forwarded_tickets if t.get('ticket_id') not in regular_ticket_ids)
-                total += forwarded_count_for_total
-            except Exception as e:
-                logger.warning(f"[API_TICKETS] Error calculating forwarded tickets count: {e}")
-                # Fallback: add all filtered forwarded tickets
-                total += len(filtered_forwarded_tickets)
         
         # Serialize tickets for JSON response
         serialized_tickets = []
