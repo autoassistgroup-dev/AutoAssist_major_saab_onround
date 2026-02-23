@@ -1091,7 +1091,7 @@ class MongoDB:
         try:
             return list(self.replies.find(
                 {"ticket_id": ticket_id}
-            ).sort("created_at", 1))
+            ).sort("created_at", -1))
         except pymongo.errors.OperationFailure as e:
             logging.error(f"Failed to get replies for ticket {ticket_id}: {e}")
             return []
