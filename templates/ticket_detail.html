@@ -9470,95 +9470,87 @@
                             });
                         }
 
-                        // Refer to Tech Director Button - Direct API call
+                        // Refer to Tech Director Button - With Note Modal
                         const referToTechDirectorBtn = document.getElementById('referToTechDirectorBtn');
                         if (referToTechDirectorBtn) {
-                            referToTechDirectorBtn.addEventListener('click', async function () {
-                                // Show confirmation dialog
-                                if (!confirm('Are you sure you want to refer this ticket to the Technical Director?\n\nThis will:\n• Change ticket status to "Referred to Tech Director"\n• Send email notification to Tech Director\n• Schedule AI-powered reminder via n8n workflow\n\nClick OK to proceed.')) {
-                                    return;
-                                }
+                            referToTechDirectorBtn.addEventListener('click', function () {
+                                // Create/show the referral note modal
+                                let referralModal = document.getElementById('referralNoteModal');
+                                if (!referralModal) {
+                                    referralModal = document.createElement('div');
+                                    referralModal.id = 'referralNoteModal';
+                                    referralModal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:10000;display:flex;align-items:center;justify-content:center;';
+                                    referralModal.innerHTML = `
+                                        <div style="background:#1e293b;border-radius:12px;padding:24px;width:90%;max-width:480px;border:1px solid rgba(255,255,255,0.1);">
+                                            <h3 style="color:#fff;margin:0 0 4px;font-size:16px;"><i class="fas fa-user-cog" style="margin-right:8px;"></i>Refer to Tech Director</h3>
+                                            <p style="color:rgba(255,255,255,0.5);font-size:12px;margin:0 0 16px;">Add a note explaining why you're referring this ticket.</p>
+                                            <textarea id="referralNoteInput" placeholder="e.g. Customer claims warranty but no documentation. Needs technical review..." 
+                                                style="width:100%;height:100px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#fff;padding:10px;font-size:13px;resize:vertical;box-sizing:border-box;"></textarea>
+                                            <div style="display:flex;gap:10px;margin-top:14px;justify-content:flex-end;">
+                                                <button id="referralCancelBtn" style="padding:8px 18px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:rgba(255,255,255,0.7);cursor:pointer;font-size:13px;">Cancel</button>
+                                                <button id="referralConfirmBtn" style="padding:8px 18px;border-radius:8px;border:none;background:#f59e0b;color:#000;font-weight:600;cursor:pointer;font-size:13px;"><i class="fas fa-paper-plane" style="margin-right:5px;"></i>Refer Now</button>
+                                            </div>
+                                        </div>
+                                    `;
+                                    document.body.appendChild(referralModal);
 
-                                // Disable button to prevent double-clicks
-                                referToTechDirectorBtn.disabled = true;
-                                referToTechDirectorBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Referring...';
-
-                                try {
-                                    const response = await fetch(`/api/tickets/${ticketId}/tech-director`, {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' }
+                                    // Cancel button
+                                    document.getElementById('referralCancelBtn').addEventListener('click', () => {
+                                        referralModal.style.display = 'none';
                                     });
 
-                                    const data = await response.json();
+                                    // Click outside to close
+                                    referralModal.addEventListener('click', (e) => {
+                                        if (e.target === referralModal) referralModal.style.display = 'none';
+                                    });
 
-                                    if (response.ok && data.status === 'success') {
-                                        showNotification(`✅ Ticket successfully referred to Tech Director!\n🚀 Real-time Mode: ${data.real_time_mode ? 'Active' : 'Inactive'}\n🔄 Webhook: ${data.webhook_queued ? 'Queued' : 'Failed'}\n📧 Email: ${data.email_sent ? 'Sent' : 'Failed'}`, 'success');
+                                    // Confirm button
+                                    document.getElementById('referralConfirmBtn').addEventListener('click', async () => {
+                                        const note = document.getElementById('referralNoteInput').value.trim();
+                                        referralModal.style.display = 'none';
 
-                                        // Log the response for debugging
-                                        console.log('🎯 Tech Director Referral Success (Real-time):', data);
+                                        // Disable button
+                                        referToTechDirectorBtn.disabled = true;
+                                        referToTechDirectorBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Referring...';
 
-                                        // REAL-TIME STATUS UPDATE: Update the ticket status to "Referred to Tech Director"
-                                        const newStatus = 'Referred to Tech Director';
-                                        const oldStatus = '{{ ticket.status }}';
-                                        const newStatusClass = newStatus.toLowerCase().replace(/ /g, '-').replace(/–/g, '');
+                                        try {
+                                            const response = await fetch(`/api/tickets/${ticketId}/tech-director`, {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({ referral_note: note })
+                                            });
 
-                                        // Update ALL status badges on the page
-                                        const allStatusBadges = document.querySelectorAll('[class*="status-"]');
-                                        allStatusBadges.forEach(badge => {
-                                            if (badge.textContent === oldStatus || badge.textContent.includes(oldStatus)) {
-                                                badge.textContent = newStatus;
-                                                badge.className = `px-3 py-1 text-xs rounded-lg font-medium status-${newStatusClass}`;
+                                            const data = await response.json();
+
+                                            if (response.ok && data.status === 'success') {
+                                                showNotification('✅ Ticket referred to Tech Director!' + (note ? '\n📝 Note attached.' : ''), 'success');
+
+                                                // Update status on page
+                                                const newStatus = 'Referred to Tech Director';
+                                                const statusDisplay = document.getElementById('currentStatusDisplay');
+                                                if (statusDisplay) statusDisplay.textContent = newStatus;
+
+                                                referToTechDirectorBtn.innerHTML = '<i class="fas fa-check-circle mr-1 text-green-600"></i> Successfully Referred!';
+                                                setTimeout(() => {
+                                                    referToTechDirectorBtn.innerHTML = '<i class="fas fa-user-cog mr-1"></i> Currently with Tech Director';
+                                                    referToTechDirectorBtn.disabled = true;
+                                                }, 3000);
+                                            } else {
+                                                showNotification(data.message || 'Error referring ticket', 'error');
+                                                referToTechDirectorBtn.disabled = false;
+                                                referToTechDirectorBtn.innerHTML = '<i class="fas fa-user-cog mr-1"></i> Refer to Tech Director';
                                             }
-                                        });
-
-                                        // Update status dropdown button text
-                                        const statusDisplay = document.getElementById('currentStatusDisplay');
-                                        if (statusDisplay) {
-                                            statusDisplay.textContent = newStatus;
+                                        } catch (error) {
+                                            console.error('Tech Director Referral Error:', error);
+                                            showNotification('An error occurred while referring ticket', 'error');
+                                            referToTechDirectorBtn.disabled = false;
+                                            referToTechDirectorBtn.innerHTML = '<i class="fas fa-user-cog mr-1"></i> Refer to Tech Director';
                                         }
-
-                                        // Update the status dropdown button styling
-                                        const statusDropdownBtn = document.getElementById('statusDropdownBtn');
-                                        if (statusDropdownBtn) {
-                                            statusDropdownBtn.className = statusDropdownBtn.className.replace(/status-\S+/g, '');
-                                            statusDropdownBtn.classList.add(`status-${newStatusClass}`);
-                                        }
-
-                                        // Update any other status-related elements
-                                        const statusElements = document.querySelectorAll('[data-status]');
-                                        statusElements.forEach(element => {
-                                            if (element.textContent === oldStatus) {
-                                                element.textContent = newStatus;
-                                            }
-                                        });
-
-                                        // Update the Refer to Tech Director button to show "Currently with Tech Director"
-                                        referToTechDirectorBtn.disabled = false;
-                                        referToTechDirectorBtn.innerHTML = '<i class="fas fa-check-circle mr-1 text-green-600"></i> Successfully Referred!';
-                                        referToTechDirectorBtn.classList.add('bg-green-100', 'text-green-800');
-                                        referToTechDirectorBtn.classList.remove('bg-orange-100', 'text-orange-800');
-
-                                        // After 3 seconds, change to "Currently with Tech Director" state
-                                        setTimeout(() => {
-                                            referToTechDirectorBtn.innerHTML = '<i class="fas fa-user-cog mr-1"></i> Currently with Tech Director';
-                                            referToTechDirectorBtn.classList.remove('bg-green-100', 'text-green-800');
-                                            referToTechDirectorBtn.classList.add('bg-orange-50', 'text-orange-700', 'border', 'border-orange-200');
-                                            referToTechDirectorBtn.disabled = true;
-                                        }, 3000);
-                                    } else {
-                                        showNotification(data.message || 'Error referring ticket to Tech Director', 'error');
-
-                                        // Re-enable button on error
-                                        referToTechDirectorBtn.disabled = false;
-                                        referToTechDirectorBtn.innerHTML = '<i class="fas fa-user-cog mr-1"></i> Refer to Tech Director';
-                                    }
-                                } catch (error) {
-                                    console.error('🚨 Tech Director Referral Error:', error);
-                                    showNotification('An error occurred while referring ticket to Tech Director', 'error');
-
-                                    // Re-enable button on error
-                                    referToTechDirectorBtn.disabled = false;
-                                    referToTechDirectorBtn.innerHTML = '<i class="fas fa-user-cog mr-1"></i> Refer to Tech Director';
+                                    });
+                                } else {
+                                    // Modal already exists, just show it and clear the note
+                                    document.getElementById('referralNoteInput').value = '';
+                                    referralModal.style.display = 'flex';
                                 }
                             });
                         }
