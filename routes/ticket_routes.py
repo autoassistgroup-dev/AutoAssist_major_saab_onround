@@ -1570,6 +1570,36 @@ def refer_back_to_admin(ticket_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@ticket_bp.route('/clear-resolved', methods=['POST'])
+def clear_resolved_tickets():
+    """Clear resolved tickets from the Tech Director's dashboard.
+    
+    Sets a td_cleared flag on tickets so they don't appear in the resolved list.
+    """
+    try:
+        if not is_authenticated():
+            return jsonify({'success': False, 'error': 'Authentication required'}), 401
+        
+        from database import get_db
+        db = get_db()
+        
+        data = request.get_json(silent=True) or {}
+        ticket_ids = data.get('ticket_ids', [])
+        
+        if not ticket_ids:
+            return jsonify({'success': False, 'error': 'No ticket IDs provided'}), 400
+        
+        for tid in ticket_ids:
+            db.update_ticket(tid, {'td_cleared': True})
+        
+        logger.info(f"Cleared {len(ticket_ids)} resolved tickets from TD dashboard")
+        
+        return jsonify({'success': True, 'cleared': len(ticket_ids)})
+    except Exception as e:
+        logger.error(f"Error clearing resolved tickets: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @ticket_bp.route('/<ticket_id>/important', methods=['POST'])
 def toggle_ticket_importance(ticket_id):
     """Toggle ticket importance (Starred)."""

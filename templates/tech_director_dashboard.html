@@ -718,174 +718,154 @@
     </div>
     {% endif %}
 
-    <!-- Referred Tickets List -->
+    <!-- Recent Tickets (Compact rows - click to open) -->
     <div class="glass-card overflow-hidden slide-up" style="animation-delay: 0.5s">
-        <div class="p-8 border-b border-gray-100/50 bg-gradient-to-r from-white/60 to-transparent">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h2 class="text-2xl font-semibold text-gray-800">
-                        <i class="fas fa-list-alt mr-3" style="color: var(--pink-primary);"></i>
-                        Tickets Forwarded to You
-                    </h2>
-                    <p class="text-sm text-gray-500 mt-2">All tickets that have been forwarded to you for technical
-                        review</p>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <div
-                        style="display: flex; align-items: center; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 10px 16px; gap: 10px;">
-                        <span style="font-size: 16px;">🔍</span>
-                        <input type="text" placeholder="Search tickets..."
-                            style="background: transparent; border: none; outline: none; color: #fff; font-size: 14px; width: 200px;">
-                    </div>
-                </div>
-            </div>
+        <div style="padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.06);">
+            <h2 style="font-size: 18px; font-weight: 600; color: #fff;">
+                <i class="fas fa-list-alt" style="margin-right: 10px; color: var(--pink-primary);"></i>
+                Recent Tickets
+                <span style="font-size: 13px; color: rgba(255,255,255,0.4); font-weight: 400; margin-left: 8px;">Click
+                    to open</span>
+            </h2>
         </div>
 
         {% if tickets %}
-        <div class="divide-y divide-gray-200/30">
+        <div>
             {% for ticket in tickets %}
-            <div class="ticket-card glass-card m-6 border-l-4 
-                    {% if ticket.priority == 'Urgent' %}border-red-500
-                    {% elif ticket.priority == 'High' %}border-orange-500
-                    {% elif ticket.priority == 'Medium' %}border-yellow-500
-                    {% elif ticket.priority == 'Low' %}border-green-500
-                    {% else %}border-gray-400{% endif %}" data-ticket-id="{{ ticket.ticket_id }}">
-                <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
-                    <!-- Ticket Info -->
-                    <div class="flex-1 min-w-0">
-                        <!-- Header -->
-                        <div class="flex flex-wrap items-start gap-3 mb-4">
-                            <div class="flex items-center space-x-3">
-                                <span class="text-sm font-bold text-gray-700 bg-gray-100/50 px-3 py-1.5 rounded-xl">
-                                    <i class="fas fa-hashtag mr-1"></i>{{ ticket.ticket_id }}
-                                </span>
-                                <span class="priority-badge 
-                                        {% if ticket.priority == 'Urgent' %}priority-urgent
-                                        {% elif ticket.priority == 'High' %}priority-high
-                                        {% elif ticket.priority == 'Medium' %}priority-medium
-                                        {% else %}priority-low{% endif %}">
-                                    <i class="fas fa-flag mr-2"></i>{{ ticket.priority|default('Medium') }}
-                                </span>
-                            </div>
+            <a href="/ticket/{{ ticket.ticket_id }}"
+                style="display: flex; align-items: center; padding: 14px 24px; border-bottom: 1px solid rgba(255,255,255,0.04); text-decoration: none; transition: background 0.15s; cursor: pointer; gap: 12px;"
+                onmouseover="this.style.background='rgba(255,255,255,0.04)'"
+                onmouseout="this.style.background='transparent'">
+                <!-- Priority dot -->
+                <span style="width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+                    {% if ticket.priority == 'Urgent' %}background: #ef4444;
+                    {% elif ticket.priority == 'High' %}background: #f59e0b;
+                    {% elif ticket.priority == 'Medium' %}background: #ec4899;
+                    {% else %}background: #6366f1;{% endif %}"></span>
 
-                            <span class="director-badge text-sm">
-                                <i class="fas fa-user-tie mr-2"></i>Referred from {{
-                                ticket.forwarded_from_name|default('Unknown') }}
-                            </span>
-                        </div>
+                <!-- Ticket ID -->
+                <span style="font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.5); min-width: 75px;">{{
+                    ticket.ticket_id }}</span>
 
-                        <!-- Subject -->
-                        <h3 class="text-xl font-semibold text-gray-800 mb-4 line-clamp-2">
-                            {{ ticket.subject|default('No Subject') }}
-                        </h3>
+                <!-- Subject -->
+                <span
+                    style="flex: 1; font-size: 14px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{
+                    ticket.subject | default('No Subject') }}</span>
 
-                        <!-- Grid Info -->
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                            <!-- Customer Info -->
-                            <div class="space-y-2">
-                                <div class="flex items-center space-x-2">
-                                    <i class="fas fa-user text-gray-400"></i>
-                                    <span class="text-sm text-gray-500">Customer</span>
-                                </div>
-                                <p class="font-medium text-gray-800 truncate">{{ ticket.name|default('Unknown') }}
-                                </p>
-                                <p class="text-sm text-gray-600 truncate">{{ ticket.email|default('No email') }}</p>
-                            </div>
+                <!-- Referral note -->
+                {% set note = ticket.forwarding_note or ticket.referral_note %}
+                {% if note %}
+                <span
+                    style="font-size: 11px; color: #f59e0b; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+                    title="{{ note }}">
+                    <i class="fas fa-comment-dots" style="margin-right: 3px;"></i>"{{ note | truncate(30, true, '…') }}"
+                </span>
+                {% endif %}
 
-                            <!-- Vehicle Info -->
-                            <div class="space-y-2">
-                                <div class="flex items-center space-x-2">
-                                    <i class="fas fa-car text-gray-400"></i>
-                                    <span class="text-sm text-gray-500">Vehicle Registration</span>
-                                </div>
-                                <p class="font-medium text-gray-800 truncate">
-                                    {{ ticket.vehicle_registration|default('Not specified') }}
-                                </p>
-                            </div>
+                <!-- Priority badge -->
+                <span style="font-size: 11px; padding: 3px 10px; border-radius: 6px; font-weight: 500;
+                    {% if ticket.priority == 'Urgent' %}background: rgba(239,68,68,0.12); color: #f87171;
+                    {% elif ticket.priority == 'High' %}background: rgba(245,158,11,0.12); color: #fbbf24;
+                    {% elif ticket.priority == 'Medium' %}background: rgba(236,72,153,0.12); color: #f472b6;
+                    {% else %}background: rgba(99,102,241,0.12); color: #a5b4fc;{% endif %}">{{ ticket.priority |
+                    default('Medium') }}</span>
 
-                            <!-- Date Info -->
-                            <div class="space-y-2">
-                                <div class="flex items-center space-x-2">
-                                    <i class="fas fa-calendar text-gray-400"></i>
-                                    <span class="text-sm text-gray-500">Referred Date</span>
-                                </div>
-                                <p class="font-medium text-gray-800 truncate">
-                                    {{ ticket.formatted_date|default('Unknown') }}
-                                </p>
-                            </div>
-                        </div>
+                <!-- Referred from -->
+                <span style="font-size: 11px; color: rgba(255,255,255,0.4); min-width: 100px; text-align: right;">
+                    <i class="fas fa-user-tie" style="margin-right: 3px;"></i>{{ ticket.forwarded_from_name |
+                    default('—') | truncate(12, true, '…') }}
+                </span>
 
-                        <!-- Issue Summary -->
-                        <div class="space-y-2">
-                            <div class="flex items-center space-x-2">
-                                <i class="fas fa-file-alt text-gray-400"></i>
-                                <span class="text-sm text-gray-500">Issue Summary</span>
-                            </div>
-                            <div class="bg-gray-50/50 rounded-xl p-4">
-                                <p class="text-gray-700 break-words line-clamp-3">
-                                    {{ ticket.body|default('No description available')|truncate(300) }}
-                                </p>
-                                <div class="mt-2 flex items-center text-sm text-gray-500">
-                                    <i class="fas fa-clock mr-1"></i>
-                                    {{ ticket.body|length if ticket.body else 0 }} characters
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <!-- Date -->
+                <span style="font-size: 11px; color: rgba(255,255,255,0.3); min-width: 80px; text-align: right;">
+                    {{ ticket.formatted_date | default('—') }}
+                </span>
 
-                    <!-- Action Buttons -->
-                    <div class="lg:w-64 flex flex-col space-y-3">
-                        <a href="/ticket/{{ ticket.ticket_id }}" class="glass-btn text-center">
-                            <i class="fas fa-cogs mr-2"></i>Review & Manage
-                        </a>
-
-                        <div class="flex flex-col space-y-2">
-                            <button onclick="openForwardModal('{{ ticket.ticket_id }}', '{{ ticket.subject|e }}')"
-                                class="w-full bg-white/80 hover:bg-white border border-gray-300 text-gray-700 px-4 py-3 rounded-xl font-medium transition-all hover:shadow-lg">
-                                <i class="fas fa-forward mr-2"></i>Forward to Team
-                            </button>
-
-                            <button
-                                class="w-full bg-white/80 hover:bg-white border border-gray-300 text-gray-700 px-4 py-3 rounded-xl font-medium transition-all hover:shadow-lg">
-                                <i class="fas fa-comment-medical mr-2"></i>Add Technical Note
-                            </button>
-                        </div>
-
-                        <div class="pt-4 border-t border-gray-200/50">
-                            <div class="text-xs text-gray-500">
-                                <div class="flex items-center">
-                                    <i class="fas fa-history mr-2"></i>
-                                    Last updated: {{ ticket.formatted_date }}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                <!-- Arrow -->
+                <i class="fas fa-chevron-right" style="font-size: 10px; color: rgba(255,255,255,0.15);"></i>
+            </a>
             {% endfor %}
         </div>
         {% else %}
-        <!-- Empty State -->
-        <div class="text-center py-16">
-            <div class="mb-6">
-                <div
-                    class="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-green-100 to-emerald-100 flex items-center justify-center">
-                    <i class="fas fa-clipboard-check text-emerald-600 text-3xl"></i>
-                </div>
-            </div>
-            <h3 class="text-2xl font-semibold text-gray-800 mb-3">No Tickets Awaiting Review</h3>
-            <p class="text-gray-500 max-w-md mx-auto mb-6">
-                All technical reviews are up to date! You're all caught up with your technical responsibilities.
-            </p>
-            <div class="space-y-3 max-w-sm mx-auto">
-                <div class="text-sm text-gray-500 bg-gray-50/50 p-4 rounded-xl">
-                    <i class="fas fa-lightbulb text-amber-500 mr-2"></i>
-                    Check back later for new technical referrals
-                </div>
-            </div>
+        <div style="text-align: center; padding: 48px 24px; color: rgba(255,255,255,0.4);">
+            <i class="fas fa-clipboard-check"
+                style="font-size: 32px; margin-bottom: 12px; display: block; opacity: 0.5;"></i>
+            <p style="font-size: 14px;">No tickets awaiting review</p>
         </div>
         {% endif %}
     </div>
+
+    <!-- Resolved Tickets Section -->
+    {% if resolved_tickets and resolved_tickets|length > 0 %}
+    <div class="glass-card overflow-hidden slide-up" style="animation-delay: 0.6s" id="resolvedSection">
+        <div
+            style="padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: space-between;">
+            <h2 style="font-size: 18px; font-weight: 600; color: #fff; margin: 0;">
+                <i class="fas fa-check-circle" style="margin-right: 10px; color: #10b981;"></i>
+                Resolved Tickets
+                <span style="font-size: 13px; color: rgba(255,255,255,0.4); font-weight: 400; margin-left: 8px;">({{
+                    resolved_tickets|length }})</span>
+            </h2>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <button id="clearSelectedBtn" onclick="clearSelectedResolved()"
+                    style="display:none; padding: 6px 14px; border-radius: 8px; border: 1px solid rgba(239,68,68,0.3); background: rgba(239,68,68,0.1); color: #f87171; font-size: 12px; cursor: pointer; font-weight: 500;">
+                    <i class="fas fa-trash-alt" style="margin-right: 4px;"></i>Clear Selected
+                </button>
+                <button onclick="clearAllResolved()"
+                    style="padding: 6px 14px; border-radius: 8px; border: 1px solid rgba(239,68,68,0.3); background: rgba(239,68,68,0.1); color: #f87171; font-size: 12px; cursor: pointer; font-weight: 500;">
+                    <i class="fas fa-broom" style="margin-right: 4px;"></i>Clear All
+                </button>
+            </div>
+        </div>
+
+        <div id="resolvedTicketsList">
+            {% for ticket in resolved_tickets %}
+            <div class="resolved-ticket-row" data-ticket-id="{{ ticket.ticket_id }}"
+                style="display: flex; align-items: center; padding: 12px 24px; border-bottom: 1px solid rgba(255,255,255,0.03); gap: 12px; {% if loop.index > 3 %}display: none;{% endif %}"
+                {% if loop.index> 3 %}data-hidden="true"{% endif %}>
+                <!-- Checkbox -->
+                <input type="checkbox" class="resolved-checkbox" value="{{ ticket.ticket_id }}"
+                    onchange="toggleClearSelected()"
+                    style="width: 16px; height: 16px; accent-color: #f87171; cursor: pointer; flex-shrink: 0;">
+
+                <!-- Green dot -->
+                <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; flex-shrink: 0;"></span>
+
+                <!-- Ticket ID -->
+                <span style="font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.4); min-width: 75px;">{{
+                    ticket.ticket_id }}</span>
+
+                <!-- Subject (clickable) -->
+                <a href="/ticket/{{ ticket.ticket_id }}"
+                    style="flex: 1; font-size: 14px; color: rgba(255,255,255,0.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-decoration: none;"
+                    onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">
+                    {{ ticket.subject | default('No Subject') }}
+                </a>
+
+                <!-- Status badge -->
+                <span
+                    style="font-size: 11px; padding: 3px 10px; border-radius: 6px; background: rgba(16,185,129,0.12); color: #34d399; font-weight: 500;">{{
+                    ticket.status }}</span>
+
+                <!-- Date -->
+                <span style="font-size: 11px; color: rgba(255,255,255,0.25); min-width: 80px; text-align: right;">
+                    {{ ticket.updated_at.strftime('%b %d') if ticket.updated_at else '—' }}
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if resolved_tickets|length > 3 %}
+        <div id="seeMoreResolvedBtn" style="padding: 12px 24px; text-align: center;">
+            <button onclick="toggleResolvedTickets()"
+                style="padding: 8px 20px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.6); font-size: 13px; cursor: pointer;">
+                <i class="fas fa-chevron-down" style="margin-right: 5px;" id="seeMoreIcon"></i>
+                <span id="seeMoreText">See More ({{ resolved_tickets|length - 3 }} more)</span>
+            </button>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
 </div>
 
 <script>
@@ -982,6 +962,98 @@
 
         // Performance optimization: Auto-refresh removed - using real-time WebSocket updates instead
     });
+
+    // ===== RESOLVED TICKETS FUNCTIONS =====
+    let resolvedExpanded = false;
+
+    function toggleResolvedTickets() {
+        const hiddenRows = document.querySelectorAll('.resolved-ticket-row[data-hidden="true"]');
+        const icon = document.getElementById('seeMoreIcon');
+        const text = document.getElementById('seeMoreText');
+        resolvedExpanded = !resolvedExpanded;
+
+        hiddenRows.forEach(row => {
+            row.style.display = resolvedExpanded ? 'flex' : 'none';
+        });
+        icon.className = resolvedExpanded ? 'fas fa-chevron-up' : 'fas fa-chevron-down';
+        icon.style.marginRight = '5px';
+        text.textContent = resolvedExpanded ? 'Show Less' : `See More (${hiddenRows.length} more)`;
+    }
+
+    function toggleClearSelected() {
+        const checked = document.querySelectorAll('.resolved-checkbox:checked');
+        const btn = document.getElementById('clearSelectedBtn');
+        if (btn) btn.style.display = checked.length > 0 ? 'inline-block' : 'none';
+    }
+
+    async function clearSelectedResolved() {
+        const checked = document.querySelectorAll('.resolved-checkbox:checked');
+        if (checked.length === 0) return;
+
+        const ticketIds = Array.from(checked).map(cb => cb.value);
+        if (!confirm(`Clear ${ticketIds.length} resolved ticket(s) from your dashboard?`)) return;
+
+        try {
+            const response = await fetch('/api/tickets/clear-resolved', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ticket_ids: ticketIds })
+            });
+            const data = await response.json();
+            if (data.success) {
+                ticketIds.forEach(id => {
+                    const row = document.querySelector(`.resolved-ticket-row[data-ticket-id="${id}"]`);
+                    if (row) {
+                        row.style.transition = 'all 0.3s ease';
+                        row.style.opacity = '0';
+                        row.style.transform = 'translateX(50px)';
+                        setTimeout(() => row.remove(), 300);
+                    }
+                });
+                setTimeout(() => {
+                    const remaining = document.querySelectorAll('.resolved-ticket-row');
+                    if (remaining.length === 0) {
+                        const section = document.getElementById('resolvedSection');
+                        if (section) section.remove();
+                    }
+                    toggleClearSelected();
+                }, 350);
+            }
+        } catch (error) {
+            console.error('Error clearing resolved tickets:', error);
+            alert('Failed to clear tickets. Please try again.');
+        }
+    }
+
+    async function clearAllResolved() {
+        const rows = document.querySelectorAll('.resolved-ticket-row');
+        if (rows.length === 0) return;
+
+        if (!confirm(`Clear all ${rows.length} resolved ticket(s) from your dashboard?`)) return;
+
+        const ticketIds = Array.from(rows).map(row => row.getAttribute('data-ticket-id'));
+
+        try {
+            const response = await fetch('/api/tickets/clear-resolved', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ticket_ids: ticketIds })
+            });
+            const data = await response.json();
+            if (data.success) {
+                const section = document.getElementById('resolvedSection');
+                if (section) {
+                    section.style.transition = 'all 0.4s ease';
+                    section.style.opacity = '0';
+                    section.style.transform = 'translateY(-20px)';
+                    setTimeout(() => section.remove(), 400);
+                }
+            }
+        } catch (error) {
+            console.error('Error clearing all resolved:', error);
+            alert('Failed to clear tickets. Please try again.');
+        }
+    }
 
     // Mobile menu toggle
     function toggleMobileMenu() {

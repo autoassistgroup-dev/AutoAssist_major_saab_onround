@@ -858,6 +858,18 @@ def tech_director_dashboard():
     except Exception as e:
         logger.warning(f"[TECH_DIRECTOR_DASHBOARD] Error counting forwarded_to_others: {e}")
         forwarded_to_others = 0
+    
+    # Get resolved/closed tickets that were previously referred to TD
+    try:
+        resolved_tickets = list(db.tickets.find({
+            "status": {"$in": ["Resolved", "Closed"]},
+            "referred_to_director": True,
+            "td_cleared": {"$ne": True}
+        }).sort("updated_at", -1))
+    except Exception as e:
+        logger.warning(f"[TECH_DIRECTOR_DASHBOARD] Error getting resolved tickets: {e}")
+        resolved_tickets = []
+    
     members = db.get_all_members()
     
     return render_template('tech_director_dashboard.html',
@@ -866,6 +878,7 @@ def tech_director_dashboard():
                           current_user_role=current_member.get('role') or session.get('member_role') or 'User',
                           tickets=forwarded_tickets,
                           referred_tickets=forwarded_tickets,
+                          resolved_tickets=resolved_tickets,
                           total_referred=total_referred,
                           forwarded_to_others=forwarded_to_others,
                           members=members)
