@@ -1555,6 +1555,15 @@
                                 {% if body_text %}
                                 <div class="subj-body">{{ body_text | striptags | truncate(120, true, '…') }}</div>
                                 {% endif %}
+                                {% set note_text = ticket.forwarding_note or ticket.referral_note %}
+                                {% if note_text %}
+                                <div
+                                    style="margin-top: 4px; padding: 3px 8px; background: rgba(245,158,11,0.08); border-left: 2px solid rgba(245,158,11,0.4); border-radius: 3px; font-size: 11px; color: rgba(255,255,255,0.6);">
+                                    <i class="fas fa-comment-dots"
+                                        style="margin-right: 4px; font-size: 9px; color: #f59e0b;"></i>
+                                    <em>"{{ note_text | truncate(80, true, '…') }}"</em>
+                                </div>
+                                {% endif %}
                             </td>
                             <td class="td-user">
                                 <span class="user-name">{{ ticket.name or ((ticket.customer_first_name or '') ~ ' ' ~
