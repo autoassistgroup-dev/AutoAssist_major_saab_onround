@@ -6466,6 +6466,12 @@
                                     {% endif %}
                                     {% endif %}
 
+                                    {% if is_tech_director and ticket.status == 'Referred to Tech Director' %}
+                                    <button id="referBackToAdminBtn" class="header-badge badge-refer"
+                                        title="Refer this ticket back to Admin">
+                                        <i class="fas fa-reply"></i> Refer back to Admin
+                                    </button>
+                                    {% endif %}
 
                                     <!-- Forward -->
                                     {% if ticket.status and ticket.status.lower() not in ['resolved', 'closed',
@@ -9560,6 +9566,77 @@
                         }
 
                         // Forward Button - DUPLICATE LISTENER REMOVED
+
+                        // Refer back to Admin Button (Tech Director only)
+                        const referBackToAdminBtn = document.getElementById('referBackToAdminBtn');
+                        if (referBackToAdminBtn) {
+                            referBackToAdminBtn.addEventListener('click', function () {
+                                let referBackModal = document.getElementById('referBackToAdminModal');
+                                if (!referBackModal) {
+                                    referBackModal = document.createElement('div');
+                                    referBackModal.id = 'referBackToAdminModal';
+                                    referBackModal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:10000;display:flex;align-items:center;justify-content:center;';
+                                    referBackModal.innerHTML = `
+                                        <div style="background:#1e293b;border-radius:12px;padding:24px;width:90%;max-width:480px;border:1px solid rgba(255,255,255,0.1);">
+                                            <h3 style="color:#fff;margin:0 0 4px;font-size:16px;"><i class="fas fa-reply" style="margin-right:8px;"></i>Refer back to Admin</h3>
+                                            <p style="color:rgba(255,255,255,0.5);font-size:12px;margin:0 0 16px;">Add a note explaining your findings or why you're returning this ticket.</p>
+                                            <textarea id="referBackNoteInput" placeholder="e.g. Warranty confirmed. Customer eligible for free replacement under policy #3201..."
+                                                style="width:100%;height:100px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#fff;padding:10px;font-size:13px;resize:vertical;box-sizing:border-box;"></textarea>
+                                            <div style="display:flex;gap:10px;margin-top:14px;justify-content:flex-end;">
+                                                <button id="referBackCancelBtn" style="padding:8px 18px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:rgba(255,255,255,0.7);cursor:pointer;font-size:13px;">Cancel</button>
+                                                <button id="referBackConfirmBtn" style="padding:8px 18px;border-radius:8px;border:none;background:#3b82f6;color:#fff;font-weight:600;cursor:pointer;font-size:13px;"><i class="fas fa-paper-plane" style="margin-right:5px;"></i>Send to Admin</button>
+                                            </div>
+                                        </div>
+                                    `;
+                                    document.body.appendChild(referBackModal);
+
+                                    document.getElementById('referBackCancelBtn').addEventListener('click', () => {
+                                        referBackModal.style.display = 'none';
+                                    });
+                                    referBackModal.addEventListener('click', (e) => {
+                                        if (e.target === referBackModal) referBackModal.style.display = 'none';
+                                    });
+
+                                    document.getElementById('referBackConfirmBtn').addEventListener('click', async () => {
+                                        const note = document.getElementById('referBackNoteInput').value.trim();
+                                        referBackModal.style.display = 'none';
+
+                                        referBackToAdminBtn.disabled = true;
+                                        referBackToAdminBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Sending...';
+
+                                        try {
+                                            const response = await fetch(`/api/tickets/${ticketId}/refer-back-to-admin`, {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({ referral_note: note })
+                                            });
+                                            const data = await response.json();
+
+                                            if (response.ok && data.success) {
+                                                showNotification('✅ Ticket referred back to Admin!' + (note ? '\n📝 Note attached.' : ''), 'success');
+                                                const statusDisplay = document.getElementById('currentStatusDisplay');
+                                                if (statusDisplay) statusDisplay.textContent = 'Open';
+
+                                                referBackToAdminBtn.innerHTML = '<i class="fas fa-check-circle mr-1"></i> Sent to Admin';
+                                                setTimeout(() => { location.reload(); }, 2000);
+                                            } else {
+                                                showNotification(data.message || 'Error referring ticket back', 'error');
+                                                referBackToAdminBtn.disabled = false;
+                                                referBackToAdminBtn.innerHTML = '<i class="fas fa-reply mr-1"></i> Refer back to Admin';
+                                            }
+                                        } catch (error) {
+                                            console.error('Refer back error:', error);
+                                            showNotification('An error occurred', 'error');
+                                            referBackToAdminBtn.disabled = false;
+                                            referBackToAdminBtn.innerHTML = '<i class="fas fa-reply mr-1"></i> Refer back to Admin';
+                                        }
+                                    });
+                                } else {
+                                    document.getElementById('referBackNoteInput').value = '';
+                                    referBackModal.style.display = 'flex';
+                                }
+                            });
+                        }
                         // This was conflicting with the main forward modal listener at line ~9294
                         // const forwardBtn = document.getElementById('forwardBtn');
                         // if (forwardBtn) { ... }

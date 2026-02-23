@@ -1511,6 +1511,65 @@ def refer_to_tech_director(ticket_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@ticket_bp.route('/<ticket_id>/refer-back-to-admin', methods=['POST'])
+def refer_back_to_admin(ticket_id):
+    """Tech Director refers ticket back to Admin.
+    
+    Clears the forwarding fields and resets status so the ticket
+    reappears in the Admin's normal ticket queue.
+    """
+    try:
+        if not is_authenticated():
+            return jsonify({'success': False, 'error': 'Authentication required'}), 401
+            
+        from utils.validators import validate_ticket_id
+        if not validate_ticket_id(ticket_id):
+            return jsonify({'success': False, 'error': 'Invalid ticket ID'}), 400
+            
+        from database import get_db
+        db = get_db()
+        
+        data = request.get_json(silent=True) or {}
+        referral_note = data.get('referral_note', '').strip()
+        
+        current_member_id = session.get('member_id')
+        current_member_name = session.get('member_name', 'Tech Director')
+        
+        update_data = {
+            # Reset status back to Open
+            'status': 'Open',
+            'referred_to_director': False,
+            
+            # Clear forwarding fields so it leaves the TD's forwarded queue
+            'is_forwarded': False,
+            'forwarded_to': None,
+            'forwarded_by': None,
+            'forwarded_at': None,
+            'is_forwarded_viewed': False,
+            
+            # Keep a record of who sent it back and why
+            'referred_back_by': current_member_id,
+            'referred_back_by_name': current_member_name,
+            'referred_back_at': datetime.now(),
+            'referred_back_note': referral_note,
+            'forwarding_note': referral_note if referral_note else None,
+        }
+        
+        db.update_ticket(ticket_id, update_data)
+        
+        logger.info(f"Ticket {ticket_id} referred back to Admin by {current_member_name}")
+        
+        return jsonify({
+            'success': True,
+            'status': 'success',
+            'message': 'Ticket referred back to Admin'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error referring ticket {ticket_id} back to admin: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @ticket_bp.route('/<ticket_id>/important', methods=['POST'])
 def toggle_ticket_importance(ticket_id):
     """Toggle ticket importance (Starred)."""
