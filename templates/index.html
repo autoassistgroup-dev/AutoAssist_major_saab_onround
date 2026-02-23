@@ -1452,7 +1452,8 @@
                             <p class="ticket-body">{{ ticket.body | default('No Body') }}</p>
 
                             <div class="ticket-meta">
-                                <span><i class="fas fa-user"></i>{{ ticket.name | default('Anonymous') }}</span>
+                                <span><i class="fas fa-user"></i>{{ ticket.name or ((ticket.customer_first_name or '') ~
+                                    ' ' ~ (ticket.customer_surname or ''))|trim or 'Anonymous' }}</span>
                                 <span><i class="fas fa-envelope"></i>{{ ticket.email | default('No Email') }}</span>
                                 {% if ticket.formatted_forwarded_at %}
                                 <span class="forwarded-meta">
@@ -1547,7 +1548,8 @@
                                 {% endif %}
                             </td>
                             <td class="td-user">
-                                <span class="user-name">{{ ticket.name | default('Anonymous') }}</span>
+                                <span class="user-name">{{ ticket.name or ((ticket.customer_first_name or '') ~ ' ' ~
+                                    (ticket.customer_surname or ''))|trim or 'Anonymous' }}</span>
                                 <span class="user-email">{{ ticket.email | default('No Email') }}</span>
                             </td>
                             <td class="td-tech">
