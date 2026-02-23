@@ -375,9 +375,8 @@ class MongoDB:
             pipeline.append({"$addFields": {"updated_at": {"$ifNull": ["$updated_at", "$created_at"]}}})
             
             # Sort -> Skip -> Limit BEFORE lookups (optimization: reduce lookup volume)
-            # Chronological sort by CREATION date: newest tickets always on top
-            # Tickets with new replies get a red dot (has_unread_reply) but stay in creation order
-            pipeline.append({"$sort": {"created_at": -1}})
+            # Sort by UPDATED date: tickets with newest activity (reply, status change, forward) on top
+            pipeline.append({"$sort": {"updated_at": -1}})
             
             skip = (page - 1) * per_page
             pipeline.extend([
@@ -1453,7 +1452,7 @@ class MongoDB:
             if classification and classification != 'All':
                 search_filter["classification"] = classification
             
-            return list(self.tickets.find(search_filter).sort("created_at", -1).limit(1000))
+            return list(self.tickets.find(search_filter).sort("updated_at", -1).limit(1000))
         except pymongo.errors.OperationFailure as e:
             logging.error(f"Failed to search tickets: {e}")
             return []
@@ -1464,7 +1463,7 @@ class MongoDB:
     def get_all_tickets(self):
         """Get all tickets"""
         try:
-            return list(self.tickets.find().sort("created_at", -1))
+            return list(self.tickets.find().sort("updated_at", -1))
         except pymongo.errors.OperationFailure as e:
             logging.error(f"Failed to get all tickets: {e}")
             return []
@@ -1682,7 +1681,7 @@ class MongoDB:
     def get_tickets_by_status(self, status):
         """Get all tickets with a specific status"""
         try:
-            tickets = list(self.tickets.find({"status": status}).sort("created_at", -1))
+            tickets = list(self.tickets.find({"status": status}).sort("updated_at", -1))
             return tickets
         except Exception as e:
             logging.error(f"Error getting tickets by status {status}: {e}")
