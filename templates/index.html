@@ -1451,6 +1451,15 @@
                             <h3 class="ticket-subject">{{ ticket.subject | default('No Subject') }}</h3>
                             <p class="ticket-body">{{ ticket.body | default('No Body') }}</p>
 
+                            {% if ticket.forwarding_note %}
+                            <div
+                                style="margin-top: 6px; padding: 6px 10px; background: rgba(255,255,255,0.06); border-left: 2px solid rgba(255,255,255,0.3); border-radius: 4px; font-size: 12px; color: rgba(255,255,255,0.7);">
+                                <i class="fas fa-comment-dots"
+                                    style="margin-right: 5px; font-size: 10px; opacity: 0.6;"></i>
+                                <em>"{{ ticket.forwarding_note }}"</em>
+                            </div>
+                            {% endif %}
+
                             <div class="ticket-meta">
                                 <span><i class="fas fa-user"></i>{{ ticket.name or ((ticket.customer_first_name or '') ~
                                     ' ' ~ (ticket.customer_surname or ''))|trim or 'Anonymous' }}</span>
