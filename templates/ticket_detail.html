@@ -7996,8 +7996,8 @@
                         const revisitEngineer = document.getElementById('revisitEngineerStandalone').value;
                         const revisitReason = document.getElementById('revisitReasonStandalone').value.trim();
                         try {
-                            const response = await fetch(`/api/tickets/${ticketId}/revisit-info`, {
-                                method: 'POST',
+                            const response = await fetch(`/api/tickets/${ticketId}/vehicle-info`, {
+                                method: 'PUT',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({
                                     revisit_date: revisitDate,

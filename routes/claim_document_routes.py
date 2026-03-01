@@ -280,7 +280,8 @@ def update_vehicle_info(ticket_id):
             'vehicle_registration', 'service_date', 'claim_date',
             'type_of_claim', 'technician', 'vhc_link',
             'days_between_service_claim', 'advisories_followed',
-            'within_warranty', 'new_fault_codes', 'dpf_light_on', 'eml_light_on'
+            'within_warranty', 'new_fault_codes', 'dpf_light_on', 'eml_light_on',
+            'revisit_date', 'revisit_technician_id', 'revisit_reason'
         ]
         
         for field in allowed_fields:
