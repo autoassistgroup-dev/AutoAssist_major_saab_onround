@@ -1723,6 +1723,49 @@ def get_ticket_replies(ticket_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@ticket_bp.route('/<ticket_id>/revisit-info', methods=['POST', 'PUT'])
+def update_revisit_info(ticket_id):
+    """Save revisit information independently of outcome category.
+    
+    This allows admins to set revisit date, engineer, and reason at any time
+    during the claim process, not just when closing with outcome = 'Revisit'.
+    """
+    try:
+        if not is_authenticated():
+            return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+
+        if not validate_ticket_id(ticket_id):
+            return jsonify({'success': False, 'error': 'Invalid ticket ID'}), 400
+
+        data = request.get_json(silent=True) or {}
+        
+        from database import get_db
+        db = get_db()
+
+        ticket = db.tickets.find_one({'ticket_id': ticket_id})
+        if not ticket:
+            return jsonify({'success': False, 'error': 'Ticket not found'}), 404
+
+        update_data = {
+            'revisit_date': (data.get('revisit_date') or '').strip(),
+            'revisit_technician_id': (data.get('revisit_technician_id') or '').strip(),
+            'revisit_reason': (data.get('revisit_reason') or '').strip(),
+            'updated_at': datetime.now()
+        }
+
+        db.tickets.update_one(
+            {'ticket_id': ticket_id},
+            {'$set': update_data}
+        )
+
+        logger.info(f"Revisit info updated for ticket {ticket_id}")
+        return jsonify({'success': True, 'message': 'Revisit information saved'})
+
+    except Exception as e:
+        logger.error(f"Error updating revisit info for ticket {ticket_id}: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @ticket_bp.route('/<ticket_id>/outcome', methods=['POST'])
 def update_ticket_outcome(ticket_id):
     """

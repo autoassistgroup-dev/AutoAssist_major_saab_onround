@@ -688,6 +688,21 @@
             vertical-align: middle;
         }
 
+        .ticket-table .returned-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 600;
+            background: rgba(59, 130, 246, 0.12);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.25);
+            margin-top: 4px;
+            animation: pulse 3s infinite;
+        }
+
         .ticket-table .star-indicator {
             color: #fbbf24;
             font-size: 10px;
@@ -1555,7 +1570,13 @@
                                 {% if body_text %}
                                 <div class="subj-body">{{ body_text | striptags | truncate(120, true, '…') }}</div>
                                 {% endif %}
-                                {% set note_text = ticket.forwarding_note or ticket.referral_note %}
+                                {% if ticket.referred_back_by_name %}
+                                <div class="returned-badge">
+                                    <i class="fas fa-reply"></i> Returned by {{ ticket.referred_back_by_name }}
+                                </div>
+                                {% endif %}
+                                {% set note_text = ticket.forwarding_note or ticket.referral_note or
+                                ticket.referred_back_note %}
                                 {% if note_text %}
                                 <div
                                     style="margin-top: 4px; padding: 3px 8px; background: rgba(245,158,11,0.08); border-left: 2px solid rgba(245,158,11,0.4); border-radius: 3px; font-size: 11px; color: rgba(255,255,255,0.6);">
@@ -1787,9 +1808,21 @@
                 filterTickets();
             });
 
-            // Manual refresh button - use AJAX instead of full reload
-            document.getElementById('manualRefreshBtn')?.addEventListener('click', function () {
-                refreshIndexTickets();
+            // Manual refresh button - use AJAX with visual feedback + fallback
+            document.getElementById('manualRefreshBtn')?.addEventListener('click', async function () {
+                const btn = this;
+                const icon = btn.querySelector('i');
+                if (icon) icon.classList.add('fa-spin');
+                btn.disabled = true;
+                try {
+                    await refreshIndexTickets();
+                } catch (e) {
+                    console.warn('[REFRESH] AJAX failed, doing full reload:', e);
+                    location.reload();
+                } finally {
+                    if (icon) icon.classList.remove('fa-spin');
+                    btn.disabled = false;
+                }
             });
 
             // Background image rotation (every 60 minutes)

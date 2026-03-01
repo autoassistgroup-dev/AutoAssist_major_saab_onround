@@ -6493,7 +6493,49 @@
                                 </div>
                             </div>
                         </div>
-                        <!-- Ticket Details -->
+
+                        <!-- Internal Notes from Admin/Tech -->
+                        {% set has_internal_notes = ticket.forwarding_note or ticket.referral_note or
+                        ticket.referred_back_note %}
+                        {% if has_internal_notes %}
+                        <div
+                            style="margin-bottom: 16px; padding: 12px 16px; background: rgba(59,130,246,0.06); border: 1px solid rgba(59,130,246,0.15); border-radius: 10px;">
+                            <div style="font-size: 12px; font-weight: 600; color: #60a5fa; margin-bottom: 8px;">
+                                <i class="fas fa-comment-alt" style="margin-right: 6px;"></i>Internal Notes
+                            </div>
+                            {% if ticket.referral_note %}
+                            <div
+                                style="font-size: 13px; color: rgba(255,255,255,0.7); margin-bottom: 6px; padding: 6px 10px; background: rgba(255,255,255,0.03); border-radius: 6px;">
+                                <strong style="color: #f59e0b;">Referral Note:</strong> {{ ticket.referral_note }}
+                                {% if ticket.forwarded_from_name %}
+                                <span style="font-size: 11px; color: rgba(255,255,255,0.35); margin-left: 8px;">— from
+                                    {{ ticket.forwarded_from_name }}</span>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                            {% if ticket.forwarding_note and ticket.forwarding_note != ticket.referral_note %}
+                            <div
+                                style="font-size: 13px; color: rgba(255,255,255,0.7); margin-bottom: 6px; padding: 6px 10px; background: rgba(255,255,255,0.03); border-radius: 6px;">
+                                <strong style="color: #a78bfa;">Forwarding Note:</strong> {{ ticket.forwarding_note }}
+                                {% if ticket.forwarded_by_name %}
+                                <span style="font-size: 11px; color: rgba(255,255,255,0.35); margin-left: 8px;">— from
+                                    {{ ticket.forwarded_by_name }}</span>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                            {% if ticket.referred_back_note %}
+                            <div
+                                style="font-size: 13px; color: rgba(255,255,255,0.7); padding: 6px 10px; background: rgba(255,255,255,0.03); border-radius: 6px;">
+                                <strong style="color: #60a5fa;">Returned by Tech:</strong> {{ ticket.referred_back_note
+                                }}
+                                {% if ticket.referred_back_by_name %}
+                                <span style="font-size: 11px; color: rgba(255,255,255,0.35); margin-left: 8px;">— from
+                                    {{ ticket.referred_back_by_name }}</span>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                             <div class="detail-card">
                                 <h3 class="text-sm font-medium text-gray-500">Customer</h3>
@@ -6708,6 +6750,107 @@
                             </div>
                         </div>
                         {% endif %}
+
+                        <!-- Standalone Revisit Information Section -->
+                        <div class="mb-4" id="revisitInfoSection">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-sm font-medium text-gray-500 flex items-center">
+                                    <i class="fas fa-redo-alt mr-2" style="color: #a78bfa;"></i>Revisit Information
+                                </h3>
+                                <button id="editRevisitBtn"
+                                    class="text-xs text-indigo-600 hover:text-indigo-800 flex items-center gap-1 px-2 py-1 rounded hover:bg-indigo-50 transition-colors"
+                                    onclick="toggleRevisitEdit()">
+                                    <i class="fas fa-edit"></i> <span>Edit</span>
+                                </button>
+                            </div>
+
+                            <!-- View Mode -->
+                            <div id="revisitViewMode" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="detail-card flex items-center">
+                                    <div class="p-3 rounded-full bg-purple-100 mr-4">
+                                        <i class="fas fa-calendar-alt text-purple-600"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-xs font-medium text-gray-500">Date Revisit Booked</h4>
+                                        <p class="text-gray-800 font-semibold" id="revisitDateDisplay">{{
+                                            ticket.revisit_date or 'Not set' }}</p>
+                                    </div>
+                                </div>
+                                <div class="detail-card flex items-center">
+                                    <div class="p-3 rounded-full bg-indigo-100 mr-4">
+                                        <i class="fas fa-user-hard-hat text-indigo-600"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-xs font-medium text-gray-500">Revisit Engineer</h4>
+                                        <p class="text-gray-800 font-semibold" id="revisitEngineerDisplay">
+                                            {% set revisit_tech_found = false %}
+                                            {% for tech in technicians %}
+                                            {% if ticket.revisit_technician_id and ticket.revisit_technician_id|string
+                                            == tech._id|string %}
+                                            {{ tech.name }}
+                                            {% set revisit_tech_found = true %}
+                                            {% endif %}
+                                            {% endfor %}
+                                            {% if not revisit_tech_found %}Not assigned{% endif %}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="detail-card flex items-center">
+                                    <div class="p-3 rounded-full bg-amber-100 mr-4">
+                                        <i class="fas fa-comment-dots text-amber-600"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-xs font-medium text-gray-500">Reason for Revisit</h4>
+                                        <p class="text-gray-800 font-semibold" id="revisitReasonDisplay">{{
+                                            ticket.revisit_reason or 'No reason provided' }}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Edit Mode (hidden by default) -->
+                            <div id="revisitEditMode" style="display: none;"
+                                class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="detail-card p-3">
+                                    <label class="text-xs font-medium text-gray-500 mb-1 block">
+                                        <i class="fas fa-calendar-alt mr-1"></i>Date Revisit Booked
+                                    </label>
+                                    <input type="date" id="revisitDateStandalone"
+                                        value="{{ ticket.revisit_date or '' }}"
+                                        class="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                                </div>
+                                <div class="detail-card p-3">
+                                    <label class="text-xs font-medium text-gray-500 mb-1 block">
+                                        <i class="fas fa-user-cog mr-1"></i>Revisit Engineer
+                                    </label>
+                                    <select id="revisitEngineerStandalone"
+                                        class="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                                        <option value="">Select Engineer</option>
+                                        {% for tech in technicians %}
+                                        <option value="{{ tech._id }}" {% if ticket.revisit_technician_id and
+                                            ticket.revisit_technician_id|string==tech._id|string %}selected{% endif %}>
+                                            {{ tech.name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="detail-card p-3">
+                                    <label class="text-xs font-medium text-gray-500 mb-1 block">
+                                        <i class="fas fa-comment-dots mr-1"></i>Reason for Revisit
+                                    </label>
+                                    <textarea id="revisitReasonStandalone" rows="2"
+                                        class="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                        placeholder="Enter reason for revisit...">{{ ticket.revisit_reason or '' }}</textarea>
+                                </div>
+                                <div class="md:col-span-3 flex gap-2 justify-end">
+                                    <button onclick="cancelRevisitEdit()"
+                                        class="px-4 py-2 text-sm text-gray-400 bg-gray-700 border border-gray-600 rounded-lg hover:bg-gray-600 transition-colors">Cancel</button>
+                                    <button onclick="saveRevisitInfo()"
+                                        class="px-4 py-2 text-sm text-white bg-purple-600 border border-purple-500 rounded-lg hover:bg-purple-500 transition-colors">
+                                        <i class="fas fa-save mr-1"></i>Save
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
 
                         <!-- Original Ticket Attachments Section -->
                         {% if ticket.attachments and ticket.attachments|length > 0 %}
@@ -7660,7 +7803,7 @@
                         notesContainer.innerHTML = '';
                         // Sort notes newest-first
                         const sortedNotes = notes.map((n, i) => ({ ...n, _origIdx: i }))
-                            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                            .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
                         sortedNotes.forEach((note) => {
                             const index = note._origIdx;
                             const noteElement = document.createElement('div');
@@ -7835,6 +7978,50 @@
                         }
                     } catch (e) {
                         console.error('Error parsing vehicle data:', e);
+                    }
+
+                    // === STANDALONE REVISIT EDIT FUNCTIONS ===
+                    function toggleRevisitEdit() {
+                        document.getElementById('revisitViewMode').style.display = 'none';
+                        document.getElementById('revisitEditMode').style.display = 'grid';
+                        document.getElementById('editRevisitBtn').style.display = 'none';
+                    }
+                    function cancelRevisitEdit() {
+                        document.getElementById('revisitViewMode').style.display = 'grid';
+                        document.getElementById('revisitEditMode').style.display = 'none';
+                        document.getElementById('editRevisitBtn').style.display = 'flex';
+                    }
+                    async function saveRevisitInfo() {
+                        const revisitDate = document.getElementById('revisitDateStandalone').value;
+                        const revisitEngineer = document.getElementById('revisitEngineerStandalone').value;
+                        const revisitReason = document.getElementById('revisitReasonStandalone').value.trim();
+                        try {
+                            const response = await fetch(`/api/tickets/${ticketId}/revisit-info`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    revisit_date: revisitDate,
+                                    revisit_technician_id: revisitEngineer,
+                                    revisit_reason: revisitReason
+                                })
+                            });
+                            const data = await response.json();
+                            if (data.success) {
+                                // Update display values
+                                document.getElementById('revisitDateDisplay').textContent = revisitDate || 'Not set';
+                                const engineerSelect = document.getElementById('revisitEngineerStandalone');
+                                const selectedOption = engineerSelect.options[engineerSelect.selectedIndex];
+                                document.getElementById('revisitEngineerDisplay').textContent = selectedOption && selectedOption.value ? selectedOption.text : 'Not assigned';
+                                document.getElementById('revisitReasonDisplay').textContent = revisitReason || 'No reason provided';
+                                cancelRevisitEdit();
+                                showNotification('Revisit information saved', 'success');
+                            } else {
+                                showNotification(data.error || 'Failed to save', 'error');
+                            }
+                        } catch (error) {
+                            console.error('Error saving revisit info:', error);
+                            showNotification('Failed to save revisit information', 'error');
+                        }
                     }
 
                     function openVehicleClaimModal() {
@@ -8768,16 +8955,31 @@
                                 return;
                             }
 
-                            // Download the document file
                             const downloadUrl = `/api/common-documents/${documentId}/download`;
 
+                            // First check if the document is accessible
                             try {
-                                const newWindow = window.open(downloadUrl, '_blank');
-                                if (!newWindow) {
-                                    showNotification('Download failed - popup blocked?', 'error');
+                                const checkResponse = await fetch(downloadUrl, { method: 'HEAD' });
+                                if (!checkResponse.ok) {
+                                    // Try to get error message
+                                    const errResponse = await fetch(downloadUrl);
+                                    const errData = await errResponse.json().catch(() => null);
+                                    const errMsg = errData?.message || 'Document file not available on the server. It may have been deleted or not uploaded correctly.';
+                                    showNotification(errMsg, 'error');
+                                    return;
                                 }
-                            } catch (windowError) {
-                                showNotification(`Error opening download: ${windowError.message}`, 'error');
+                            } catch (headErr) {
+                                // HEAD not supported — try direct open anyway
+                            }
+
+                            const newWindow = window.open(downloadUrl, '_blank');
+                            if (!newWindow) {
+                                // Popup blocked — offer direct link
+                                showNotification('Popup blocked. Click the link below to download.', 'warning');
+                                const linkEl = document.createElement('a');
+                                linkEl.href = downloadUrl;
+                                linkEl.download = '';
+                                linkEl.click();
                             }
 
                         } catch (error) {
