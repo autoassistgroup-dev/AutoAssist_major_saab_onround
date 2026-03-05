@@ -10041,7 +10041,7 @@
                                         // Decode HTML entities
                                         const tempEl = document.createElement('div');
                                         tempEl.innerHTML = text;
-                                        responseTextarea.value = tempEl.textContent || tempEl.innerText || '';
+                                        responseTextarea.value = (tempEl.textContent || tempEl.innerText || '').trim();
                                     }
 
                                     // Create FormData object to handle both text and file attachments
