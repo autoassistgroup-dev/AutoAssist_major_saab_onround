@@ -305,6 +305,7 @@ def process_n8n_email_data(raw_data):
             'attachments': attachments,
             'draft': draft or '',
             'n8n_draft': n8n_draft or '',
+            'draft_body': n8n_draft or draft or '',
             'thread_id': thread_id,
             'message_id': message_id,
             'email_date': date_str,

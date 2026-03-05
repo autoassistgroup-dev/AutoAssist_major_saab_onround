@@ -49,6 +49,7 @@ def _sanitize_ticket_for_template(ticket):
     out['subject'] = out.get('subject') or 'No Subject'
     out['body'] = out.get('body') or out.get('message') or ''
     out['message'] = out.get('message') or out.get('body') or ''
+    out['draft_body'] = out.get('draft_body') or out.get('n8n_draft') or out.get('draft') or ''
     atts = out.get('attachments')
     if not isinstance(atts, list):
         out['attachments'] = []
