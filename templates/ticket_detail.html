@@ -11538,9 +11538,13 @@
                         // Check for AI response on page load
                         checkForAIResponse();
 
-                        // AI Response checking function
+                        // AI Response checking function with retry polling
+                        let aiRetryCount = 0;
+                        const AI_MAX_RETRIES = 5;
+                        const AI_RETRY_INTERVAL = 3000; // 3 seconds
+
                         function checkForAIResponse() {
-                            console.log('🤖 Checking for AI response...');
+                            console.log('🤖 Checking for AI response... (attempt ' + (aiRetryCount + 1) + ')');
                             const ticketId = '{{ ticket.ticket_id }}';
 
                             // Check URL parameters first
@@ -11553,6 +11557,13 @@
                                 return;
                             }
 
+                            // Skip if editor already has content (user typed or draft already loaded)
+                            const editor = document.getElementById('response_editor');
+                            if (editor && editor.innerText && editor.innerText.trim().length > 0) {
+                                console.log('ℹ️ Editor already has content, skipping AI draft fetch');
+                                return;
+                            }
+
                             // Check for AI response in database
                             fetch(`/api/ai/get-response/${ticketId}`)
                                 .then(response => response.json())
@@ -11561,18 +11572,32 @@
                                         console.log('📝 Found AI response in database');
                                         populateTextareaWithAIResponse(data.ai_response);
                                     } else {
-                                        console.log('ℹ️ No AI response found');
+                                        console.log('ℹ️ No AI response found yet');
+                                        // Retry if we haven't exceeded max retries
+                                        aiRetryCount++;
+                                        if (aiRetryCount < AI_MAX_RETRIES) {
+                                            console.log('🔄 Will retry in ' + (AI_RETRY_INTERVAL / 1000) + 's...');
+                                            setTimeout(checkForAIResponse, AI_RETRY_INTERVAL);
+                                        } else {
+                                            console.log('⏹️ Max retries reached, stopping AI draft polling');
+                                        }
                                     }
                                 })
                                 .catch(error => {
                                     console.log('⚠️ Error checking for AI response:', error);
+                                    // Retry on error too
+                                    aiRetryCount++;
+                                    if (aiRetryCount < AI_MAX_RETRIES) {
+                                        setTimeout(checkForAIResponse, AI_RETRY_INTERVAL);
+                                    }
                                 });
                         }
 
-                        // Function to populate textarea with AI response
+                        // Function to populate textarea AND visible editor with AI response
                         function populateTextareaWithAIResponse(aiResponse) {
                             console.log('🔧 Populating textarea with AI response...');
                             const textarea = document.getElementById('response');
+                            const editor = document.getElementById('response_editor');
 
                             if (textarea) {
                                 console.log('✅ Found textarea, setting value...');
@@ -11586,14 +11611,20 @@
 
                                 // Trigger input event to save to localStorage
                                 textarea.dispatchEvent(new Event('input', { bubbles: true }));
-
-                                // Show notification
-                                showNotification('AI response loaded into textarea!', 'success');
-
-                                console.log('🎉 AI response successfully loaded!');
-                            } else {
-                                console.error('❌ Textarea not found!');
                             }
+
+                            // CRITICAL FIX: Also update the visible contenteditable editor
+                            if (editor) {
+                                editor.innerText = aiResponse;
+                                console.log('✅ Editor div also populated with AI response');
+                            }
+
+                            // Show notification
+                            if (typeof showNotification === 'function') {
+                                showNotification('🤖 AI draft reply loaded!', 'success');
+                            }
+
+                            console.log('🎉 AI response successfully loaded!');
                         }
 
                         // Auto-expand textarea functionality (WhatsApp-style) - GLOBAL SCOPE
