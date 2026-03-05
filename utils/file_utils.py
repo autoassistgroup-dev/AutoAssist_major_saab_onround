@@ -345,10 +345,12 @@ def extract_attachment_bytes(att):
 
 def save_ticket_attachment_to_disk(ticket_id, attachment_dict, index, upload_root):
     """
-    Persist one ticket attachment to disk and return metadata-only dict for MongoDB.
+    Persist one ticket attachment to disk and return metadata dict for MongoDB.
     Writes under upload_root/tickets/<ticket_id>/.
     Accepts attachment dict with base64 in data/fileData/content/binary.data.
-    Returns dict with: filename, file_path, mime_type, size, uploaded_at (no base64).
+    Returns dict with: filename, file_path, data (base64), mime_type, size, uploaded_at.
+    IMPORTANT: We now also store the base64 'data' in MongoDB so that Vercel
+    (serverless / ephemeral disk) can still serve attachments after deploy.
     On failure returns None and the caller can keep original or drop.
     """
     if not attachment_dict or not isinstance(attachment_dict, dict):
@@ -376,10 +378,13 @@ def save_ticket_attachment_to_disk(ticket_id, attachment_dict, index, upload_roo
             f.write(data_bytes)
         size = len(data_bytes)
         mime_type = get_mime_type(fn)
+        # Store base64 data in MongoDB so Vercel ephemeral disk doesn't break previews
+        b64_data = base64.b64encode(data_bytes).decode('utf-8')
         return {
             "filename": fn,
             "fileName": fn,
             "file_path": file_path,
+            "data": b64_data,
             "mime_type": mime_type,
             "size": size,
             "uploaded_at": datetime.now(),
@@ -392,7 +397,8 @@ def save_attachment_bytes_to_disk(upload_root, subdir, unique_prefix, filename, 
     """
     Save raw bytes to disk under upload_root/subdir/ with a unique name.
     Used for claim docs, reply attachments, and UI ticket attachments.
-    Returns dict with file_path, filename, mime_type, size or None on failure.
+    Returns dict with file_path, filename, data (base64), mime_type, size or None on failure.
+    Also stores base64 data so Vercel ephemeral disk doesn't break previews.
     """
     if not data_bytes or not filename:
         return None
@@ -408,9 +414,11 @@ def save_attachment_bytes_to_disk(upload_root, subdir, unique_prefix, filename, 
         file_path = os.path.join(dir_path, unique_name)
         with open(file_path, "wb") as f:
             f.write(data_bytes)
+        b64_data = base64.b64encode(data_bytes).decode('utf-8')
         return {
             "filename": fn,
             "file_path": file_path,
+            "data": b64_data,
             "mime_type": get_mime_type(fn),
             "size": len(data_bytes),
         }
