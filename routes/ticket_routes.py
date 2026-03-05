@@ -734,8 +734,8 @@ def send_ticket_reply(ticket_id):
                 webhook_payload = {
                     'ticket_id': ticket_id,
                     'portal_reply_id': str(reply_id),
-                    'response_text': message_plain,
-                    'replyMessage': message_plain,              # CLEAN PLAIN TEXT
+                    'response_text': html_message,              # Send HTML so newlines work in email client
+                    'replyMessage': html_message,               # Send HTML so newlines work in email client
                     'html_message': html_message,               # HTML version for reference
                     
                     'customer_email': ticket.get('email'),
@@ -756,8 +756,8 @@ def send_ticket_reply(ticket_id):
                     'attachment_count': len(resolved_reply_attachments),
                     'body': ticket.get('body', ''),  # Original ticket body for context
                     'draft': message,
-                    'message': message_plain,
-                    'content': message_plain
+                    'message': html_message,
+                    'content': html_message
                 }
                 
                 logger.info(f"Sending reply to N8N webhook for ticket {ticket_id}")
