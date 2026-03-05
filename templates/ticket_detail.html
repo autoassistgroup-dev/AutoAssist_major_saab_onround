@@ -10029,7 +10029,19 @@
                                     // Sync contenteditable to textarea just before submitting
                                     const responseEditor = document.getElementById('response_editor');
                                     if (responseEditor) {
-                                        responseTextarea.value = responseEditor.innerText;
+                                        // Use custom text extraction to preserve newlines from HTML
+                                        let html = responseEditor.innerHTML || '';
+                                        // Convert <div>...</div> and <br> tags to newlines
+                                        html = html.replace(/<br\s*[\/]?>/gi, '\n');
+                                        html = html.replace(/<\/div>\s*<div[^>]*>/gi, '\n');
+                                        html = html.replace(/<div[^>]*>/gi, '\n');
+                                        html = html.replace(/<\/p>/gi, '\n');
+                                        // Remove any remaining HTML tags
+                                        let text = html.replace(/<[^>]+>/g, '');
+                                        // Decode HTML entities
+                                        const tempEl = document.createElement('div');
+                                        tempEl.innerHTML = text;
+                                        responseTextarea.value = tempEl.textContent || tempEl.innerText || '';
                                     }
 
                                     // Create FormData object to handle both text and file attachments
