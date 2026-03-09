@@ -6494,18 +6494,71 @@
                             </div>
                         </div>
 
-                        <!-- Internal Notes from Admin/Tech -->
-                        {% set has_internal_notes = ticket.forwarding_note or ticket.referral_note or
+                        <!-- Internal Notes / Forward-Return Conversation History -->
+                        {% set notes_list = ticket.private_notes or [] %}
+                        {% set has_legacy_notes = ticket.forwarding_note or ticket.referral_note or
                         ticket.referred_back_note %}
-                        {% if has_internal_notes %}
+                        {% if notes_list|length > 0 or has_legacy_notes %}
                         <div
                             style="margin-bottom: 16px; padding: 12px 16px; background: rgba(59,130,246,0.06); border: 1px solid rgba(59,130,246,0.15); border-radius: 10px;">
-                            <div style="font-size: 12px; font-weight: 600; color: #60a5fa; margin-bottom: 8px;">
-                                <i class="fas fa-comment-alt" style="margin-right: 6px;"></i>Internal Notes
+                            <div
+                                style="font-size: 12px; font-weight: 600; color: #60a5fa; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
+                                <span><i class="fas fa-comment-alt" style="margin-right: 6px;"></i>Internal Notes</span>
+                                {% if notes_list|length > 3 %}
+                                <button id="toggleNotesBtn" onclick="toggleAllNotes()"
+                                    style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.6); font-size: 11px; padding: 3px 10px; border-radius: 6px; cursor: pointer; transition: all 0.2s;">
+                                    <i class="fas fa-chevron-down" style="margin-right: 4px; font-size: 9px;"></i>Show
+                                    all ({{ notes_list|length }})
+                                </button>
+                                {% endif %}
                             </div>
+
+                            {% if notes_list|length > 0 %}
+                            <!-- Timeline from private_notes array -->
+                            <div id="notesTimeline" style="display: flex; flex-direction: column; gap: 6px;">
+                                {% for note in notes_list %}
+                                {% set is_return = 'Return' in (note.title or '') or 'return' in (note.title or '') %}
+                                {% set is_forward = 'Forward' in (note.title or '') or 'forward' in (note.title or '')
+                                or 'Referred' in (note.title or '') %}
+                                <div class="internal-note-entry {% if notes_list|length > 3 and loop.index <= (notes_list|length - 3) %}notes-hidden{% endif %}"
+                                    style="font-size: 13px; color: rgba(255,255,255,0.7); padding: 8px 12px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid {% if is_return %}#60a5fa{% elif is_forward %}#a78bfa{% else %}#f59e0b{% endif %}; {% if notes_list|length > 3 and loop.index <= (notes_list|length - 3) %}display: none;{% endif %}">
+                                    <div
+                                        style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                                        <div style="display: flex; align-items: center; gap: 6px;">
+                                            <i class="fas {% if is_return %}fa-reply{% elif is_forward %}fa-share{% else %}fa-sticky-note{% endif %}"
+                                                style="font-size: 10px; color: {% if is_return %}#60a5fa{% elif is_forward %}#a78bfa{% else %}#f59e0b{% endif %};"></i>
+                                            <strong
+                                                style="color: {% if is_return %}#60a5fa{% elif is_forward %}#a78bfa{% else %}#f59e0b{% endif %}; font-size: 12px;">
+                                                {{ note.title or 'Note' }}
+                                            </strong>
+                                        </div>
+                                        <span style="font-size: 10px; color: rgba(255,255,255,0.3);">
+                                            {% if note.timestamp %}
+                                            {{ note.timestamp[:16].replace('T', ' ') }}
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                    {% if note.content %}
+                                    <div style="margin-top: 2px; line-height: 1.4;">{{ note.content }}</div>
+                                    {% else %}
+                                    <div
+                                        style="margin-top: 2px; color: rgba(255,255,255,0.3); font-style: italic; font-size: 12px;">
+                                        No note provided</div>
+                                    {% endif %}
+                                    {% if note.author %}
+                                    <div style="margin-top: 4px; font-size: 11px; color: rgba(255,255,255,0.3);">
+                                        — {{ note.author }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                            {% else %}
+                            <!-- Legacy fallback: show flat fields if no private_notes array -->
                             {% if ticket.referral_note %}
                             <div
-                                style="font-size: 13px; color: rgba(255,255,255,0.7); margin-bottom: 6px; padding: 6px 10px; background: rgba(255,255,255,0.03); border-radius: 6px;">
+                                style="font-size: 13px; color: rgba(255,255,255,0.7); margin-bottom: 6px; padding: 6px 10px; background: rgba(255,255,255,0.03); border-radius: 6px; border-left: 3px solid #f59e0b;">
                                 <strong style="color: #f59e0b;">Referral Note:</strong> {{ ticket.referral_note }}
                                 {% if ticket.forwarded_from_name %}
                                 <span style="font-size: 11px; color: rgba(255,255,255,0.35); margin-left: 8px;">— from
@@ -6515,7 +6568,7 @@
                             {% endif %}
                             {% if ticket.forwarding_note and ticket.forwarding_note != ticket.referral_note %}
                             <div
-                                style="font-size: 13px; color: rgba(255,255,255,0.7); margin-bottom: 6px; padding: 6px 10px; background: rgba(255,255,255,0.03); border-radius: 6px;">
+                                style="font-size: 13px; color: rgba(255,255,255,0.7); margin-bottom: 6px; padding: 6px 10px; background: rgba(255,255,255,0.03); border-radius: 6px; border-left: 3px solid #a78bfa;">
                                 <strong style="color: #a78bfa;">Forwarding Note:</strong> {{ ticket.forwarding_note }}
                                 {% if ticket.forwarded_by_name %}
                                 <span style="font-size: 11px; color: rgba(255,255,255,0.35); margin-left: 8px;">— from
@@ -6525,7 +6578,7 @@
                             {% endif %}
                             {% if ticket.referred_back_note %}
                             <div
-                                style="font-size: 13px; color: rgba(255,255,255,0.7); padding: 6px 10px; background: rgba(255,255,255,0.03); border-radius: 6px;">
+                                style="font-size: 13px; color: rgba(255,255,255,0.7); padding: 6px 10px; background: rgba(255,255,255,0.03); border-radius: 6px; border-left: 3px solid #60a5fa;">
                                 <strong style="color: #60a5fa;">Returned by Tech:</strong> {{ ticket.referred_back_note
                                 }}
                                 {% if ticket.referred_back_by_name %}
@@ -6534,7 +6587,28 @@
                                 {% endif %}
                             </div>
                             {% endif %}
+                            {% endif %}
                         </div>
+
+                        <script>
+                            function toggleAllNotes() {
+                                const hiddenNotes = document.querySelectorAll('.internal-note-entry.notes-hidden');
+                                const btn = document.getElementById('toggleNotesBtn');
+                                const isExpanded = btn.dataset.expanded === 'true';
+
+                                hiddenNotes.forEach(note => {
+                                    note.style.display = isExpanded ? 'none' : 'block';
+                                });
+
+                                if (isExpanded) {
+                                    btn.innerHTML = '<i class="fas fa-chevron-down" style="margin-right: 4px; font-size: 9px;"></i>Show all ({{ notes_list|length }})';
+                                    btn.dataset.expanded = 'false';
+                                } else {
+                                    btn.innerHTML = '<i class="fas fa-chevron-up" style="margin-right: 4px; font-size: 9px;"></i>Show less';
+                                    btn.dataset.expanded = 'true';
+                                }
+                            }
+                        </script>
                         {% endif %}
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                             <div class="detail-card">

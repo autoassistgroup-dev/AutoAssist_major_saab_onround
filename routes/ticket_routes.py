@@ -1349,6 +1349,33 @@ def assign_ticket(ticket_id):
             }
             db.assign_ticket(assignment_data)
             
+            # Add to private_notes for full conversation history
+            target_member = db.get_member_by_id(target_member_id)
+            target_name = target_member.get('name', 'Unknown') if target_member else 'Unknown'
+            if note:
+                forward_private_note = {
+                    'title': f'Forwarded to {target_name}',
+                    'content': note,
+                    'author': current_member_name or 'Admin',
+                    'timestamp': datetime.now().isoformat()
+                }
+                db.tickets.update_one(
+                    {'ticket_id': ticket_id},
+                    {'$set': update_data, '$push': {'private_notes': forward_private_note}}
+                )
+            else:
+                # Even without a note, record the forward event
+                forward_private_note = {
+                    'title': f'Forwarded to {target_name}',
+                    'content': '',
+                    'author': current_member_name or 'Admin',
+                    'timestamp': datetime.now().isoformat()
+                }
+                db.tickets.update_one(
+                    {'ticket_id': ticket_id},
+                    {'$set': update_data, '$push': {'private_notes': forward_private_note}}
+                )
+            
             msg = 'Ticket forwarded successfully'
             
         else:
@@ -1375,8 +1402,7 @@ def assign_ticket(ticket_id):
             db.assign_ticket(assignment_data)
             
             msg = 'Ticket taken over successfully'
-        
-        db.update_ticket(ticket_id, update_data)
+            db.update_ticket(ticket_id, update_data)
         
         logger.info(f"Ticket {ticket_id} assignment updated by {current_member_name}")
         
@@ -1497,23 +1523,18 @@ def refer_to_tech_director(ticket_id):
             'referral_note': referral_note   # Also keep as referral_note for clarity
         }
         
-        # Add to Private Notes for full history
-        private_note = None
-        if referral_note:
-            private_note = {
-                'title': 'Forwarded to Tech Director',
-                'content': referral_note,
-                'author': session.get('member_name') or 'Admin',
-                'timestamp': datetime.now().isoformat()
-            }
+        # Add to Private Notes for full history (always record the event)
+        private_note = {
+            'title': 'Forwarded to Tech Director',
+            'content': referral_note,
+            'author': session.get('member_name') or 'Admin',
+            'timestamp': datetime.now().isoformat()
+        }
             
-        if private_note:
-            db.tickets.update_one(
-                {'ticket_id': ticket_id},
-                {'$set': update_data, '$push': {'private_notes': private_note}}
-            )
-        else:
-            db.update_ticket(ticket_id, update_data)
+        db.tickets.update_one(
+            {'ticket_id': ticket_id},
+            {'$set': update_data, '$push': {'private_notes': private_note}}
+        )
         
         logger.info(f"Ticket {ticket_id} referred to Tech Director (ID: {tech_director_id}) by {session.get('member_name')}")
         
@@ -1588,23 +1609,18 @@ def refer_back_to_admin(ticket_id):
             # 'forwarding_note': referral_note if referral_note else None, # Do NOT set forwarding_note here, it breaks dashboard
         }
         
-        # Keep a permanent record in Private Notes
-        private_note = None
-        if referral_note:
-            private_note = {
-                'title': 'Returned to Admin',
-                'content': referral_note,
-                'author': current_member_name,
-                'timestamp': datetime.now().isoformat()
-            }
+        # Keep a permanent record in Private Notes (always record the event)
+        private_note = {
+            'title': 'Returned to Admin',
+            'content': referral_note,
+            'author': current_member_name,
+            'timestamp': datetime.now().isoformat()
+        }
 
-        if private_note:
-            db.tickets.update_one(
-                {'ticket_id': ticket_id},
-                {'$set': update_data, '$push': {'private_notes': private_note}}
-            )
-        else:
-            db.update_ticket(ticket_id, update_data)
+        db.tickets.update_one(
+            {'ticket_id': ticket_id},
+            {'$set': update_data, '$push': {'private_notes': private_note}}
+        )
         
         logger.info(f"Ticket {ticket_id} referred back to Admin by {current_member_name}")
         
