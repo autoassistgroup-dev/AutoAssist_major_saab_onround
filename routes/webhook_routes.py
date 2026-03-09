@@ -468,7 +468,8 @@ def webhook_reply():
                 
                 db.update_ticket(ticket_id, {
                     'has_unread_reply': True,
-                    'last_reply_at': datetime.now()
+                    'last_reply_at': datetime.now(),
+                    'updated_at': datetime.now()
                 })
                 
                 return jsonify({
@@ -508,7 +509,8 @@ def webhook_reply():
         # Update ticket with unread reply flag
         db.update_ticket(ticket_id, {
             'has_unread_reply': True,
-            'last_reply_at': datetime.now()
+            'last_reply_at': datetime.now(),
+            'updated_at': datetime.now()
         })
         
         logger.info(f"✅ REPLY SAVED │ Ticket {ticket_id} │ Message: {len(message)} chars │ Attachments: {len(normalized_attachments)}")
