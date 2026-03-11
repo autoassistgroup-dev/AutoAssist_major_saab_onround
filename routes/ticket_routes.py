@@ -1066,8 +1066,11 @@ def send_ticket_email(ticket_id):
                     html_body = _re.sub(r'(@VHC_Link|\[VHC_LINK\])', html_link, html_body, flags=_re.IGNORECASE)
                 
                 # Payload with OVERRIDDEN subject and body
+                # 🚀 CRITICAL: Include threadId and message_id so n8n replies
+                # in the SAME email thread instead of creating a new email
                 webhook_payload = {
                     'ticket_id': ticket_id,
+                    'portal_reply_id': str(reply_id),
                     'response_text': body_plain,
                     'replyMessage': body_plain,
                     'html_message': html_body,
@@ -1080,13 +1083,17 @@ def send_ticket_email(ticket_id):
                     'ticket_status': ticket.get('status', 'Waiting for Response'),
                     'ticketSource': 'email template',
                     'source': 'email template',
+                    'is_email_ticket': ticket.get('is_email_ticket', False),
+                    'threadId': ticket.get('threadId', ''),
+                    'message_id': ticket.get('message_id', ''),
                     'user_id': session.get('member_id'),
                     'has_attachments': len(resolved_attachments) > 0,
                     'attachments': resolved_attachments,
                     'attachment_count': len(resolved_attachments),
                     'body': ticket.get('body', ''), 
                     'message': body_plain,
-                    'content': body_plain
+                    'content': body_plain,
+                    'timestamp': datetime.now().isoformat()
                 }
                 
                 logger.info(f"Sending email template to N8N webhook for ticket {ticket_id}")

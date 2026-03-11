@@ -6782,21 +6782,21 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 checklist-grid">
                                 <div class="detail-card">
                                     <ul class="space-y-3">
-                                        {% if advisories_followed == '1' %}
+                                        {% if advisories_followed %}
                                         <li class="flex items-center">
                                             <i class="fas fa-check-circle text-green-500 mr-2"></i>
                                             <span>Advisories Followed</span>
                                         </li>
                                         {% endif %}
 
-                                        {% if within_warranty == '1' %}
+                                        {% if within_warranty %}
                                         <li class="flex items-center">
                                             <i class="fas fa-check-circle text-green-500 mr-2"></i>
                                             <span>Within Warranty Period</span>
                                         </li>
                                         {% endif %}
 
-                                        {% if new_fault_codes == '1' %}
+                                        {% if new_fault_codes %}
                                         <li class="flex items-center">
                                             <i class="fas fa-check-circle text-green-500 mr-2"></i>
                                             <span>Provided New Fault Codes</span>
@@ -6806,14 +6806,14 @@
                                 </div>
                                 <div class="detail-card">
                                     <ul class="space-y-3">
-                                        {% if dpf_light_on == '1' %}
+                                        {% if dpf_light_on %}
                                         <li class="flex items-center">
                                             <i class="fas fa-check-circle text-green-500 mr-2"></i>
                                             <span>DPF Light On</span>
                                         </li>
                                         {% endif %}
 
-                                        {% if eml_light_on == '1' %}
+                                        {% if eml_light_on %}
                                         <li class="flex items-center">
                                             <i class="fas fa-check-circle text-green-500 mr-2"></i>
                                             <span>EML Light On</span>
