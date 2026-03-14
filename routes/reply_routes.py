@@ -75,6 +75,10 @@ def download_reply_attachment_legacy(reply_id, attachment_index):
         if not file_data and (attachment.get('data') or attachment.get('fileData')):
             base64_data = attachment.get('data') or attachment.get('fileData')
             try:
+                # IMPORTANT: Strip "data:mime/type;base64," prefix before decoding!
+                if isinstance(base64_data, str) and ',' in base64_data:
+                    base64_data = base64_data.split(',', 1)[1]
+                    
                 file_data = base64.b64decode(base64_data)
                 logger.info(f"[LEGACY DOWNLOAD] Successfully decoded {len(file_data)} bytes from base64")
             except Exception as e:
@@ -171,6 +175,10 @@ def preview_reply_attachment_legacy(reply_id, attachment_index):
         if not file_data and (attachment.get('data') or attachment.get('fileData')):
             base64_data = attachment.get('data') or attachment.get('fileData')
             try:
+                # IMPORTANT: Strip "data:mime/type;base64," prefix before decoding!
+                if isinstance(base64_data, str) and ',' in base64_data:
+                    base64_data = base64_data.split(',', 1)[1]
+                    
                 file_data = base64.b64decode(base64_data)
                 logger.info(f"[LEGACY PREVIEW] Successfully decoded {len(file_data)} bytes from base64")
             except Exception as e:
