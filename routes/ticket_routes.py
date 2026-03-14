@@ -739,48 +739,9 @@ def send_ticket_reply(ticket_id):
                     html_link = f'<a href="{ticket_vhc_link}" target="_blank" style="color: #4f46e5; font-weight: 500; text-decoration: underline;">Vehicle Health Check — click here</a>'
                     html_message = re.sub(r'(@VHC_Link|\[VHC_LINK\])', html_link, html_message, flags=re.IGNORECASE)
                 
-                webhook_payload = {
-                    'ticket_id': ticket_id,
-                    'portal_reply_id': str(reply_id),
-                    'response_text': message_plain,
-                    'replyMessage': message_plain,
-                    'html_message': html_message,
-                    
-                    'customer_email': ticket.get('email'),
-                    'email': ticket.get('email'),
-                    'ticket_subject': ticket.get('subject', 'Your Support Request'),
-                    'subject': ticket.get('subject', 'Your Support Request'),
-                    'customer_name': ticket.get('customer_name', ticket.get('name', '')),
-                    'priority': ticket.get('priority', 'Medium'),
-                    'ticket_status': ticket.get('status', 'Waiting for Response'),
-                    'ticketSource': ticket.get('source', 'manual'),
-                    'is_email_ticket': ticket.get('is_email_ticket', False),
-                    'threadId': ticket.get('threadId', ''),
-                    'message_id': ticket.get('message_id', ''),
-                    'timestamp': datetime.now().isoformat(),
-                    'user_id': session.get('member_id'),
-                    'has_attachments': len(resolved_reply_attachments) > 0,
-                    'attachments': resolved_reply_attachments,
-                    'attachment_count': len(resolved_reply_attachments),
-                    'body': ticket.get('body', ''),
-                    'draft': message,
-                    'message': message_plain,
-                    'content': message_plain
-                }
-                
-                logger.info(f"Sending reply to N8N webhook for ticket {ticket_id}")
-                
-                webhook_response = requests.post(
-                    WEBHOOK_URL,
-                    json=webhook_payload,
-                    timeout=30
-                )
-                
-                email_sent = webhook_response.status_code == 200
-                logger.info(f"N8N webhook response for ticket {ticket_id}: {webhook_response.status_code}")
-                
-                # 🚀 CRITICAL: Update reply record with resolved attachment metadata
-                # so the portal can display and download the attachments
+                # 🚀 CRITICAL FIX: Update the reply record with properly resolved attachment metadata FIRST!
+                # Do this BEFORE calling N8N. N8N webhooks often time out on large attachments.
+                # If we wait until after, the try-catch block jumps and the DB never gets updated!
                 if resolved_reply_attachments:
                     reply_att_metadata = []
                     for ra in resolved_reply_attachments:
@@ -808,9 +769,44 @@ def send_ticket_reply(ticket_id):
                             {'_id': reply_id},
                             {'$set': {'attachments': reply_att_metadata}}
                         )
-                        logger.info(f"[REPLY-ATT] ✅ Updated reply {reply_id} with {len(reply_att_metadata)} resolved attachments")
+                        logger.info(f"[REPLY-ATT] ✅ Updated reply {reply_id} with {len(reply_att_metadata)} resolved attachments BEFORE webhook")
                     except Exception as update_err:
                         logger.error(f"[REPLY-ATT] ❌ Failed to update reply attachments: {update_err}")
+
+                # 6. Call Webhook for notification/external syncing
+                webhook_payload = {
+                    'ticket_id': ticket_id,
+                    'portal_reply_id': str(reply_id),
+                    'replyMessage': message_plain,
+                    'customer_email': ticket.get('email'),
+                    'email': ticket.get('email'),
+                    'ticket_subject': ticket.get('subject', 'Your Support Request'),
+                    'subject': ticket.get('subject', 'Your Support Request'),
+                    'customer_name': ticket.get('customer_name', ticket.get('name', '')),
+                    'priority': ticket.get('priority', 'Medium'),
+                    'ticket_status': ticket.get('status', 'Waiting for Response'),
+                    'ticketSource': ticket.get('source', 'manual'),
+                    'source': ticket.get('source', 'manual'),
+                    'is_email_ticket': ticket.get('is_email_ticket', False),
+                    'user_id': session.get('member_id'),
+                    'has_attachments': len(resolved_reply_attachments) > 0,
+                    'attachments': resolved_reply_attachments,
+                    'attachment_count': len(resolved_reply_attachments),
+                    'body': ticket.get('body', ''),
+                    'message': message_plain,
+                    'timestamp': datetime.now().isoformat()
+                }
+                
+                logger.info(f"Sending reply to N8N webhook for ticket {ticket_id}")
+                
+                webhook_response = requests.post(
+                    WEBHOOK_URL,
+                    json=webhook_payload,
+                    timeout=30
+                )
+                
+                email_sent = webhook_response.status_code == 200
+                logger.info(f"N8N webhook response for ticket {ticket_id}: {webhook_response.status_code}")
                 
             except requests.exceptions.Timeout:
                 logger.error(f"N8N webhook timeout for ticket {ticket_id}")
@@ -1112,6 +1108,37 @@ def send_ticket_email(ticket_id):
                     html_link = f'<a href="{ticket_vhc_link}" target="_blank" style="color: #4f46e5; font-weight: 500; text-decoration: underline;">Vehicle Health Check — click here</a>'
                     html_body = _re.sub(r'(@VHC_Link|\[VHC_LINK\])', html_link, html_body, flags=_re.IGNORECASE)
                 
+                # 🚀 CRITICAL FIX: Update the reply record with properly resolved attachment metadata FIRST!
+                # Do this BEFORE calling N8N. N8N webhooks often time out on large attachments.
+                # If we wait until after, the try-catch block jumps and the DB never gets updated!
+                if resolved_attachments:
+                    reply_att_metadata = []
+                    for ra in resolved_attachments:
+                        reply_att_metadata.append({
+                            'filename': ra.get('filename', 'attachment'),
+                            'name': ra.get('filename', 'attachment'),
+                            'fileName': ra.get('filename', 'attachment'),
+                            'content_type': ra.get('content_type', 'application/octet-stream'),
+                            'type': 'file',
+                            'size': len(ra.get('data', '')) if ra.get('data') else 0,
+                            'source': 'email_template',
+                            'has_data': bool(ra.get('data')),
+                            # Preserve original file_path for download serving
+                            'file_path': next(
+                                (a.get('file_path', '') for a in attachments 
+                                 if (a.get('name') or a.get('filename', '')) == ra.get('filename', '')),
+                                ''
+                            )
+                        })
+                    try:
+                        db.replies.update_one(
+                            {'_id': reply_id},
+                            {'$set': {'attachments': reply_att_metadata}}
+                        )
+                        logger.info(f"[EMAIL-ATT] ✅ Updated reply {reply_id} with {len(reply_att_metadata)} resolved attachments BEFORE webhook")
+                    except Exception as update_err:
+                        logger.error(f"[EMAIL-ATT] ❌ Failed to update reply attachments: {update_err}")
+
                 # Payload with OVERRIDDEN subject and body
                 # 🚀 CRITICAL: Include threadId and message_id so n8n replies
                 # in the SAME email thread instead of creating a new email
@@ -1154,37 +1181,6 @@ def send_ticket_email(ticket_id):
                 
                 email_sent = webhook_response.status_code == 200
                 logger.info(f"N8N webhook response: {webhook_response.status_code}")
-                
-                # 🚀 CRITICAL: Update the reply record with properly resolved attachment metadata
-                # The reply was created BEFORE resolution (line above) so it has raw frontend data.
-                # Now we update it with the resolved metadata so the portal can display & download.
-                if resolved_attachments:
-                    reply_att_metadata = []
-                    for ra in resolved_attachments:
-                        reply_att_metadata.append({
-                            'filename': ra.get('filename', 'attachment'),
-                            'name': ra.get('filename', 'attachment'),
-                            'fileName': ra.get('filename', 'attachment'),
-                            'content_type': ra.get('content_type', 'application/octet-stream'),
-                            'type': 'file',
-                            'size': len(ra.get('data', '')) if ra.get('data') else 0,
-                            'source': 'email_template',
-                            'has_data': bool(ra.get('data')),
-                            # Preserve original file_path for download serving
-                            'file_path': next(
-                                (a.get('file_path', '') for a in attachments 
-                                 if (a.get('name') or a.get('filename', '')) == ra.get('filename', '')),
-                                ''
-                            )
-                        })
-                    try:
-                        db.replies.update_one(
-                            {'_id': reply_id},
-                            {'$set': {'attachments': reply_att_metadata}}
-                        )
-                        logger.info(f"[EMAIL-ATT] ✅ Updated reply {reply_id} with {len(reply_att_metadata)} resolved attachments")
-                    except Exception as update_err:
-                        logger.error(f"[EMAIL-ATT] ❌ Failed to update reply attachments: {update_err}")
                 
             except Exception as email_error:
                 logger.error(f"Failed to send email template via N8N: {email_error}")
