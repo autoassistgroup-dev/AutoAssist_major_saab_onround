@@ -432,52 +432,27 @@ def save_attachment_bytes_to_disk(upload_root, subdir, unique_prefix, filename, 
 
 def get_attachment_signature(att):
     """
-    Generate a quick, unique signature for an attachment to detect duplicates.
-    It hashes the first 10,000 chars of the base64 data (or bytes).
-    If no data is present, it will fallback to reading from disk or hashing the filename+size.
+    Generate a FAST, unique signature for an attachment to detect duplicates.
+    Uses the raw base64 string directly (NO decoding) + filename for speed.
     """
     import hashlib
-    import os
     if not att or not isinstance(att, dict):
         return "invalid"
-        
-    data, _ = extract_attachment_bytes(att)
     
-    if not data and att.get('file_path') and os.path.exists(att['file_path']):
-        try:
-            with open(att['file_path'], 'rb') as f:
-                data = f.read(10000)
-        except Exception:
-            pass
-            
-    if not data and att.get('document_id'):
-        from database import get_db
-        from bson.objectid import ObjectId
-        try:
-            doc = get_db().common_documents.find_one({'_id': ObjectId(att['document_id'])})
-            if doc:
-                if doc.get('data') or doc.get('fileData'):
-                    data, _ = extract_attachment_bytes(doc)
-                elif doc.get('file_path') and os.path.exists(doc['file_path']):
-                    with open(doc['file_path'], 'rb') as f:
-                        data = f.read(10000)
-        except Exception:
-            pass
-
-    if data:
-        # Hash the first 10KB of raw bytes for speed, usually enough to prove uniqueness
-        return hashlib.md5(data[:10000]).hexdigest()
-        
     filename = att.get('filename', att.get('fileName', att.get('name', '')))
-    size = att.get('size')
     
-    if size is None and att.get('file_path') and os.path.exists(att['file_path']):
-        try:
-            size = os.path.getsize(att['file_path'])
-        except Exception:
-            size = 0
-            
-    if size is None:
-        size = 0
-        
+    # Grab the raw base64 string WITHOUT decoding it (fast!)
+    raw = att.get('data') or att.get('fileData') or att.get('content', '')
+    if isinstance(raw, str) and len(raw) > 20:
+        # Strip data URI prefix for consistent comparison
+        if raw.startswith('data:'):
+            comma_idx = raw.find(',')
+            if comma_idx > -1:
+                raw = raw[comma_idx + 1:]
+        # Hash first 200 chars of base64 + filename = unique enough, instant speed
+        key = f"{filename}_{raw[:200]}"
+        return hashlib.md5(key.encode('utf-8')).hexdigest()
+    
+    # Fallback: just filename + size
+    size = att.get('size', 0)
     return hashlib.md5(f"{filename}_{size}".encode('utf-8')).hexdigest()
