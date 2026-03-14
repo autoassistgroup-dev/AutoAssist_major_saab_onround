@@ -2984,6 +2984,16 @@
                     }
                 }
             });
+
+            // Handle manual file selection via input click
+            fileInput.addEventListener('change', function (e) {
+                if (this.files && this.files.length > 0) {
+                    console.log('Files selected manually:', this.files.length);
+                    handleFileDrop(this.files);
+                    // Reset input so the same file can be selected again if removed
+                    this.value = '';
+                }
+            });
         }
 
         // Handle file drops
