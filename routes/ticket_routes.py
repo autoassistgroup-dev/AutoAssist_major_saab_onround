@@ -896,6 +896,20 @@ def send_ticket_email(ticket_id):
         sender_name = current_member.get('name', 'Support Team') if current_member else 'Support Team'
         
         # Create reply record (so it shows in history)
+        # 🚀 NORMALIZE: Ensure all attachments have 'filename' field for the frontend template
+        normalized_attachments = []
+        for att in attachments:
+            att_copy = dict(att)
+            # Ensure filename field exists (template checks attachment.filename first)
+            if not att_copy.get('filename'):
+                att_copy['filename'] = att_copy.get('name', att_copy.get('fileName', 'attachment'))
+            if not att_copy.get('name'):
+                att_copy['name'] = att_copy.get('filename', 'attachment')
+            # Ensure type field
+            if not att_copy.get('type'):
+                att_copy['type'] = 'file'
+            normalized_attachments.append(att_copy)
+        
         reply_data = {
             'ticket_id': ticket_id,
             'message': body, # Store the body as the message
@@ -903,7 +917,7 @@ def send_ticket_email(ticket_id):
             'sender_name': sender_name,
             'sender_id': session.get('member_id'),
             'sender_type': 'agent',
-            'attachments': attachments,
+            'attachments': normalized_attachments,
             'created_at': datetime.now(),
             'is_email_template': True # detailed flag
         }
@@ -1107,6 +1121,37 @@ def send_ticket_email(ticket_id):
                 
                 email_sent = webhook_response.status_code == 200
                 logger.info(f"N8N webhook response: {webhook_response.status_code}")
+                
+                # 🚀 CRITICAL: Update the reply record with properly resolved attachment metadata
+                # The reply was created BEFORE resolution (line above) so it has raw frontend data.
+                # Now we update it with the resolved metadata so the portal can display & download.
+                if resolved_attachments:
+                    reply_att_metadata = []
+                    for ra in resolved_attachments:
+                        reply_att_metadata.append({
+                            'filename': ra.get('filename', 'attachment'),
+                            'name': ra.get('filename', 'attachment'),
+                            'fileName': ra.get('filename', 'attachment'),
+                            'content_type': ra.get('content_type', 'application/octet-stream'),
+                            'type': 'file',
+                            'size': len(ra.get('data', '')) if ra.get('data') else 0,
+                            'source': 'email_template',
+                            'has_data': bool(ra.get('data')),
+                            # Preserve original file_path for download serving
+                            'file_path': next(
+                                (a.get('file_path', '') for a in attachments 
+                                 if (a.get('name') or a.get('filename', '')) == ra.get('filename', '')),
+                                ''
+                            )
+                        })
+                    try:
+                        db.replies.update_one(
+                            {'_id': reply_id},
+                            {'$set': {'attachments': reply_att_metadata}}
+                        )
+                        logger.info(f"[EMAIL-ATT] ✅ Updated reply {reply_id} with {len(reply_att_metadata)} resolved attachments")
+                    except Exception as update_err:
+                        logger.error(f"[EMAIL-ATT] ❌ Failed to update reply attachments: {update_err}")
                 
             except Exception as email_error:
                 logger.error(f"Failed to send email template via N8N: {email_error}")
