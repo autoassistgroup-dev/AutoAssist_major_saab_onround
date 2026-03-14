@@ -1073,10 +1073,7 @@
 
                                 {% set downloadable_attachments = [] %}
                                 {% for attachment in reply.attachments %}
-                                {% if attachment.type == 'file' or attachment.source == 'webhook_base64' or
-                                attachment.source == 'webhook' or not attachment.type %}
                                 {% set _ = downloadable_attachments.append(attachment) %}
-                                {% endif %}
                                 {% endfor %}
 
 
@@ -1099,9 +1096,6 @@
                                     </div>
                                     <div class="flex flex-wrap gap-2">
                                         {% for attachment in downloadable_attachments %}
-                                        {% if attachment.type == 'file' or attachment.source in
-                                        ['webhook_base64',
-                                        'webhook'] or not attachment.type %}
                                         <div
                                             class="bg-gray-50 border border-gray-200 rounded-lg p-2 flex items-center justify-between text-xs max-w-xs">
                                             <div class="flex items-center min-w-0 flex-1">
@@ -1141,10 +1135,10 @@
                                                 filename.endswith('.jpeg') or filename.endswith('.png') or
                                                 filename.endswith('.gif') or filename.endswith('.pdf') or
                                                 filename.endswith('.txt') or filename.endswith('.md') %}
-                                                {% set can_download = attachment.type == 'file' or
-                                                attachment.source
-                                                ==
-                                                'webhook_base64' or attachment.source == 'webhook' %}
+                                                {% set can_download = attachment.type == 'file' or attachment.type ==
+                                                'common-document' or
+                                                attachment.source == 'webhook_base64' or attachment.source == 'webhook'
+                                                or not attachment.type %}
                                                 {% if can_preview %}
                                                 <button
                                                     onclick="previewAttachment('{{ reply._id|e }}', '{{ loop.index0 }}', '{{ filename|e }}', '{{ source|e }}')"
