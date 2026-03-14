@@ -4715,7 +4715,6 @@ Email Ticket: ${debugInfo.ticket_source.is_email_ticket}`;
                     const isCommonDocument = checkbox.dataset.isCommonDocument === 'true';
                     const documentId = checkbox.dataset.documentId;
                     const hasFileData = checkbox.dataset.hasData === 'true';
-                    const fileData = checkbox.dataset.fileData || '';
 
                     // Determine the correct file path based on attachment type
                     let correctFilePath = checkbox.dataset.filePath || checkbox.dataset.key || '';
@@ -4723,30 +4722,23 @@ Email Ticket: ${debugInfo.ticket_source.is_email_ticket}`;
                         correctFilePath = `/api/common-documents/${documentId}/download`;
                     }
 
-                    // 🚀 CRITICAL FIX: Validate file data before sending
-                    if (!hasFileData || !fileData || fileData.length < 10) {
-                        console.warn(`⚠️ ATTACHMENT HAS NO VALID FILE DATA: ${checkbox.dataset.name}`);
-                        console.warn(`⚠️ File data length: ${fileData ? fileData.length : 0}`);
-                        console.warn(`⚠️ Has data flag: ${hasFileData}`);
-                    }
-
+                    // 🚀 FIXED: Only send file_path reference — backend reads from disk
+                    // No more base64 data in the frontend payload!
                     const attachmentData = {
                         name: checkbox.dataset.name,
                         file_path: correctFilePath,
                         key: checkbox.dataset.key || '',
                         ticket_index: checkbox.dataset.ticketIndex ? parseInt(checkbox.dataset.ticketIndex) : null,
-                        fileData: fileData,  // 🚀 FIXED: Include the actual file data
                         size: parseInt(checkbox.dataset.size) || 0,
                         type: checkbox.dataset.type || 'file',
                         is_common_document: isCommonDocument,
                         document_id: documentId || null,
-                        has_data: hasFileData  // 🚀 ADDED: Flag to indicate if file has real data
+                        has_data: hasFileData
                     };
 
                     console.log('📎 SELECTED EMAIL TEMPLATE ATTACHMENT:', {
                         name: attachmentData.name,
-                        hasFileData: hasFileData,
-                        fileDataLength: fileData ? fileData.length : 0,
+                        file_path: correctFilePath,
                         size: attachmentData.size,
                         type: attachmentData.type
                     });
@@ -5313,9 +5305,9 @@ Email Ticket: ${debugInfo.ticket_source.is_email_ticket}`;
                 // Add tooltip with attachment details
                 const tooltipText = `Type: ${attachment.type || 'file'}\nSize: ${attachment.size || 0} bytes\nHas Data: ${hasData ? 'Yes' : 'No'}\nManual Ticket: ${attachment.is_manual_ticket_attachment ? 'Yes' : 'No'}`;
 
-                // 🚀 FIXED: Properly handle file data for email template attachments
-                const fileData = attachment.fileData || attachment.data || '';
-                const hasFileData = fileData && fileData.length > 10; // Valid base64 data
+                // 🚀 FIXED: Do NOT inject base64 data into DOM — it causes corruption!
+                // The backend reads files from disk when actually sending the email.
+                const hasFileData = attachment.has_data || false;
 
                 return '<div class="flex items-center space-x-2 p-2 bg-gray-50 rounded hover:bg-gray-100 transition" title="' + tooltipText + '">' +
                     '<input type="checkbox" id="attachment_' + attachmentName + '" ' +
@@ -5323,7 +5315,6 @@ Email Ticket: ${debugInfo.ticket_source.is_email_ticket}`;
                     'data-file-path="' + correctFilePath + '" ' +
                     'data-key="' + attachmentKey + '" ' +
                     'data-ticket-index="' + (attachment.ticket_index || '') + '" ' +
-                    'data-file-data="' + fileData + '" ' +
                     'data-size="' + (attachment.size || 0) + '" ' +
                     'data-type="' + (attachment.type || 'file') + '" ' +
                     'data-document-id="' + (attachment.document_id || '') + '" ' +

@@ -225,37 +225,40 @@ Auto Assist Group Support Team"""
         except Exception as ra_err:
             logger.warning(f"Could not load reply attachments for template: {ra_err}")
         
-        # 🚀 RESOLVE attachment file data for frontend
-        # Manual ticket attachments are stored on disk (file_path) without inline base64 data.
-        # We must resolve them so the frontend has actual data to send back in the email.
-        import base64
+        # 🚀 LIGHTWEIGHT METADATA ONLY — DO NOT send base64 data to the frontend!
+        # The frontend only needs to know the attachment name, path, and whether 
+        # data exists. The actual file reading happens in send_ticket_email when
+        # the email is actually sent. Sending base64 to the frontend previously
+        # caused DOM corruption (huge strings in data-* attributes broke HTML).
         import os
         resolved_attachments = []
         for att in raw_attachments:
             att_copy = dict(att)  # Don't modify the original
             att_name = att_copy.get('filename', att_copy.get('name', att_copy.get('fileName', '')))
-            has_data = bool(att_copy.get('data') or att_copy.get('fileData'))
             
-            if not has_data:
-                # Try reading from file_path on disk
-                file_path = att_copy.get('file_path', '')
-                if file_path and os.path.exists(file_path):
-                    try:
-                        with open(file_path, 'rb') as f:
-                            file_bytes = f.read()
-                        att_copy['data'] = base64.b64encode(file_bytes).decode('utf-8')
-                        att_copy['fileData'] = att_copy['data']
-                        att_copy['has_data'] = True
-                        att_copy['size'] = len(file_bytes)
-                        logger.info(f"Resolved attachment from disk for template: {att_name} ({len(file_bytes)} bytes)")
-                    except Exception as e:
-                        logger.error(f"Failed to read attachment from disk {file_path}: {e}")
-                        att_copy['has_data'] = False
-                else:
-                    logger.warning(f"Attachment has no data and no valid file_path: {att_name}, path={file_path}")
-                    att_copy['has_data'] = False
-            else:
+            # Check if data exists (in DB or on disk) but do NOT send the actual data
+            has_data = bool(att_copy.get('data') or att_copy.get('fileData'))
+            file_path = att_copy.get('file_path', '')
+            
+            if not has_data and file_path and os.path.exists(file_path):
+                # File exists on disk — mark as available but don't read it
                 att_copy['has_data'] = True
+                try:
+                    att_copy['size'] = os.path.getsize(file_path)
+                except:
+                    pass
+                logger.info(f"Attachment verified on disk: {att_name} (path: {file_path})")
+            elif has_data:
+                att_copy['has_data'] = True
+            else:
+                att_copy['has_data'] = False
+                logger.warning(f"Attachment has no data and no valid file_path: {att_name}, path={file_path}")
+            
+            # 🔥 CRITICAL: Strip base64 data before sending to frontend
+            # This prevents DOM corruption from huge strings in HTML data attributes
+            att_copy.pop('data', None)
+            att_copy.pop('fileData', None)
+            att_copy.pop('content', None)
             
             # Ensure name field is set
             if not att_copy.get('name'):
