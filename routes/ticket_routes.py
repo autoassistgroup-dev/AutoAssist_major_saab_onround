@@ -736,9 +736,10 @@ def send_ticket_reply(ticket_id):
                             except Exception as re:
                                 logger.error(f"Failed to read reply attachment {fp}: {re}")
                     
-                    # Ensure base64 strings have the data URI prefix for n8n email node
-                    if file_data and isinstance(file_data, str) and not file_data.startswith('data:'):
-                        file_data = f"data:{mime_type};base64,{file_data}"
+                    # Ensure base64 strings DO NOT have the data URI prefix for n8n email node
+                    # Outlook expects pure base64. If the data URI prefix is present, the file corrupts.
+                    if file_data and isinstance(file_data, str) and 'base64,' in file_data:
+                        file_data = file_data.split('base64,', 1)[1]
                     
                     resolved_reply_attachments.append({
                         'filename': filename,
