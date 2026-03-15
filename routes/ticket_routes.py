@@ -828,6 +828,8 @@ def send_ticket_reply(ticket_id):
                     'ticketSource': ticket.get('source', 'manual'),
                     'source': ticket.get('source', 'manual'),
                     'is_email_ticket': ticket.get('is_email_ticket', False),
+                    'threadId': ticket.get('threadId', ''),
+                    'message_id': ticket.get('message_id', ''),
                     'user_id': session.get('member_id'),
                     'has_attachments': len(resolved_reply_attachments) > 0,
                     'attachments': resolved_reply_attachments,
