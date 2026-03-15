@@ -5342,7 +5342,7 @@ Email Ticket: ${debugInfo.ticket_source.is_email_ticket}`;
 
     // Email attachment functions
     function downloadEmailAttachment(ticketId, attachmentIndex, fileName) {
-        const url = `/api/tickets/${ticketId}/attachments/${attachmentIndex}/download`;
+        const url = `/api/attachments/ticket/${ticketId}/${attachmentIndex}`;
 
         // Create a temporary link to trigger download
         const link = document.createElement('a');
@@ -5357,7 +5357,7 @@ Email Ticket: ${debugInfo.ticket_source.is_email_ticket}`;
     }
 
     function previewEmailAttachment(ticketId, attachmentIndex, fileName) {
-        const url = `/api/tickets/${ticketId}/attachments/${attachmentIndex}/preview`;
+        const url = `/api/attachments/preview/${ticketId}/${attachmentIndex}`;
 
         // Open preview in new window
         const previewWindow = window.open(url, '_blank', 'width=800,height=600,scrollbars=yes,resizable=yes');
@@ -5372,7 +5372,7 @@ Email Ticket: ${debugInfo.ticket_source.is_email_ticket}`;
 
     // Ticket attachment functions
     function downloadTicketAttachment(ticketId, attachmentIndex, fileName) {
-        const url = `/api/tickets/${ticketId}/attachments/${attachmentIndex}/download`;
+        const url = `/api/attachments/ticket/${ticketId}/${attachmentIndex}`;
 
         console.log(`🔽 Downloading ticket attachment: ${fileName} from ${url}`);
 
@@ -5404,7 +5404,7 @@ Email Ticket: ${debugInfo.ticket_source.is_email_ticket}`;
     }
 
     function previewTicketAttachment(ticketId, attachmentIndex, fileName) {
-        const url = `/api/tickets/${ticketId}/attachments/${attachmentIndex}/preview`;
+        const url = `/api/attachments/preview/${ticketId}/${attachmentIndex}`;
 
         // Open preview in new window/tab
         const previewWindow = window.open(url, '_blank', 'width=900,height=700,scrollbars=yes,resizable=yes');
@@ -5437,10 +5437,10 @@ Email Ticket: ${debugInfo.ticket_source.is_email_ticket}`;
         // FIXED: Simplified attachment detection - use reply endpoints for all reply attachments
         if (replyId && replyId !== 'undefined' && replyId !== 'null') {
             // This is a reply attachment, use reply endpoint
-            url = `/api/replies/${replyId}/attachments/${parseInt(attachmentIndex)}/download`;
+            url = `/api/attachments/reply/${replyId}/${parseInt(attachmentIndex)}`;
         } else {
             // This is a ticket attachment, use ticket endpoint
-            url = `/api/tickets/${ticketId}/attachments/${parseInt(attachmentIndex)}/download`;
+            url = `/api/attachments/ticket/${ticketId}/${parseInt(attachmentIndex)}`;
         }
 
         // Show downloading indicator
@@ -5604,10 +5604,10 @@ Email Ticket: ${debugInfo.ticket_source.is_email_ticket}`;
         // FIXED: Simplified attachment detection - use reply endpoints for all reply attachments
         if (replyId && replyId !== 'undefined' && replyId !== 'null') {
             // This is a reply attachment, use reply endpoint
-            url = `/api/replies/${replyId}/attachments/${parseInt(attachmentIndex)}/preview`;
+            url = `/api/attachments/reply/${replyId}/${parseInt(attachmentIndex)}/preview`;
         } else {
             // This is a ticket attachment, use ticket endpoint
-            url = `/api/tickets/${ticketId}/attachments/${parseInt(attachmentIndex)}/preview`;
+            url = `/api/attachments/preview/${ticketId}/${parseInt(attachmentIndex)}`;
         }
 
         // First check if the attachment can be previewed

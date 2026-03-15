@@ -735,6 +735,36 @@ def send_ticket_reply(ticket_id):
                                 logger.info(f"Reply attachment resolved from disk: {filename} ({len(fbytes)} bytes)")
                             except Exception as re:
                                 logger.error(f"Failed to read reply attachment {fp}: {re}")
+                        
+                        # 🚀 RESOLVE FROM COMMON DOCUMENTS if still no data
+                        elif att.get('type') == 'common-document' or att.get('ref') or att.get('document_id'):
+                            doc_id = att.get('ref') or att.get('document_id')
+                            if doc_id:
+                                try:
+                                    doc = db.common_documents.find_one({'_id': ObjectId(doc_id)})
+                                    if doc:
+                                        # Use file_path if exists on disk
+                                        doc_fp = doc.get('file_path')
+                                        if doc_fp and os.path.exists(doc_fp):
+                                            with open(doc_fp, 'rb') as f:
+                                                fbytes = f.read()
+                                            file_data = b64.b64encode(fbytes).decode('utf-8')
+                                            logger.info(f"Reply common document resolved from disk: {filename}")
+                                        # Fallback to inline data
+                                        else:
+                                            doc_data = doc.get('data') or doc.get('fileData') or doc.get('file_data') or doc.get('content')
+                                            if doc_data:
+                                                if isinstance(doc_data, (bytes, bytearray)):
+                                                    file_data = b64.b64encode(doc_data).decode('utf-8')
+                                                else:
+                                                    file_data = doc_data
+                                                logger.info(f"Reply common document resolved from DB: {filename}")
+                                        
+                                        # Use document's own filename/mime if available
+                                        if doc.get('file_name'): filename = doc['file_name']
+                                        if doc.get('file_type'): mime_type = doc['file_type']
+                                except Exception as doc_err:
+                                    logger.error(f"Failed to resolve common document {doc_id} for reply: {doc_err}")
                     
                     # Ensure base64 strings DO NOT have the data URI prefix for n8n email node
                     # Outlook expects pure base64. If the data URI prefix is present, the file corrupts.
