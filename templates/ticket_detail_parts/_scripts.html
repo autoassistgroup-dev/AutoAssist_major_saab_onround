@@ -501,8 +501,10 @@
 
         // Helper function to check if file is previewable
         function isPreviewable(fileName, fileType) {
+            if (!fileName) return false;
             const ext = fileName.split('.').pop().toLowerCase();
-            return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf'].includes(ext) ||
+            const previewExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'bmp', 'svg', 'txt', 'md'];
+            return previewExts.includes(ext) ||
                 fileType?.startsWith('image/') ||
                 fileType === 'application/pdf';
         }
@@ -670,8 +672,10 @@
 
         // Helper function to check if file is previewable
         function isPreviewable(fileName, fileType) {
+            if (!fileName) return false;
             const ext = fileName.split('.').pop().toLowerCase();
-            return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf'].includes(ext) ||
+            const previewExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'bmp', 'svg', 'txt', 'md'];
+            return previewExts.includes(ext) ||
                 fileType?.startsWith('image/') ||
                 fileType === 'application/pdf';
         }
