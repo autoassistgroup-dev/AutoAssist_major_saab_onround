@@ -7469,17 +7469,13 @@
                                                 <div class="flex items-center min-w-0 flex-1">
                                                     {% set filename = attachment.filename or attachment.name or
                                                     attachment.original_name or 'Unknown File' %}
-                                                    {% if filename.endswith('.pdf') %}
+                                                    {% if filename.lower().endswith('.pdf') %}
                                                     <i class="fas fa-file-pdf text-red-500 mr-2 flex-shrink-0"></i>
-                                                    {% elif filename.endswith('.doc') or filename.endswith('.docx')
-                                                    %}
+                                                    {% elif filename.lower().endswith(('.doc', '.docx')) %}
                                                     <i class="fas fa-file-word text-blue-500 mr-2 flex-shrink-0"></i>
-                                                    {% elif filename.endswith('.xls') or filename.endswith('.xlsx')
-                                                    %}
+                                                    {% elif filename.lower().endswith(('.xls', '.xlsx')) %}
                                                     <i class="fas fa-file-excel text-green-500 mr-2 flex-shrink-0"></i>
-                                                    {% elif filename.endswith('.jpg') or filename.endswith('.jpeg')
-                                                    or
-                                                    filename.endswith('.png') or filename.endswith('.gif') %}
+                                                    {% elif filename.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp')) %}
                                                     <i class="fas fa-file-image text-purple-500 mr-2 flex-shrink-0"></i>
                                                     {% else %}
                                                     <i class="fas fa-file text-gray-500 mr-2 flex-shrink-0"></i>
@@ -7499,10 +7495,8 @@
                                                 </div>
                                                 <div class="flex gap-1 ml-2">
                                                     {% set source = attachment.source|default('reply') %}
-                                                    {% set can_preview = filename.endswith('.jpg') or
-                                                    filename.endswith('.jpeg') or filename.endswith('.png') or
-                                                    filename.endswith('.gif') or filename.endswith('.pdf') or
-                                                    filename.endswith('.txt') or filename.endswith('.md') %}
+                                                    {% set can_preview = filename.lower().endswith(('.jpg', '.jpeg', '.png',
+                                                    '.gif', '.pdf', '.txt', '.md', '.webp', '.bmp')) %}
                                                     {% set can_download = attachment.type == 'file' or
                                                     attachment.source
                                                     ==
