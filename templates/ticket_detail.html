@@ -6942,11 +6942,11 @@
                                 <div
                                     class="detail-card p-3 flex items-center justify-between hover:bg-opacity-80 transition">
                                     <div class="flex items-center flex-1 min-w-0">
-                                        {% if att_name.endswith('.pdf') %}
+                                        {% if att_name.lower().endswith('.pdf') %}
                                         <i class="fas fa-file-pdf text-red-500 mr-2"></i>
-                                        {% elif att_name.endswith(('.jpg', '.jpeg', '.png', '.gif')) %}
+                                        {% elif att_name.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp')) %}
                                         <i class="fas fa-file-image text-blue-500 mr-2"></i>
-                                        {% elif att_name.endswith(('.doc', '.docx')) %}
+                                        {% elif att_name.lower().endswith(('.doc', '.docx')) %}
                                         <i class="fas fa-file-word text-blue-600 mr-2"></i>
                                         {% else %}
                                         <i class="fas fa-file text-gray-500 mr-2"></i>
@@ -6961,8 +6961,8 @@
                                         {% endif %}
                                     </div>
                                     <div class="flex gap-1 ml-2 flex-shrink-0">
-                                        {% set can_preview = att_name.endswith(('.jpg', '.jpeg', '.png',
-                                        '.gif', '.pdf', '.txt', '.md')) %}
+                                        {% set can_preview = att_name.lower().endswith(('.jpg', '.jpeg', '.png',
+                                        '.gif', '.pdf', '.txt', '.md', '.webp', '.bmp')) %}
                                         {% if can_preview %}
                                         <button
                                             onclick="previewTicketAttachment('{{ ticket.ticket_id|e }}', {{ loop.index0 }}, '{{ att_name|e }}')"

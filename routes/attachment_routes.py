@@ -17,7 +17,7 @@ from io import BytesIO
 from bson.objectid import ObjectId
 
 from middleware.session_manager import is_authenticated
-from utils.file_utils import get_mime_type
+from utils.file_utils import get_mime_type, extract_attachment_bytes
 
 logger = logging.getLogger(__name__)
 
@@ -57,13 +57,11 @@ def download_attachment(ticket_id, attachment_index):
         file_data = None
         filename = attachment.get('filename', attachment.get('fileName', 'download'))
         
-        # Try to get base64 data
-        if attachment.get('data') or attachment.get('fileData'):
-            base64_data = attachment.get('data') or attachment.get('fileData')
-            try:
-                file_data = base64.b64decode(base64_data)
-            except Exception as e:
-                logger.error(f"Failed to decode base64: {e}")
+        # Try to get data bytes (handles base64, Data URIs, etc.)
+        file_data, err = extract_attachment_bytes(attachment)
+        if err:
+            logger.debug(f"extract_attachment_bytes skipped or failed: {err}")
+            file_data = None
         
         # If no data, try file path
         if not file_data and attachment.get('file_path'):
@@ -118,12 +116,11 @@ def preview_attachment(ticket_id, attachment_index):
         file_data = None
         filename = attachment.get('filename', attachment.get('fileName', 'file'))
         
-        if attachment.get('data') or attachment.get('fileData'):
-            base64_data = attachment.get('data') or attachment.get('fileData')
-            try:
-                file_data = base64.b64decode(base64_data)
-            except Exception:
-                pass
+        # Try to get data bytes (same logic as download)
+        file_data, err = extract_attachment_bytes(attachment)
+        if err:
+            logger.debug(f"preview_attachment: extract_attachment_bytes skipped or failed: {err}")
+            file_data = None
         
         if not file_data and attachment.get('file_path'):
             file_path = attachment.get('file_path')
@@ -200,13 +197,12 @@ def download_reply_attachment(reply_id, attachment_index):
             with open(attachment['file_path'], 'rb') as f:
                 file_data = f.read()
         
-        # Base64 (legacy)
-        if not file_data and (attachment.get('data') or attachment.get('fileData')):
-            base64_data = attachment.get('data') or attachment.get('fileData')
-            try:
-                file_data = base64.b64decode(base64_data)
-            except Exception as e:
-                logger.error(f"Failed to decode base64: {e}")
+        # Data bytes (handles base64, Data URIs, etc. - handles legacy too)
+        if not file_data:
+            file_data, err = extract_attachment_bytes(attachment)
+            if err:
+                logger.debug(f"download_reply_attachment: extract_attachment_bytes skipped or failed: {err}")
+                file_data = None
         
         if not file_data:
             return jsonify({'error': 'Attachment data not available'}), 404
@@ -271,12 +267,12 @@ def preview_reply_attachment(reply_id, attachment_index):
             with open(attachment['file_path'], 'rb') as f:
                 file_data = f.read()
         
-        if not file_data and (attachment.get('data') or attachment.get('fileData')):
-            base64_data = attachment.get('data') or attachment.get('fileData')
-            try:
-                file_data = base64.b64decode(base64_data)
-            except Exception as e:
-                logger.error(f"[PREVIEW] Failed to decode base64: {e}")
+        # Data bytes (handles base64, Data URIs, etc. - handles legacy too)
+        if not file_data:
+            file_data, err = extract_attachment_bytes(attachment)
+            if err:
+                logger.debug(f"preview_reply_attachment: extract_attachment_bytes skipped or failed: {err}")
+                file_data = None
         
         if not file_data:
             return jsonify({'error': 'Attachment data not available'}), 404
