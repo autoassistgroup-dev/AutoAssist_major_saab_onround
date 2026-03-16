@@ -861,45 +861,9 @@
         modal.style.display = 'flex';
     }
 
-    function previewAttachment(messageId, attachmentIndex, filename, source) {
-        console.log('previewAttachment called:', { messageId, attachmentIndex, filename, source });
-        const url = `/api/attachments/reply/${messageId}/${attachmentIndex}/preview`;
-        showPreviewInModal(url, filename);
-    }
-
-    function downloadAttachment(messageId, attachmentIndex, filename, source) {
-        console.log('downloadAttachment called:', { messageId, attachmentIndex, filename, source });
-        const url = `/api/attachments/reply/${messageId}/${attachmentIndex}`;
-        console.log('Downloading from URL:', url);
-        window.location.href = url;
-    }
-
-    function previewEmailAttachment(ticketId, attachmentIndex, filename) {
-        console.log('previewEmailAttachment called:', { ticketId, attachmentIndex, filename });
-        const url = `/api/attachments/preview/${ticketId}/${attachmentIndex}`;
-        showPreviewInModal(url, filename);
-    }
-
-    function downloadEmailAttachment(ticketId, attachmentIndex, filename) {
-        console.log('downloadEmailAttachment called:', { ticketId, attachmentIndex, filename });
-        const url = `/api/attachments/ticket/${ticketId}/${attachmentIndex}`;
-        console.log('Downloading from URL:', url);
-        window.location.href = url;
-    }
-
-    // Original Ticket Attachment Functions
-    function previewTicketAttachment(ticketId, attachmentIndex, filename) {
-        console.log('previewTicketAttachment called:', { ticketId, attachmentIndex, filename });
-        const url = `/api/attachments/preview/${ticketId}/${attachmentIndex}`;
-        showPreviewInModal(url, filename);
-    }
-
-    function downloadTicketAttachment(ticketId, attachmentIndex, filename) {
-        console.log('downloadTicketAttachment called:', { ticketId, attachmentIndex, filename });
-        const url = `/api/attachments/ticket/${ticketId}/${attachmentIndex}`;
-        console.log('Downloading from URL:', url);
-        window.location.href = url;
-    }
+    // Unified attachment functions (downloadAttachment, previewAttachment, etc.)
+    // are now centrally defined later in this file to handle both ticket and reply attachments
+    // robustly with better error handling and preview capabilities.
 
     function setupAttachmentHandlers() {
         // This function is called in DOMContentLoaded

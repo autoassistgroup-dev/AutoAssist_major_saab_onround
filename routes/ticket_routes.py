@@ -301,6 +301,7 @@ def create_ticket():
                         "filename": saved["filename"],
                         "fileName": saved["filename"],
                         "file_path": saved["file_path"],
+                        "data": saved.get("data"),  # ROBUSTNESS: include base64 data in DB
                         "mime_type": saved.get("mime_type", file_obj.content_type or "application/octet-stream"),
                         "size": saved["size"],
                     })
@@ -628,6 +629,7 @@ def send_ticket_reply(ticket_id):
                                     'fileName': saved['filename'],
                                     'type': 'file',
                                     'file_path': saved['file_path'],
+                                    'data': saved.get('data'), # ROBUSTNESS: include base64 data in DB
                                     'content_type': saved.get('mime_type', f.content_type or 'application/octet-stream'),
                                     'size': saved['size'],
                                 })
