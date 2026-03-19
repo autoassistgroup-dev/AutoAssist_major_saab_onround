@@ -189,7 +189,24 @@ def display_response():
                             sort=[('created_at', -1)]
                         )
                         
-                        if recent_reply:
+                        # ── PROTECT: Do not promote the AI response itself to a customer reply ──
+                        # Sometimes N8N sends the AI response in the 'body' field.
+                        # We must ensure we don't treat the AI's own words as a message from the customer.
+                        is_ai_duplicate = False
+                        if ai_response and full_message:
+                            # Normalize for comparison (strip whitespace and common prefixes)
+                            norm_ai = ai_response.strip().lower()
+                            norm_msg = full_message.strip().lower()
+                            
+                            # Exact match or message starts with AI response (common if N8N appends things)
+                            if norm_ai == norm_msg or norm_msg.startswith(norm_ai) or norm_ai.startswith(norm_msg):
+                                is_ai_duplicate = True
+                            
+                            # Check for common AI signature if it's an "unclear content" or "automatic" style message
+                            if "unclear content" in norm_msg and "sincerely" in norm_msg:
+                                is_ai_duplicate = True
+
+                        if recent_reply and not is_ai_duplicate:
                             update_fields = {}
                             existing_msg = recent_reply.get('message', '')
                             if len(full_message) > len(existing_msg):
@@ -209,9 +226,10 @@ def display_response():
                                 logger.info(f"📝 REPLY PATCHED │ Ticket {ticket_id} │ {len(existing_msg)} → {len(full_message)} chars │ Attachments: {len(recent_reply.get('attachments', []))} → {len(update_fields.get('attachments', recent_reply.get('attachments', [])))}")
                             else:
                                 logger.info(f"📝 REPLY OK │ Ticket {ticket_id} │ Already has {len(existing_msg)} chars (body: {len(full_message)})")
-                        else:
+                        elif not is_ai_duplicate:
                             # No recent reply found — create one from the full body
                             sender_name = data.get('name', data.get('from', 'Customer'))
+
                             reply_data = {
                                 'ticket_id': ticket_id,
                                 'message': full_message,
