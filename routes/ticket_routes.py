@@ -1162,10 +1162,20 @@ def send_ticket_email(ticket_id):
                     if data_len < 10:
                         logger.warning(f"[EMAIL-ATT] ⚠️ UNRESOLVED attachment: {filename} (data_len={data_len})")
                     
-                    # Ensure base64 strings DO NOT have the data URI prefix for n8n email node
-                    # Outlook expects pure base64. If the data URI prefix is present, the file corrupts.
-                    if file_data and isinstance(file_data, str) and 'base64,' in file_data:
-                        file_data = file_data.split('base64,', 1)[1]
+                    # Apply prefix handling matching send_ticket_reply logic
+                    is_email_ticket = ticket.get('is_email_ticket', False)
+                    creation_method = ticket.get('creation_method', 'manual')
+                    is_manual = ticket.get('source') == 'manual' or creation_method in ('manual', 'api') or not is_email_ticket
+
+                    if file_data and isinstance(file_data, str):
+                        if not is_manual:
+                            # Email Ticket (Outlook branch): stripping prefix
+                            if 'base64,' in file_data:
+                                file_data = file_data.split('base64,', 1)[1]
+                        else:
+                            # Manual Ticket (Template branch): Needs the full data URI
+                            if not file_data.startswith('data:'):
+                                file_data = f"data:{mime_type};base64,{file_data}"
                     
                     resolved_attachments.append({
                         'filename': filename,
