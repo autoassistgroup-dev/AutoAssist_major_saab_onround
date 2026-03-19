@@ -865,6 +865,20 @@
     // are now centrally defined later in this file to handle both ticket and reply attachments
     // robustly with better error handling and preview capabilities.
 
+    // Legacy aliases for backward compatibility with templates
+    function previewEmailAttachment(ticketId, attachmentIndex, filename) {
+        return previewAttachment(null, attachmentIndex, filename, 'ticket');
+    }
+    function downloadEmailAttachment(ticketId, attachmentIndex, filename) {
+        return downloadAttachment(null, attachmentIndex, filename, 'ticket');
+    }
+    function previewTicketAttachment(ticketId, attachmentIndex, filename) {
+        return previewAttachment(null, attachmentIndex, filename, 'ticket');
+    }
+    function downloadTicketAttachment(ticketId, attachmentIndex, filename) {
+        return downloadAttachment(null, attachmentIndex, filename, 'ticket');
+    }
+
     function setupAttachmentHandlers() {
         // This function is called in DOMContentLoaded
         console.log('Attachment handlers initialized');

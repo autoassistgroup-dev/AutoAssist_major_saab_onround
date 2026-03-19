@@ -7459,15 +7459,15 @@
                                             {% endif %}
                                         </div>
                                         <div class="flex flex-wrap gap-2">
-                                            {% for attachment in downloadable_attachments %}
+                                            {% for attachment in reply.attachments %}
+                                            {% set filename = attachment.filename or attachment.fileName or
+                                            attachment.name or 'Unknown File' %}
+
                                             {% if attachment.type == 'file' or attachment.source in
-                                            ['webhook_base64',
-                                            'webhook'] or not attachment.type %}
+                                            ['webhook_base64', 'webhook'] or not attachment.type %}
                                             <div
                                                 class="bg-gray-50 border border-gray-200 rounded-lg p-2 flex items-center justify-between text-xs max-w-xs">
                                                 <div class="flex items-center min-w-0 flex-1">
-                                                    {% set filename = attachment.filename or attachment.name or
-                                                    attachment.original_name or 'Unknown File' %}
                                                     {% if filename.lower().endswith('.pdf') %}
                                                     <i class="fas fa-file-pdf text-red-500 mr-2 flex-shrink-0"></i>
                                                     {% elif filename.lower().endswith(('.doc', '.docx')) %}
@@ -7485,21 +7485,14 @@
                                                             filename }}</div>
                                                         {% if attachment.size and attachment.size > 0 %}
                                                         <div class="text-gray-400 text-[10px]">({{ (attachment.size
-                                                            /
-                                                            1024)
-                                                            | round(1) }} KB)</div>
+                                                            / 1024) | round(1) }} KB)</div>
                                                         {% endif %}
-
                                                     </div>
                                                 </div>
                                                 <div class="flex gap-1 ml-2">
                                                     {% set source = attachment.source|default('reply') %}
                                                     {% set can_preview = filename.lower().endswith(('.jpg', '.jpeg', '.png',
                                                     '.gif', '.pdf', '.txt', '.md', '.webp', '.bmp')) %}
-                                                    {% set can_download = attachment.type == 'file' or
-                                                    attachment.source
-                                                    ==
-                                                    'webhook_base64' or attachment.source == 'webhook' %}
                                                     {% if can_preview %}
                                                     <button
                                                         onclick="previewAttachment('{{ reply._id|e }}', '{{ loop.index0 }}', '{{ filename|e }}', '{{ source|e }}')"
@@ -7529,12 +7522,8 @@
                                                 <i class="fas fa-paperclip text-green-500 mr-1"></i>
                                                 <span class="font-medium">{{ attachment.name }}</span>
                                                 {% if attachment.description %}
-                                                <span class="text-gray-500 ml-1">- {{ attachment.description
-                                                    }}</span>
+                                                <span class="text-gray-500 ml-1">- {{ attachment.description }}</span>
                                                 {% endif %}
-                                                <span class="text-blue-500 ml-2 text-[10px]">(Text Reference - Click
-                                                    to
-                                                    view)</span>
                                             </div>
                                             {% endif %}
                                             {% endfor %}
