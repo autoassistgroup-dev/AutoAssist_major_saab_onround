@@ -448,13 +448,13 @@ class MongoDB:
                                     "tech_id_doc": {
                                         "$arrayElemAt": [
                                             {"$filter": {
-                                                "input": "$_tech_metadata",
+                                                "input": {"$ifNull": ["$_tech_metadata", []]},
                                                 "cond": {"$eq": ["$$this.key", "technician_id"]}
                                             }}, 0
                                         ]
                                     }
                                 },
-                                "in": "$$tech_id_doc.value"
+                                "in": {"$ifNull": ["$$tech_id_doc.value", None]}
                             }
                         },
                         "technician_name": {
@@ -463,13 +463,13 @@ class MongoDB:
                                     "tech_name_doc": {
                                         "$arrayElemAt": [
                                             {"$filter": {
-                                                "input": "$_tech_metadata",
+                                                "input": {"$ifNull": ["$_tech_metadata", []]},
                                                 "cond": {"$eq": ["$$this.key", "technician_name"]}
                                             }}, 0
                                         ]
                                     }
                                 },
-                                "in": "$$tech_name_doc.value"
+                                "in": {"$ifNull": ["$$tech_name_doc.value", None]}
                             }
                         }
                     }
@@ -486,10 +486,12 @@ class MongoDB:
             
             result = list(self.tickets.aggregate(pipeline, allowDiskUse=True))
             
-            # Ensure has_unread_reply is boolean on all tickets (lightweight, no logging per ticket)
+            # Ensure has_unread_reply and has_unread_notification are boolean on all tickets
             for ticket in result:
                 if 'has_unread_reply' not in ticket or not isinstance(ticket.get('has_unread_reply'), bool):
                     ticket['has_unread_reply'] = bool(ticket.get('has_unread_reply', False))
+                if 'has_unread_notification' not in ticket or not isinstance(ticket.get('has_unread_notification'), bool):
+                    ticket['has_unread_notification'] = bool(ticket.get('has_unread_notification', False))
             
             return result
             
@@ -975,8 +977,18 @@ class MongoDB:
             claims = data.get("claims_stats", [{}])[0]
             
             return {
-                "overdue_tickets": data.get("overdue", []),
-                "unread_tickets": data.get("unread", []),
+                "overdue_tickets": [
+                    {**t, 
+                     "has_unread_reply": bool(t.get("has_unread_reply", False)),
+                     "has_unread_notification": bool(t.get("has_unread_notification", False))
+                    } for t in data.get("overdue", [])
+                ],
+                "unread_tickets": [
+                    {**t, 
+                     "has_unread_reply": bool(t.get("has_unread_reply", False)),
+                     "has_unread_notification": bool(t.get("has_unread_notification", False))
+                    } for t in data.get("unread", [])
+                ],
                 "total_claims": claims.get("total", 0),
                 "approved_claims": claims.get("approved", 0),
                 "declined_claims": claims.get("declined", 0),
