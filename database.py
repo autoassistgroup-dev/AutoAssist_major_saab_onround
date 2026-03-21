@@ -371,22 +371,21 @@ class MongoDB:
             if match_stage:
                 pipeline.append({"$match": match_stage})
             
-            # Ensure updated_at exists (fallback to created_at for older tickets)
-            # Also ensure has_unread_notification exists
-            pipeline.append({"$addFields": {
-                "updated_at": {"$ifNull": ["$updated_at", "$created_at"]},
-                "has_unread_notification": {"$ifNull": ["$has_unread_notification", False]}
-            }})
-            
-            # Sort -> Skip -> Limit BEFORE lookups (optimization: reduce lookup volume)
-            # Sort by UNREAD flag first, then by UPDATED date
-            pipeline.append({"$sort": {"has_unread_notification": -1, "updated_at": -1}})
+            # Sort -> Skip -> Limit BEFORE lookups and computed fields (MASSIVE performance fix for timeouts)
+            # Sort by native UNREAD flag first, then by CREATED date natively
+            pipeline.append({"$sort": {"has_unread_notification": -1, "created_at": -1}})
             
             skip = (page - 1) * per_page
             pipeline.extend([
                 {"$skip": skip},
                 {"$limit": per_page}
             ])
+            
+            # Post-pagination calculated fields (operates only on the 20-50 returned docs)
+            pipeline.append({"$addFields": {
+                "updated_at": {"$ifNull": ["$updated_at", "$created_at"]},
+                "has_unread_notification": {"$ifNull": ["$has_unread_notification", False]}
+            }})
             
             # Lookups only on paginated results
             pipeline.extend([
