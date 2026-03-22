@@ -6113,11 +6113,6 @@
                         class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium">
                         <i class="fas fa-download mr-2"></i>Load Template
                     </button>
-                    <button id="editTemplate"
-                        class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors font-medium"
-                        style="display: none;">
-                        <i class="fas fa-edit mr-2"></i>Edit Template
-                    </button>
                     <button id="clearFields"
                         class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium">
                         <i class="fas fa-eraser mr-2"></i>Clear
@@ -12103,7 +12098,6 @@
                         const closeEmailTemplateModal = document.getElementById('closeEmailTemplateModal');
                         const cancelEmailTemplate = document.getElementById('cancelEmailTemplate');
                         const loadTemplate = document.getElementById('loadTemplate');
-                        const editTemplate = document.getElementById('editTemplate');
                         const clearFields = document.getElementById('clearFields');
                         const sendEmail = document.getElementById('sendEmail');
                         const templateTypeSelect = document.getElementById('templateTypeSelect');
@@ -12197,8 +12191,6 @@
                                         if (emailSubject) emailSubject.classList.add('bg-white', 'cursor-text');
                                         if (emailBody) emailBody.classList.add('bg-white', 'cursor-text');
 
-                                        // Show edit template button
-                                        if (editTemplate) editTemplate.style.display = 'inline-block';
 
                                         // Populate attachments
                                         populateAttachments(currentTemplateData.attachments);
@@ -12341,29 +12333,6 @@ Email Ticket: ${debugInfo.ticket_source.is_email_ticket}`;
                             });
                         }
 
-                        // Edit template button - with null check
-                        if (editTemplate) {
-                            editTemplate.addEventListener('click', function () {
-                                // Make fields editable if they aren't already
-                                if (emailSubject) emailSubject.removeAttribute('readonly');
-                                if (emailBody) emailBody.removeAttribute('readonly');
-
-                                // Update visual styling to show fields are editable
-                                if (emailSubject) emailSubject.classList.add('bg-white', 'cursor-text');
-                                if (emailBody) emailBody.classList.add('bg-white', 'cursor-text');
-
-                                // Focus on subject field
-                                if (emailSubject) emailSubject.focus();
-
-                                // Show notification
-                                showNotification('✏️ Template is now editable! You can modify the subject and body.', 'info');
-
-                                // Hide edit button since we're already editing
-                                editTemplate.style.display = 'none';
-                            });
-                        }
-
-
                         // Clear fields button - with null check
                         if (clearFields) {
                             clearFields.addEventListener('click', function () {
@@ -12380,8 +12349,6 @@ Email Ticket: ${debugInfo.ticket_source.is_email_ticket}`;
                                 // Show notification
                                 showNotification('🧹 Fields cleared! You can now enter new content.', 'info');
 
-                                // Hide edit button if it was showing
-                                if (editTemplate) editTemplate.style.display = 'none';
 
                                 // Reset template data
                                 currentTemplateData = null;
@@ -12444,11 +12411,6 @@ Email Ticket: ${debugInfo.ticket_source.is_email_ticket}`;
                                 // Show notification
                                 showNotification('🔄 Loading selected template...', 'info');
 
-                                // Hide edit button
-                                editTemplate.style.display = 'none';
-
-                                // Reset template data
-                                currentTemplateData = null;
 
                                 // 🚀 AUTO-LOAD: Trigger the load template logic immediately
                                 if (this.value) {
