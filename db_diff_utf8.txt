@@ -1,0 +1,110 @@
+﻿diff --git a/database.py b/database.py
+index 7335a2a..05ceca3 100644
+--- a/database.py
++++ b/database.py
+@@ -365,23 +365,28 @@ class MongoDB:
+                     {"name": {"$regex": search_query, "$options": "i"}},
+                     {"email": {"$regex": search_query, "$options": "i"}}
+                 ]
+-            
++            # Robust aggregation: Calculate sorting fields first, then sort, then join
+             pipeline = []
+             
+             if match_stage:
+                 pipeline.append({"$match": match_stage})
+-            
+-            # Ensure updated_at exists (fallback to created_at for older tickets)
+-            # Also ensure has_unread_notification exists
++
++            # Add calculated fields for sorting and unread indicators BEFORE sort
++            # Use ifNull to ensure fields exist for sorting stage
+             pipeline.append({"$addFields": {
+                 "updated_at": {"$ifNull": ["$updated_at", "$created_at"]},
+-                "has_unread_notification": {"$ifNull": ["$has_unread_notification", False]}
++                "has_unread_notification": {"$ifNull": ["$has_unread_notification", False]},
++                "has_unread_reply": {"$ifNull": ["$has_unread_reply", False]}
+             }})
+-            
+-            # Sort -> Skip -> Limit BEFORE lookups (optimization: reduce lookup volume)
+-            # Sort by UNREAD flag first, then by UPDATED date
+-            pipeline.append({"$sort": {"has_unread_notification": -1, "updated_at": -1}})
+-            
++
++            # Sort by unread status first, then by update time
++            pipeline.append({"$sort": {
++                "has_unread_notification": -1, 
++                "has_unread_reply": -1, 
++                "updated_at": -1
++            }})
++
++            # Pagination
+             skip = (page - 1) * per_page
+             pipeline.extend([
+                 {"$skip": skip},
+@@ -448,13 +453,13 @@ class MongoDB:
+                                     "tech_id_doc": {
+                                         "$arrayElemAt": [
+                                             {"$filter": {
+-                                                "input": "$_tech_metadata",
++                                                "input": {"$ifNull": ["$_tech_metadata", []]},
+                                                 "cond": {"$eq": ["$$this.key", "technician_id"]}
+                                             }}, 0
+                                         ]
+                                     }
+                                 },
+-                                "in": "$$tech_id_doc.value"
++                                "in": {"$ifNull": ["$$tech_id_doc.value", None]}
+                             }
+                         },
+                         "technician_name": {
+@@ -463,13 +468,13 @@ class MongoDB:
+                                     "tech_name_doc": {
+                                         "$arrayElemAt": [
+                                             {"$filter": {
+-                                                "input": "$_tech_metadata",
++                                                "input": {"$ifNull": ["$_tech_metadata", []]},
+                                                 "cond": {"$eq": ["$$this.key", "technician_name"]}
+                                             }}, 0
+                                         ]
+                                     }
+                                 },
+-                                "in": "$$tech_name_doc.value"
++                                "in": {"$ifNull": ["$$tech_name_doc.value", None]}
+                             }
+                         }
+                     }
+@@ -486,10 +491,12 @@ class MongoDB:
+             
+             result = list(self.tickets.aggregate(pipeline, allowDiskUse=True))
+             
+-            # Ensure has_unread_reply is boolean on all tickets (lightweight, no logging per ticket)
++            # Ensure has_unread_reply and has_unread_notification are boolean on all tickets
+             for ticket in result:
+                 if 'has_unread_reply' not in ticket or not isinstance(ticket.get('has_unread_reply'), bool):
+                     ticket['has_unread_reply'] = bool(ticket.get('has_unread_reply', False))
++                if 'has_unread_notification' not in ticket or not isinstance(ticket.get('has_unread_notification'), bool):
++                    ticket['has_unread_notification'] = bool(ticket.get('has_unread_notification', False))
+             
+             return result
+             
+@@ -975,8 +982,18 @@ class MongoDB:
+             claims = data.get("claims_stats", [{}])[0]
+             
+             return {
+-                "overdue_tickets": data.get("overdue", []),
+-                "unread_tickets": data.get("unread", []),
++                "overdue_tickets": [
++                    {**t, 
++                     "has_unread_reply": bool(t.get("has_unread_reply", False)),
++                     "has_unread_notification": bool(t.get("has_unread_notification", False))
++                    } for t in data.get("overdue", [])
++                ],
++                "unread_tickets": [
++                    {**t, 
++                     "has_unread_reply": bool(t.get("has_unread_reply", False)),
++                     "has_unread_notification": bool(t.get("has_unread_notification", False))
++                    } for t in data.get("unread", [])
++                ],
+                 "total_claims": claims.get("total", 0),
+                 "approved_claims": claims.get("approved", 0),
+                 "declined_claims": claims.get("declined", 0),
