@@ -366,133 +366,46 @@ class MongoDB:
                     {"email": {"$regex": search_query, "$options": "i"}}
                 ]
             
-            pipeline = []
-            
-            if match_stage:
-                pipeline.append({"$match": match_stage})
-            
-            # Sort -> Skip -> Limit BEFORE lookups and computed fields (MASSIVE performance fix for timeouts)
-            # Sort by native indexed _id first which represents creation date
-            pipeline.append({"$sort": {"_id": -1}})
-            
             skip = (page - 1) * per_page
-            pipeline.extend([
-                {"$skip": skip},
-                {"$limit": per_page}
-            ])
             
-            # Post-pagination calculated fields (operates only on the 20-50 returned docs)
-            pipeline.append({"$addFields": {
-                "updated_at": {"$ifNull": ["$updated_at", "$created_at"]},
-                "has_unread_notification": {"$ifNull": ["$has_unread_notification", False]}
-            }})
+            # Fetch base tickets natively
+            cursor = self.tickets.find(match_stage).sort("_id", -1).skip(skip).limit(per_page)
+            tickets = list(cursor)
             
-            # Lookups only on paginated results
-            pipeline.extend([
-                {
-                    "$lookup": {
-                        "from": "ticket_assignments",
-                        "localField": "ticket_id",
-                        "foreignField": "ticket_id",
-                        "as": "assignment"
-                    }
-                },
-                {
-                    "$addFields": {
-                        "assignment_member_id": {"$arrayElemAt": ["$assignment.member_id", 0]},
-                        "assignment_forwarded_from": {"$arrayElemAt": ["$assignment.forwarded_from", 0]}
-                    }
-                },
-                {
-                    "$lookup": {
-                        "from": "members",
-                        "localField": "assignment_member_id",
-                        "foreignField": "_id",
-                        "as": "assigned_member"
-                    }
-                },
-                {
-                    "$lookup": {
-                        "from": "members",
-                        "localField": "assignment_forwarded_from",
-                        "foreignField": "_id",
-                        "as": "forwarded_from_member"
-                    }
-                },
-                {
-                    "$lookup": {
-                        "from": "members",
-                        "localField": "forwarded_to",
-                        "foreignField": "_id",
-                        "as": "forwarded_to_member"
-                    }
-                },
-                # PERFORMANCE FIX: Technician metadata is now included via $lookup
-                # instead of N+1 individual queries per ticket
-                {
-                    "$lookup": {
-                        "from": "ticket_metadata",
-                        "localField": "ticket_id",
-                        "foreignField": "ticket_id",
-                        "as": "_tech_metadata"
-                    }
-                },
-                # Extract technician info from metadata and ensure has_unread_reply
-                {
-                    "$addFields": {
-                        "has_unread_reply": {"$ifNull": ["$has_unread_reply", False]},
-                        "technician_id": {
-                            "$let": {
-                                "vars": {
-                                    "tech_id_doc": {
-                                        "$arrayElemAt": [
-                                            {"$filter": {
-                                                "input": {"$ifNull": ["$_tech_metadata", []]},
-                                                "cond": {"$eq": ["$$this.key", "technician_id"]}
-                                            }}, 0
-                                        ]
-                                    }
-                                },
-                                "in": {"$ifNull": ["$$tech_id_doc.value", None]}
-                            }
-                        },
-                        "technician_name": {
-                            "$let": {
-                                "vars": {
-                                    "tech_name_doc": {
-                                        "$arrayElemAt": [
-                                            {"$filter": {
-                                                "input": {"$ifNull": ["$_tech_metadata", []]},
-                                                "cond": {"$eq": ["$$this.key", "technician_name"]}
-                                            }}, 0
-                                        ]
-                                    }
-                                },
-                                "in": {"$ifNull": ["$$tech_name_doc.value", None]}
-                            }
-                        }
-                    }
-                },
-                # Remove temporary fields
-                {
-                    "$project": {
-                        "assignment_member_id": 0,
-                        "assignment_forwarded_from": 0,
-                        "_tech_metadata": 0
-                    }
-                }
-            ])
-            
-            result = list(self.tickets.aggregate(pipeline))
-            
-            # Ensure has_unread_reply and has_unread_notification are boolean on all tickets
-            for ticket in result:
-                if 'has_unread_reply' not in ticket or not isinstance(ticket.get('has_unread_reply'), bool):
-                    ticket['has_unread_reply'] = bool(ticket.get('has_unread_reply', False))
-                if 'has_unread_notification' not in ticket or not isinstance(ticket.get('has_unread_notification'), bool):
-                    ticket['has_unread_notification'] = bool(ticket.get('has_unread_notification', False))
-            
-            return result
+            # Execute manual lookups in Python (bypasses MongoDB aggregate lock/timeout bugs)
+            for t in tickets:
+                t_id = t.get("ticket_id")
+                
+                # Add computed fields natively
+                t["updated_at"] = t.get("updated_at") or t.get("created_at")
+                t["has_unread_notification"] = bool(t.get("has_unread_notification", False))
+                t["has_unread_reply"] = bool(t.get("has_unread_reply", False))
+                
+                # Fetch assignment
+                assignment = self.ticket_assignments.find_one({"ticket_id": t_id}) or {}
+                
+                assigned_member_id = assignment.get("member_id")
+                fwd_from_id = assignment.get("forwarded_from")
+                fwd_to_id = t.get("forwarded_to")
+                
+                # Fetch members
+                t["assigned_member"] = [self.members.find_one({"_id": assigned_member_id})] if assigned_member_id else []
+                t["forwarded_from_member"] = [self.members.find_one({"_id": fwd_from_id})] if fwd_from_id else []
+                t["forwarded_to_member"] = [self.members.find_one({"_id": fwd_to_id})] if fwd_to_id else []
+                
+                # Remove Nones from arrays
+                t["assigned_member"] = [m for m in t["assigned_member"] if m]
+                t["forwarded_from_member"] = [m for m in t["forwarded_from_member"] if m]
+                t["forwarded_to_member"] = [m for m in t["forwarded_to_member"] if m]
+                
+                # Fetch technician metadata
+                tech_id_meta = self.ticket_metadata.find_one({"ticket_id": t_id, "key": "technician_id"})
+                tech_name_meta = self.ticket_metadata.find_one({"ticket_id": t_id, "key": "technician_name"})
+                
+                t["technician_id"] = tech_id_meta.get("value") if tech_id_meta else None
+                t["technician_name"] = tech_name_meta.get("value") if tech_name_meta else None
+                
+            return tickets
             
         except pymongo.errors.OperationFailure as e:
             self.last_error = f"[DATABASE] Failed to get tickets (OperationFailure): {str(e)}\n{traceback.format_exc()}"
