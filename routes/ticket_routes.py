@@ -1767,6 +1767,7 @@ def refer_back_to_admin(ticket_id):
             'referred_back_by_name': current_member_name,
             'referred_back_at': datetime.now(),
             'referred_back_note': referral_note,
+            'is_returned_viewed': False,
             # 'forwarding_note': referral_note if referral_note else None, # Do NOT set forwarding_note here, it breaks dashboard
         }
         

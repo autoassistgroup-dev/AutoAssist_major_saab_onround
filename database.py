@@ -368,8 +368,19 @@ class MongoDB:
             
             skip = (page - 1) * per_page
             
-            # Fetch base tickets natively
-            cursor = self.tickets.find(match_stage).sort("_id", -1).skip(skip).limit(per_page)
+            # Fetch base tickets natively with prioritized sorting:
+            # 1. Unread notifications/replies first
+            # 2. Unviewed new tickets/returned tickets next
+            # 3. Finally by updated_at (newest first)
+            sort_criteria = [
+                ("has_unread_notification", -1),
+                ("has_unread_reply", -1),
+                ("is_new_viewed", 1),
+                ("is_returned_viewed", 1),
+                ("updated_at", -1)
+            ]
+            
+            cursor = self.tickets.find(match_stage).sort(sort_criteria).skip(skip).limit(per_page)
             tickets = list(cursor)
             
             # Execute manual lookups in Python (bypasses MongoDB aggregate lock/timeout bugs)
@@ -537,7 +548,8 @@ class MongoDB:
                 {"$set": {
                     "has_unread_notification": False,
                     "has_unread_reply": False,
-                    "is_new_viewed": True
+                    "is_new_viewed": True,
+                    "is_returned_viewed": True
                 }}
             )
             return True
