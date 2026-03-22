@@ -372,8 +372,8 @@ class MongoDB:
                 pipeline.append({"$match": match_stage})
             
             # Sort -> Skip -> Limit BEFORE lookups and computed fields (MASSIVE performance fix for timeouts)
-            # Sort by native UNREAD flag first, then by CREATED date natively
-            pipeline.append({"$sort": {"has_unread_notification": -1, "created_at": -1}})
+            # Sort by native indexed _id first which represents creation date
+            pipeline.append({"$sort": {"_id": -1}})
             
             skip = (page - 1) * per_page
             pipeline.extend([
@@ -483,7 +483,7 @@ class MongoDB:
                 }
             ])
             
-            result = list(self.tickets.aggregate(pipeline, allowDiskUse=True))
+            result = list(self.tickets.aggregate(pipeline))
             
             # Ensure has_unread_reply and has_unread_notification are boolean on all tickets
             for ticket in result:
