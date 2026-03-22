@@ -122,10 +122,8 @@ def get_email_template(template_type, ticket_id):
         
         # Determine subject
         original_subject = ticket.get('subject', 'Support Request')
-        if not original_subject.lower().startswith('re:'):
-            subject = f"Re: {original_subject} [TID: {ticket_id}]"
-        else:
-            subject = f"{original_subject} [TID: {ticket_id}]"
+        # Remove "Re:" prefix logic as requested - use original subject directly or with template context
+        subject = f"{original_subject} [TID: {ticket_id}]"
             
         # Check for existing draft
         draft = ticket.get('draft', '')
@@ -135,18 +133,26 @@ def get_email_template(template_type, ticket_id):
         body = ""
         content_source = "template"
         
-        # NOTE: logic to prefer draft if highly relevant could go here,
-        # but usually user selecting a template wants that specific template.
-        
         if template_type == 'warranty_claim':
             body = generate_warranty_claim_template(ticket, first_name)
-            subject = f"Re: Warranty Claim Update - Ticket #{ticket_id}"
+            subject = f"Warranty Claim Update - Ticket #{ticket_id}"
             
-        elif template_type == 'technical_support':
-            body = generate_technical_support_template(ticket, first_name)
+        elif template_type == 'ticket_data':
+            # Option 2: Loads the ticket's current subject and description/body
+            subject = original_subject
+            body = ticket.get('description') or ticket.get('body') or ticket.get('message') or ''
             
-        elif template_type == 'customer_service':
-            body = generate_customer_service_template(ticket, first_name)
+        elif template_type == 'acknowledgement':
+            # Option 3: Formal acknowledgement template
+            subject = f"Acknowledgement: {original_subject}"
+            body = f"""Dear {first_name},
+    
+We would like to acknowledge receipt of your support ticket #{ticket_id}. Our dedicated team is currently reviewing the details provided and is working towards a resolution. 
+
+We appreciate your patience and will provide an update as soon as possible.
+
+Best regards,
+Auto Assist Group Support Team"""
             
         elif template_type == 'draft' and has_draft:
             # Explicit request for draft or fallback
@@ -154,9 +160,7 @@ def get_email_template(template_type, ticket_id):
             content_source = "draft"
             
             # Ensure ticket ID is present in draft if it's missing
-            # This handles cases where a draft was saved without context
             if str(ticket_id) not in body and f"Ticket #{ticket_id}" not in body:
-                # Add context header if missing
                 context_header = f"Ref: Ticket #{ticket_id}\n\n"
                 if not body.startswith("Ref: Ticket"):
                     body = context_header + body
