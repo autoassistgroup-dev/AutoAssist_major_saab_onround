@@ -1957,8 +1957,8 @@
             const isNew = !t.is_new_viewed;
             const unreadDot = hasNew ? '<span class="unread-dot" title="New Reply"></span>' 
                             : (isNew ? '<span class="unread-dot unread-dot-yellow" title="New Ticket Created"></span>' : '');
-            const isReturned = !!t.referred_back_by_name;
-            const isForwarded = !!t.is_forwarded;
+            const isReturned = !!t.referred_back_by_name && !t.is_returned_viewed;
+            const isForwarded = !!t.is_forwarded && !t.is_forwarded_viewed;
             
             let highlightClass = '';
             if (isNew) highlightClass = 'ticket-highlight-new';
@@ -2101,8 +2101,8 @@
                     } else {
                         row = document.createElement('tr');
                         const isNew = !ticket.is_new_viewed;
-                        const isReturned = !!ticket.referred_back_by_name;
-                        const isForwarded = !!ticket.is_forwarded;
+                        const isReturned = !!ticket.referred_back_by_name && !ticket.is_returned_viewed;
+                        const isForwarded = !!ticket.is_forwarded && !ticket.is_forwarded_viewed;
                         let highlightClass = isNew ? 'ticket-highlight-new' : (isReturned ? 'ticket-highlight-returned' : (isForwarded ? 'ticket-highlight-forwarded' : ''));
                         
                         row.className = `ticket-card ${highlightClass}`;

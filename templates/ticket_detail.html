@@ -8532,7 +8532,20 @@
                     function previewEmailAttachment(ticketId, attachmentIndex, filename) {
                         console.log('previewEmailAttachment called:', { ticketId, attachmentIndex, filename });
                         const url = `/api/attachments/preview/${ticketId}/${attachmentIndex}`;
-                        showPreviewInModal(url, filename);
+                        fetch(url, { method: 'HEAD' })
+                            .then(response => {
+                                if (response.ok) {
+                                    const previewWindow = window.open(url, '_blank', 'width=900,height=700,scrollbars=yes,resizable=yes');
+                                    if (!previewWindow) {
+                                        showPreviewInModal(url, filename);
+                                    }
+                                } else {
+                                    showNotification(`Preview not available for ${filename}. Try downloading instead.`, 'error');
+                                }
+                            })
+                            .catch(() => {
+                                showNotification(`Could not preview ${filename}. Try downloading instead.`, 'error');
+                            });
                     }
 
                     function downloadEmailAttachment(ticketId, attachmentIndex, filename) {
@@ -8546,7 +8559,20 @@
                     function previewTicketAttachment(ticketId, attachmentIndex, filename) {
                         console.log('previewTicketAttachment called:', { ticketId, attachmentIndex, filename });
                         const url = `/api/attachments/preview/${ticketId}/${attachmentIndex}`;
-                        showPreviewInModal(url, filename);
+                        fetch(url, { method: 'HEAD' })
+                            .then(response => {
+                                if (response.ok) {
+                                    const previewWindow = window.open(url, '_blank', 'width=900,height=700,scrollbars=yes,resizable=yes');
+                                    if (!previewWindow) {
+                                        showPreviewInModal(url, filename);
+                                    }
+                                } else {
+                                    showNotification(`Preview not available for ${filename}. Try downloading instead.`, 'error');
+                                }
+                            })
+                            .catch(() => {
+                                showNotification(`Could not preview ${filename}. Try downloading instead.`, 'error');
+                            });
                     }
 
                     function downloadTicketAttachment(ticketId, attachmentIndex, filename) {
