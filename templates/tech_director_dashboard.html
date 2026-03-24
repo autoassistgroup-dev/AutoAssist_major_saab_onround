@@ -1063,135 +1063,16 @@
         }
     }
 
-    // ===== SOCKET.IO REAL-TIME UPDATES FOR TECH DIRECTOR =====
+    // ===== SMART AUTO RELOAD (NO WEBSOCKETS) =====
     (function () {
-        // Dynamic loading of scripts
-        const loadScript = (src) => {
-            return new Promise((resolve, reject) => {
-                if (document.querySelector(`script[src="${src}"]`)) {
-                    resolve();
-                    return;
-                }
-                const script = document.createElement('script');
-                script.src = src;
-                script.onload = resolve;
-                script.onerror = reject;
-                document.head.appendChild(script);
-            });
-        };
-
-        // Load dependencies then initialize
-        Promise.all([
-            loadScript('https://cdn.socket.io/4.7.2/socket.io.min.js'),
-            loadScript('/static/js/socket-manager.js')
-        ]).then(() => {
-            initRealTimeUpdates();
-        }).catch(err => console.error('Failed to load WebSocket scripts:', err));
-
-        function initRealTimeUpdates() {
-            // Initialize with explicit user context from Jinja2
-            const socketManager = new SocketManager({
-                userId: '{{ session.get("member_id") }}',
-                role: 'Technical Director', // Explicitly join as Tech Director
-                debug: true
-            });
-
-            // Notification Sound
-            const notificationSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-
-            // --- Event Handlers ---
-
-            // Ticket Referred
-            const handleReferral = (data) => {
-                console.log('[SOCKET] Ticket referred:', data);
-                notificationSound.play().catch(e => console.log('Audio blocked:', e));
-                addNewReferredTicket(data);
-                updateTicketCount(1);
-                socketManager.showToast(`New Referral: #${data.ticket_id}`, data.subject, 'success');
-            };
-
-            socketManager.on('ticket_referred_to_director', handleReferral);
-            socketManager.on('ticket_referred_to_you', handleReferral);
-
-            // Ticket Forwarded (Remove from list)
-            socketManager.on('ticket_forwarded', (data) => {
-                console.log('[SOCKET] Ticket forwarded:', data);
-                // If it was forwarded BY us (or to someone else), remove it
-                TicketUIUpdater.removeTicket(data.ticket_id);
-                // The TicketUIUpdater handles count update
-            });
-
-            // Status/Priority Changes
-            socketManager.on('ticket_status_changed', (data) => {
-                TicketUIUpdater.updateStatus(data.ticket_id, data.new_status);
-                socketManager.showToast(`Status Updated: #${data.ticket_id}`, data.new_status, 'info');
-            });
-
-            socketManager.on('ticket_priority_changed', (data) => {
-                TicketUIUpdater.updatePriority(data.ticket_id, data.new_priority);
-                socketManager.showToast(`Priority Updated: #${data.ticket_id}`, data.new_priority, 'info');
-            });
-        }
-
-        // Expanded "Add Ticket" logic with Empty State Fix
-        function addNewReferredTicket(data) {
-            let ticketsContainer = document.querySelector('.divide-y');
-
-            // Fix for Empty State: Create container if it doesn't exist
-            if (!ticketsContainer) {
-                // Look for the main card container
-                const listSection = document.querySelector('.glass-card.overflow-hidden.slide-up');
-                if (listSection) {
-                    // Remove "No Tickets" placeholder if present
-                    const emptyState = listSection.querySelector('.text-center.py-16');
-                    if (emptyState) emptyState.remove();
-
-                    // Create the list container
-                    ticketsContainer = document.createElement('div');
-                    ticketsContainer.className = 'divide-y divide-gray-200/30';
-                    listSection.appendChild(ticketsContainer);
-                } else {
-                    console.error('Could not find ticket list container section');
-                    return;
-                }
+        // Auto Reload within 5 to 10 seconds (using 10s so backend can reload and show changes)
+        setInterval(function() {
+            // Only reload if the forward modal is not open, to avoid interrupting the user
+            const forwardModal = document.getElementById('forwardModal');
+            if (!forwardModal || forwardModal.classList.contains('hidden')) {
+                window.location.reload();
             }
-
-            // Prevent duplicates
-            if (document.querySelector(`[data-ticket-id="${data.ticket_id}"]`)) return;
-
-            const priority = data.priority || 'Medium';
-            const borderMap = { 'Urgent': 'border-red-500', 'High': 'border-orange-500', 'Medium': 'border-yellow-500', 'Low': 'border-green-500' };
-            const priorityMap = { 'Urgent': 'priority-urgent', 'High': 'priority-high', 'Medium': 'priority-medium', 'Low': 'priority-low' };
-
-            const ticketHtml = `
-                <div class="ticket-card glass-card m-6 border-l-4 ${borderMap[priority] || 'border-gray-400'}" data-ticket-id="${data.ticket_id}" style="animation: slideUp 0.5s ease-out;">
-                    <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
-                        <div class="flex-1 min-w-0">
-                            <div class="flex flex-wrap items-start gap-3 mb-4">
-                                <span class="text-sm font-bold text-gray-700 bg-gray-100/50 px-3 py-1.5 rounded-xl"><i class="fas fa-hashtag mr-1"></i>${data.ticket_id}</span>
-                                <span class="priority-badge ${priorityMap[priority] || 'priority-medium'}"><i class="fas fa-flag mr-2"></i>${priority}</span>
-                                <span class="director-badge text-sm"><i class="fas fa-user-tie mr-2"></i>Referred from ${data.referred_by_name || 'Unknown'}</span>
-                            </div>
-                            <h3 class="text-xl font-semibold text-gray-800 mb-4 line-clamp-2">${data.subject || 'No Subject'}</h3>
-                        </div>
-                        <div class="flex flex-col gap-3 lg:flex-shrink-0">
-                            <a href="/ticket/${data.ticket_id}" class="glass-btn text-sm"><i class="fas fa-eye mr-2"></i>View Details</a>
-                            <button onclick="openForwardModal('${data.ticket_id}', '${(data.subject || '').replace(/'/g, "\\'")}')" class="px-4 py-2 rounded-xl text-sm font-medium transition-all" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.25);"><i class="fas fa-share mr-2"></i>Forward to Team</button>
-                        </div>
-                    </div>
-                </div>`;
-            ticketsContainer.insertAdjacentHTML('afterbegin', ticketHtml);
-        }
-
-        // Helper to update global counters
-        function updateTicketCount(delta) {
-            document.querySelectorAll('.text-3xl.font-bold').forEach(el => {
-                const count = parseInt(el.textContent) || 0;
-                el.textContent = Math.max(0, count + delta);
-            });
-        }
-
-        // (showToast removed as it's now in SocketManager/TicketUIUpdater)
+        }, 10000);
     })();
 
     // ===== FORWARD MODAL FUNCTIONS =====

@@ -2145,6 +2145,15 @@
                 showToast('An error occurred while deactivating member', 'error');
             }
         }
+
+        // Auto Reload within 5 to 10 seconds to fetch changes from backend
+        // (Only if no modals are open)
+        setInterval(function() {
+            const openModals = document.querySelectorAll('.modal-overlay.show, .modal.show');
+            if (openModals.length === 0) {
+                window.location.reload();
+            }
+        }, 10000); // 10 seconds
     </script>
 </body>
 
