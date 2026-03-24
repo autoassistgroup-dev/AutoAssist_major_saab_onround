@@ -7,6 +7,7 @@ This module contains API endpoints for managing claim documents
 Author: AutoAssistGroup Development Team
 """
 
+import os
 from flask import Blueprint, request, jsonify, send_file
 import logging
 from datetime import datetime
@@ -201,7 +202,6 @@ def download_claim_document(ticket_id, document_id):
     Download a claim document file. Prefer file_path (disk); fall back to file_data (legacy base64).
     """
     try:
-        import os
         from database import get_db
         db = get_db()
         ticket_id_str = str(ticket_id).strip() if ticket_id is not None else ''

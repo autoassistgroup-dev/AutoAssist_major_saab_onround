@@ -1971,7 +1971,43 @@
             if (isReturned) badgesHtml += '<span class="highlight-badge badge-returned">RETURNED</span>';
             if (isForwarded) badgesHtml += '<span class="highlight-badge badge-forwarded-highlight">FORWARDED</span>';
 
-            const starHtml = t.is_bookmarked ? '<i class="fas fa-star star-indicator"></i>' : '';
+            const starHtml = t.is_important ? '<i class="fas fa-star star-indicator"></i>' : '';
+
+            // Tech HTML
+            let techHtml = '<span style="color: rgba(255,255,255,0.2);">—</span>';
+            if (t.assigned_technician || t.technician_name) {
+                const techName = t.technician_name || t.assigned_technician;
+                techHtml = `<i class="fas fa-wrench"></i>${escapeHtml(techName.length > 15 ? techName.substring(0, 15) + '...' : techName)}`;
+            }
+
+            // Assignment HTML
+            let assignHtml = '<span style="color: rgba(255,255,255,0.2);">—</span>';
+            const hasTakeover = t.assignment && t.assignment.length > 0 && t.assigned_member && t.assigned_member.length > 0;
+            const hasForward = t.is_forwarded && t.forwarded_to_member && t.forwarded_to_member.length > 0;
+            
+            if (hasTakeover || hasForward) {
+                assignHtml = '<div class="assign-forwarded">';
+                if (hasTakeover) {
+                    const name = t.assigned_member[0].name || '';
+                    assignHtml += `<div><span class="assign-label">Takeover</span><span class="assign-name"><i class="fas fa-user-check"></i>${escapeHtml(name.length > 15 ? name.substring(0, 15) + '...' : name)}</span></div>`;
+                }
+                if (hasForward) {
+                    const name = t.forwarded_to_member[0].name || '';
+                    assignHtml += `<div><span class="assign-label">Forwarded</span><span class="assign-name"><i class="fas fa-share" style="transform: scaleX(-1);"></i>${escapeHtml(name.length > 15 ? name.substring(0, 15) + '...' : name)}</span></div>`;
+                }
+                assignHtml += '</div>';
+            }
+
+            // Time String (Client-side formatting)
+            const date = new Date(t.updated_at || t.created_at);
+            const timeStr = date.toLocaleString('en-GB', { 
+                day: '2-digit', 
+                month: 'short', 
+                year: 'numeric', 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: false
+            }).replace(',', '');
 
             // Update row class
             const rowId = `ticket-row-${ticketId}`;

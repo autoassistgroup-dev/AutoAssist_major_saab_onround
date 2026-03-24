@@ -732,7 +732,6 @@ def send_ticket_reply(ticket_id):
                 # 🚀 RESOLVE attachment file data for webhook
                 # Reply attachments may be stored on disk (file_path) without inline base64 data.
                 import base64 as b64
-                import os
                 resolved_reply_attachments = []
                 for att in attachments:
                     filename = att.get('filename', att.get('fileName', att.get('name', 'file')))
@@ -1058,7 +1057,6 @@ def send_ticket_email(ticket_id):
             try:
                 import requests
                 import base64
-                import os
                 from config.settings import WEBHOOK_URL
                 
                 # 🚀 RESOLVE attachment file data for webhook
@@ -2188,7 +2186,6 @@ def download_ticket_attachment(ticket_id, attachment_index):
         from database import get_db
         from flask import make_response
         import base64
-        import os
         db = get_db()
         
         # Get ticket
@@ -2285,7 +2282,6 @@ def preview_ticket_attachment(ticket_id, attachment_index):
         from database import get_db
         from flask import make_response
         import base64
-        import os
         db = get_db()
         
         # Get ticket

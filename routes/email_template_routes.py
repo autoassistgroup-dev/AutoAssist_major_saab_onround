@@ -7,6 +7,7 @@ for the ticket detail view's email composition modal.
 Author: AutoAssistGroup Development Team
 """
 
+import os
 from flask import Blueprint, jsonify
 from datetime import datetime
 import logging
@@ -191,7 +192,6 @@ Auto Assist Group Support Team"""
         # data exists. The actual file reading happens in send_ticket_email when
         # the email is actually sent. Sending base64 to the frontend previously
         # caused DOM corruption (huge strings in data-* attributes broke HTML).
-        import os
         resolved_attachments = []
         for att in raw_attachments:
             att_copy = dict(att)  # Don't modify the original
