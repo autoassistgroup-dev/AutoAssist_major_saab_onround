@@ -65,6 +65,30 @@ from werkzeug.security import generate_password_hash
 from bson.objectid import ObjectId
 
 
+def _sanitize_reply_for_template(reply):
+    """Ensure reply has safe values for Jinja."""
+    if not reply:
+        return reply
+    out = dict(reply)
+    # Ensure 'message' field exists for template consistency
+    out['message'] = out.get('message') or out.get('body') or out.get('text') or ''
+    out['sender_name'] = out.get('sender_name') or 'Unknown'
+    
+    # Handle attachments
+    atts = out.get('attachments')
+    if not isinstance(atts, list):
+        out['attachments'] = []
+    else:
+        out['attachments'] = []
+        for a in atts:
+            if not isinstance(a, dict):
+                continue
+            na = dict(a)
+            na['filename'] = a.get('filename') or a.get('fileName') or a.get('name') or 'attachment'
+            out['attachments'].append(na)
+    return out
+
+
 def _sanitize_ticket_for_template(ticket):
     """
     Ensure ticket has safe values for Jinja (n8n/API tickets may have None or missing fields).
@@ -445,6 +469,8 @@ def ticket_detail(ticket_id):
             ticket['is_forwarded_viewed'] = True
     
     replies = db.get_replies_by_ticket(ticket_id)
+    # Sanitize each reply for template consistency
+    replies = [_sanitize_reply_for_template(r) for r in replies]
     members = db.get_all_members()
     technicians = db.get_all_technicians()
     ticket_statuses = list(db.ticket_statuses.find({"is_active": True}).sort("order", 1))

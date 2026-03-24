@@ -611,7 +611,9 @@ def send_ticket_reply(ticket_id):
             attachments = []
             from config.settings import Config
             from utils.file_utils import save_attachment_bytes_to_disk
-            upload_root = Config.get_upload_folder()
+            import sys
+            _is_vercel = os.environ.get('VERCEL') or sys.platform != 'win32'
+            upload_root = '/tmp' if _is_vercel else Config.get_upload_folder()
             reply_prefix = f"reply_{ticket_id}_{int(datetime.now().timestamp())}"
             for key in sorted(request.files.keys()):
                 if key.startswith('attachment_') or key in ('attachments', 'response_attachments'):

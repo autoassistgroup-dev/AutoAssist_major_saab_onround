@@ -7340,7 +7340,7 @@
                                 <div class="original-message-container" id="originalMessageContainer">
                                     <div class="original-message-content {% if (ticket.body or '')|length > 1500 %}truncated{% endif %}"
                                         id="originalMessage">
-                                        {{ ticket.body or '' }}
+                                        {{ ticket.body | safe if ticket.body else '' }}
                                     </div>
                                     {% if (ticket.body or '')|length > 1500 %}
                                     <button class="read-more-btn" onclick="expandMessage('originalMessage')"
@@ -7395,7 +7395,7 @@
                                         <div class="message-content line-clamp-3 overflow-hidden text-gray-200 transition-all duration-300"
                                             id="message-content-{{ loop.index }}"
                                             style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.6;">
-                                            {{ reply.message }}
+                                            {{ reply.message | safe if reply.message else '' }}
                                         </div>
 
                                         <!-- Read More / Show Less Button (Conditional via JS) -->
@@ -8403,8 +8403,6 @@
                     window.deleteClaimDocument = deleteClaimDocument;
                     window.loadTicketClaimDocs = loadTicketClaimDocs;
                     window.uploadClaimDocument = uploadClaimDocument;
-                    window.previewAttachment = previewAttachment;
-                    window.downloadAttachment = downloadAttachment;
                     window.previewEmailAttachment = previewEmailAttachment;
                     window.downloadEmailAttachment = downloadEmailAttachment;
                     window.previewTicketAttachment = previewTicketAttachment;

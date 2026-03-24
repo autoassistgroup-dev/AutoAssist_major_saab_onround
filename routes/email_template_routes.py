@@ -143,7 +143,9 @@ def get_email_template(template_type, ticket_id):
         elif template_type == 'ticket_data':
             # Option 2: Loads the ticket's current subject and description/body
             subject = f"[#{ticket_id}] {original_subject}"
-            body = ticket.get('description') or ticket.get('body') or ticket.get('message') or ''
+            raw_body = ticket.get('description') or ticket.get('body') or ticket.get('message') or ''
+            # Inject Ticket ID into body for better context
+            body = f"Ticket ID: #{ticket_id}\n\n{raw_body}"
             
         elif template_type == 'acknowledgement':
             # Option 3: Formal acknowledgement template

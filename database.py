@@ -383,38 +383,67 @@ class MongoDB:
             cursor = self.tickets.find(match_stage).sort(sort_criteria).skip(skip).limit(per_page)
             tickets = list(cursor)
             
-            # Execute manual lookups in Python (bypasses MongoDB aggregate lock/timeout bugs)
+            if not tickets:
+                return []
+
+            # 🚀 OPTIMIZATION: Bulk fetch all related data to avoid N+1 queries
+            ticket_ids = [t.get("ticket_id") for t in tickets]
+            
+            # 1. Bulk fetch all assignments for these tickets
+            assignments_list = list(self.ticket_assignments.find({"ticket_id": {"$in": ticket_ids}}))
+            assignments_map = {a.get("ticket_id"): a for a in assignments_list}
+            
+            # 2. Collect all member IDs needed (assigned_member, forwarded_from, forwarded_to)
+            member_ids = set()
+            for t in tickets:
+                a = assignments_map.get(t.get("ticket_id"), {})
+                if a.get("member_id"): member_ids.add(a.get("member_id"))
+                if a.get("forwarded_from"): member_ids.add(a.get("forwarded_from"))
+                if t.get("forwarded_to"): member_ids.add(t.get("forwarded_to"))
+            
+            # Bulk fetch all members
+            members_list = list(self.members.find({"_id": {"$in": list(member_ids)}}))
+            members_map = {str(m.get("_id")): m for m in members_list}
+            
+            # 3. Bulk fetch all metadata for these tickets (technician info)
+            metadata_list = list(self.ticket_metadata.find({
+                "ticket_id": {"$in": ticket_ids},
+                "key": {"$in": ["technician_id", "technician_name"]}
+            }))
+            
+            # Map metadata by (ticket_id, key)
+            metadata_map = {}
+            for meta in metadata_list:
+                tid = meta.get("ticket_id")
+                key = meta.get("key")
+                if tid not in metadata_map: metadata_map[tid] = {}
+                metadata_map[tid][key] = meta.get("value")
+
+            # 4. Process tickets with the bulk-fetched data
             for t in tickets:
                 t_id = t.get("ticket_id")
                 
-                # Add computed fields natively
+                # Add computed fields
                 t["updated_at"] = t.get("updated_at") or t.get("created_at")
                 t["has_unread_notification"] = bool(t.get("has_unread_notification", False))
                 t["has_unread_reply"] = bool(t.get("has_unread_reply", False))
                 
-                # Fetch assignment
-                assignment = self.ticket_assignments.find_one({"ticket_id": t_id}) or {}
+                # Get assignment from map
+                assignment = assignments_map.get(t_id, {})
                 
                 assigned_member_id = assignment.get("member_id")
                 fwd_from_id = assignment.get("forwarded_from")
                 fwd_to_id = t.get("forwarded_to")
                 
-                # Fetch members
-                t["assigned_member"] = [self.members.find_one({"_id": assigned_member_id})] if assigned_member_id else []
-                t["forwarded_from_member"] = [self.members.find_one({"_id": fwd_from_id})] if fwd_from_id else []
-                t["forwarded_to_member"] = [self.members.find_one({"_id": fwd_to_id})] if fwd_to_id else []
+                # Look up members in map
+                t["assigned_member"] = [members_map.get(str(assigned_member_id))] if assigned_member_id and str(assigned_member_id) in members_map else []
+                t["forwarded_from_member"] = [members_map.get(str(fwd_from_id))] if fwd_from_id and str(fwd_from_id) in members_map else []
+                t["forwarded_to_member"] = [members_map.get(str(fwd_to_id))] if fwd_to_id and str(fwd_to_id) in members_map else []
                 
-                # Remove Nones from arrays
-                t["assigned_member"] = [m for m in t["assigned_member"] if m]
-                t["forwarded_from_member"] = [m for m in t["forwarded_from_member"] if m]
-                t["forwarded_to_member"] = [m for m in t["forwarded_to_member"] if m]
-                
-                # Fetch technician metadata
-                tech_id_meta = self.ticket_metadata.find_one({"ticket_id": t_id, "key": "technician_id"})
-                tech_name_meta = self.ticket_metadata.find_one({"ticket_id": t_id, "key": "technician_name"})
-                
-                t["technician_id"] = tech_id_meta.get("value") if tech_id_meta else None
-                t["technician_name"] = tech_name_meta.get("value") if tech_name_meta else None
+                # Get technician metadata from map
+                t_meta = metadata_map.get(t_id, {})
+                t["technician_id"] = t_meta.get("technician_id")
+                t["technician_name"] = t_meta.get("technician_name")
                 
             return tickets
             

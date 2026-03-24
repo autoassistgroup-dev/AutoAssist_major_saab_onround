@@ -97,12 +97,13 @@ def create_document():
     if file and allowed_file(file.filename):
         try:
             filename = secure_filename(file.filename)
-            upload_folder = Config.get_upload_folder()
+            import sys
+            _is_vercel = os.environ.get('VERCEL') or sys.platform != 'win32' # Vercel or Linux-like
+            upload_folder = '/tmp' if _is_vercel else Config.get_upload_folder()
             
-            # Create common_docs subfolder to keep organized
-            # common_docs_folder = os.path.join(upload_folder, 'common_docs')
-            # os.makedirs(common_docs_folder, exist_ok=True)
-            # Actually, let's keep it simple and use the main bucket but maybe prefix?
+            # Ensure folder exists (usually /tmp exists, but if it's local we need it)
+            if not os.path.exists(upload_folder):
+                os.makedirs(upload_folder, exist_ok=True)
             
             # Generate unique filename to avoid collisions
             unique_filename = f"common_{int(datetime.now().timestamp())}_{filename}"
