@@ -839,7 +839,9 @@ def send_ticket_reply(ticket_id):
                             'size': ra.get('size', 0) or (len(ra.get('data', '')) if ra.get('data') else 0),
                             'source': 'reply',
                             'has_data': bool(ra.get('data')),
-                            'file_path': original_fp
+                            'file_path': original_fp,
+                            'data': ra.get('data'),
+                            'fileData': ra.get('data')
                         })
                     try:
                         db.replies.update_one(
