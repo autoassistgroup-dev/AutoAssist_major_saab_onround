@@ -1954,8 +1954,9 @@
                     : status === 'Closed' ? 'status-closed'
                         : status === 'Resolved' ? 'status-resolved' : 'status-new';
 
+            const hasUnread = !!(t.has_unread_notification || t.has_unread_reply || t.has_new_reply);
             const isNew = !t.is_new_viewed;
-            const unreadDot = hasNew ? '<span class="unread-dot" title="New Reply"></span>' 
+            const unreadDot = hasUnread ? '<span class="unread-dot" title="New Reply"></span>' 
                             : (isNew ? '<span class="unread-dot unread-dot-yellow" title="New Ticket Created"></span>' : '');
             const isReturned = !!t.referred_back_by_name && !t.is_returned_viewed;
             const isForwarded = !!t.is_forwarded && !t.is_forwarded_viewed;
@@ -2026,9 +2027,9 @@
             const idCell = row.querySelector('.td-id');
             if (idCell) {
                 const status = ticket.status || 'New';
-                const hasNew = !!(ticket.has_new_reply || ticket.has_unread_reply);
-                const unreadDot = hasNew ? '<span class="unread-dot" title="New Reply"></span>' 
-                                : (status === 'New' ? '<span class="unread-dot unread-dot-yellow" title="New Ticket Created"></span>' : '');
+                const hasUnread = !!(ticket.has_unread_notification || ticket.has_unread_reply || ticket.has_new_reply);
+                const unreadDot = hasUnread ? '<span class="unread-dot" title="New Reply"></span>' 
+                                : (status === 'New' && !ticket.is_new_viewed ? '<span class="unread-dot unread-dot-yellow" title="New Ticket Created"></span>' : '');
                 
                 const isNew = !ticket.is_new_viewed;
                 const isReturned = !!ticket.referred_back_by_name && !ticket.is_returned_viewed;

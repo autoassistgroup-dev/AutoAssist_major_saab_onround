@@ -12,6 +12,7 @@ Author: AutoAssistGroup Development Team
 """
 
 import logging
+import os
 from datetime import datetime
 from flask import Blueprint, jsonify, request, session
 

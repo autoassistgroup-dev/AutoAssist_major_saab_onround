@@ -1039,6 +1039,7 @@ class MongoDB:
             ticket_data.setdefault('is_important', False)
             ticket_data.setdefault('has_unread_reply', False)
             ticket_data.setdefault('is_new_viewed', False)
+            ticket_data.setdefault('is_returned_viewed', False)
             ticket_data.setdefault('has_unread_notification', True)
             
             result = self.tickets.insert_one(ticket_data)
