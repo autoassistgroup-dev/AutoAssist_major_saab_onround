@@ -376,24 +376,43 @@ class MongoDB:
             
             skip = (page - 1) * per_page
             
-            # Fetch base tickets natively with prioritized sorting:
-            # 1. Unread notifications/replies first
-            # 2. Unviewed new tickets/returned tickets next
-            # 3. Finally by updated_at (newest first)
-            sort_criteria = [
-                ("has_unread_notification", -1),
-                ("has_unread_reply", -1),
-                ("is_new_viewed", 1),
-                ("is_returned_viewed", 1),
-                ("updated_at", -1)
-            ]
+            # PERFORMANCE FIX: A complex 5-field sort causes MongoDB Atlas Serverless to 
+            # hang and timeout (NetworkTimeout) when doing aggressive in-memory sorting.
+            # Instead, we do a simple index-backed sort to get recent tickets, then
+            # do the complex prioritization sort in pure Python memory.
             
-            cursor = self.tickets.find(match_stage).sort(sort_criteria).skip(skip).limit(per_page)
-            tickets = list(cursor)
+            # 1. Fetch more tickets than we need using a fast index sort
+            fetch_limit = per_page * 3  # Fetch extra to ensure we get important ones
+            cursor = self.tickets.find(match_stage).sort("updated_at", -1).limit(fetch_limit)
+            all_recent_tickets = list(cursor)
+            
+            if not all_recent_tickets:
+                return []
+                
+            # 2. Add safe default booleans for sorting
+            for t in all_recent_tickets:
+                t["has_unread_notification"] = bool(t.get("has_unread_notification", False))
+                t["has_unread_reply"] = bool(t.get("has_unread_reply", False))
+                t["is_new_viewed"] = bool(t.get("is_new_viewed", False))
+                t["is_returned_viewed"] = bool(t.get("is_returned_viewed", False))
+                t["updated_at"] = t.get("updated_at") or t.get("created_at")
+                
+            # 3. Perform the complex prioritization sort in memory
+            # True sorts before False for -1, False sorts before True for 1
+            all_recent_tickets.sort(key=lambda x: (
+                not x["has_unread_notification"],  # -1 (True first)
+                not x["has_unread_reply"],         # -1 (True first)
+                x["is_new_viewed"],                # 1  (False first)
+                x["is_returned_viewed"],           # 1  (False first)
+                -x["updated_at"].timestamp() if hasattr(x["updated_at"], 'timestamp') else 0  # -1 (newest first)
+            ))
+            
+            # 4. Apply pagination manually
+            tickets = all_recent_tickets[skip : skip + per_page]
             
             if not tickets:
                 return []
-
+                
             # 🚀 OPTIMIZATION: Bulk fetch all related data to avoid N+1 queries
             ticket_ids = [t.get("ticket_id") for t in tickets]
             
