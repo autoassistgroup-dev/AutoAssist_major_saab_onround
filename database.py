@@ -109,18 +109,18 @@ class MongoDB:
                 logging.warning("certifi not installed, SSL certificate verification may fail")
             
             connection_options = {
-                # PERFORMANCE: Serverless optimized - minimal pool, fast timeouts
+                # PERFORMANCE: Balanced for eventlet + Atlas stability
                 'maxPoolSize': 5,                     # Smaller pool for serverless
                 'minPoolSize': 0,                     # MUST be 0 for Serverless
-                'maxIdleTimeMS': 10000,               # Aggressive pool cleanup (10s)
-                'serverSelectionTimeoutMS': 3000,     # 3s fast-fail on DNS issues
-                'connectTimeoutMS': 5000,             # 5s network connect (was 10s)
-                'socketTimeoutMS': 30000,             # 30s socket limit
+                'maxIdleTimeMS': 30000,               # 30s pool cleanup (was 10s — too aggressive)
+                'serverSelectionTimeoutMS': 10000,    # 10s server selection (was 3s — Atlas needs time)
+                'connectTimeoutMS': 10000,            # 10s connect (was 5s — eventlet SSL needs more)
+                'socketTimeoutMS': 60000,             # 60s socket limit (was 30s — root cause of timeout)
                 'heartbeatFrequencyMS': 30000,        # 30 seconds
                 'retryWrites': True,
                 'retryReads': True,
                 'w': 'majority',
-                'readPreference': 'primaryPreferred',
+                'readPreference': 'secondaryPreferred',  # Read from secondary to reduce primary load
                 'maxConnecting': 2
             }
             
@@ -382,10 +382,44 @@ class MongoDB:
             # Instead, we do a simple index-backed sort to get recent tickets, then
             # do the complex prioritization sort in pure Python memory.
             
+            # 🚀 PROJECTION: Only fetch fields needed for the ticket list view.
+            # Excludes body, raw_data, description, attachments, replies, etc.
+            # This reduces data transfer by 5-10x and drastically speeds up the query.
+            list_projection = {
+                'ticket_id': 1, 'subject': 1, 'name': 1, 'email': 1,
+                'status': 1, 'priority': 1, 'classification': 1,
+                'created_at': 1, 'updated_at': 1,
+                'has_unread_reply': 1, 'has_unread_notification': 1,
+                'is_new_viewed': 1, 'is_returned_viewed': 1,
+                'is_forwarded': 1, 'forwarded_to': 1, 'forwarded_by': 1,
+                'forwarded_at': 1, 'is_forwarded_viewed': 1,
+                'referred_back_by_name': 1,
+                'is_important': 1, 'is_deleted': 1,
+                'creation_method': 1, 'processing_method': 1,
+                'assigned_technician': 1, 'technician_name': 1,
+                'customer_first_name': 1,
+                'has_warranty': 1, 'has_attachments': 1,
+            }
+            
             # 1. Fetch more tickets than we need using a fast index sort
             fetch_limit = per_page * 3  # Fetch extra to ensure we get important ones
-            cursor = self.tickets.find(match_stage).sort("updated_at", -1).limit(fetch_limit)
-            all_recent_tickets = list(cursor)
+            cursor = self.tickets.find(match_stage, list_projection).sort("updated_at", -1).limit(fetch_limit)
+            
+            # 🚀 RETRY LOGIC: Retry once on transient NetworkTimeout
+            all_recent_tickets = None
+            for attempt in range(2):
+                try:
+                    all_recent_tickets = list(cursor)
+                    break  # Success
+                except pymongo.errors.NetworkTimeout as e:
+                    if attempt == 0:
+                        logging.warning(f"[DATABASE] Transient timeout on ticket fetch, retrying... ({e})")
+                        import time as _time
+                        _time.sleep(1)
+                        # Re-create cursor for retry
+                        cursor = self.tickets.find(match_stage, list_projection).sort("updated_at", -1).limit(fetch_limit)
+                    else:
+                        raise  # Second attempt failed, let outer handler deal with it
             
             if not all_recent_tickets:
                 return []
